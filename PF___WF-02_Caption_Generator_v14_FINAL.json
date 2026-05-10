@@ -1,0 +1,278 @@
+{
+  "name": "PF – WF-02 Caption Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## PF – WF-02 Caption Generator\n\n**Setup (einmalig vor erstem Test):**\n1. n8n Settings → Environment Variables → `ANTHROPIC_API_KEY` setzen\n2. Manuellen Trigger klicken → Output im letzten Node prüfen\n\n**Kosten pro Ausführung:** ca. 0,01–0,02 EUR (Claude Sonnet)\n\n**Ablauf:**\nSharePoint (Status=Bereit) → Claude 3 Captions → Teams Freigabe → SharePoint Update",
+        "height": 200,
+        "width": 960,
+        "color": 5
+      },
+      "id": "601c9feb-212a-437e-b352-d1c5552bd914",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "content": "**Output-Felder (für WF-03/04):**\n\n`final_caption` – freigegebene Caption\n`final_hashtags` – Hashtag-Set 1\n`final_ton` / `final_hook`\n`final_post` – Caption + Hashtags\n`gewaehlte_variante` – 1, 2 oder 3\n`thema` / `datum` / `uhrzeit`\n`sharepoint_item_id` – AUSWEIS",
+        "width": 290,
+        "color": 3
+      },
+      "id": "090ff656-b4b5-434c-a912-dc1ceceea512",
+      "name": "Output-Felder",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [240, 224]
+    },
+    {
+      "parameters": {
+        "content": "**Häufige Fehler:**\n\n`401` → ANTHROPIC_API_KEY fehlt\n`429` → Rate Limit, kurz warten\n`JSON Parse Error` → wird abgefangen\n`500 SharePoint` → Spaltentyp prüfen",
+        "width": 220,
+        "color": 4
+      },
+      "id": "dbe5e376-2398-42b7-a3cc-9b43baaba6af",
+      "name": "Häufige Fehler",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 224]
+    },
+    {
+      "parameters": {
+        "content": "**v14 FINAL – 2026-05-10 ✅**\n\nVollständig produktionsreif.\n\nSharePoint Feldmapping (intern):\nfield_1  = Thema\nfield_2  = Post_Typ\nfield_3  = Content_Brief\nfield_4  = Datum\nfield_5  = Uhrzeit\nfield_6  = Status ← WRITE\nfield_7  = Hashtag_Thema\nfield_8  = Bild_Dateiname\nfield_9  = Canva_Template_ID\nfield_10 = Caption_Variante ← WRITE\nfield_11 = Freigabe_Person ← WRITE\nfield_12 = Instagram_Post_ID\nfield_13 = Kommentare\n\nSharePoint REST API:\nPOST + X-HTTP-Method: MERGE\nSite: PhysioFuchsTW (nicht TB!)\nList-GUID: d17a6a6f-...\nCredential: PF Microsoft SharePoint\n\nAPI-Key: $env.ANTHROPIC_API_KEY",
+        "width": 290,
+        "color": 6
+      },
+      "id": "changelog-v14-final",
+      "name": "Changelog v14 FINAL",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [2368, 224]
+    },
+    {
+      "parameters": {},
+      "id": "bb20bbf3-3fbf-4a75-a6d5-b9a0eccaab83",
+      "name": "Manueller Test-Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [272, 432]
+    },
+    {
+      "parameters": {
+        "resource": "item",
+        "site": {
+          "__rl": true,
+          "value": "physiofuchs889.sharepoint.com,c74040a2-0d6b-4385-b514-fbd9830a56ac,7a7842d6-ea6c-440d-aeed-580bdd2a091c",
+          "mode": "list",
+          "cachedResultName": "Physio Fuchs Administration"
+        },
+        "list": {
+          "__rl": true,
+          "value": "d17a6a6f-e6ef-457d-a2a9-4c30ea56120f",
+          "mode": "list",
+          "cachedResultName": "PF-Content-Kalender-2026"
+        },
+        "filter": "=",
+        "options": { "fields": ["fields"] },
+        "simplify": false,
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [512, 432],
+      "id": "3f6c6694-c474-41d2-a91c-41e6619b188b",
+      "name": "Get many items",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "1dc54f08-2a4c-46c8-bebc-83a9f54b7a5e",
+              "leftValue": "={{ $json.fields.field_6 }}",
+              "rightValue": "Bereit",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [800, 432],
+      "id": "a5cd55d6-40cc-41e2-b893-d47349e7b8eb",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "jsCode": "const d = $input.item.json.Felder || $input.item.json;\nconst systemPrompt = `Du bist der Social-Media-Texter der Physiotherapiepraxis Physio Fuchs.\nDu schreibst Instagram-Captions auf Deutsch fuer eine moderne, empathische Physiotherapiepraxis.\nTONALITAET:\n- Warm, professionell, motivierend - nie arrogant oder klinisch\n- Duzen der Community ist erwuenscht\n- Emojis: maximal 3-5 pro Caption, nur unterstuetzend\n- Keine Clickbait-Formulierungen\n- Keine medizinischen Versprechen (kein 'heilt', 'kuriert')\n- Erlaubt: 'kann helfen', 'unterstuetzt', 'lindert haeufig'\nCAPTION-AUFBAU:\n1. Hook (erste Zeile, max. 12 Woerter) - stopp-wuerdig, direkte Ansprache\n2. Hauptinhalt (3-5 Saetze) - Mehrwert, Tipps oder konkreter Einblick\n3. Handlungsaufruf (1 Satz) - Termin buchen, Kommentieren oder Beitrag speichern\nWICHTIG: Keine Hashtags in der Caption selbst.\nAUSGABE: Nur reines JSON ohne Markdown-Backticks oder erklaerenden Text davor/danach.\nExaktes Format:\n{\"variante_1\":{\"caption\":\"...\",\"hook_preview\":\"...(erste 15 Zeichen)\",\"ton\":\"informativ\"},\"variante_2\":{\"caption\":\"...\",\"hook_preview\":\"...\",\"ton\":\"persoenlich\"},\"variante_3\":{\"caption\":\"...\",\"hook_preview\":\"...\",\"ton\":\"motivierend\"},\"hashtag_set_1\":[\"#tag1\",\"#tag2\"],\"hashtag_set_2\":[\"#tag1\",\"#tag2\"]}`;\n\nconst thema   = d.Field_1 || 'Physiotherapie';\nconst postTyp = d.Field_2 || 'Tipp';\nconst brief   = d.Field_3 || '';\nconst hashtag = d.Field_7 || '';\nconst monat   = new Date().getMonth();\nconst jahreszeit = monat <= 1 || monat === 11 ? 'Winter' : monat <= 4 ? 'Frühling' : monat <= 7 ? 'Sommer' : 'Herbst';\n\nconst userMessage = `BRIEF VON JUDITH:\\nThema: ${thema}\\nPost-Typ: ${postTyp}\\nAnweisung: ${brief}\\nKONTEXT: Jahreszeit: ${jahreszeit}\\nHASHTAG-POOL: #physiofuchs #physiotherapie #physio #gesundheit ${hashtag}\\nErstelle alle 3 Varianten. Nur reines JSON.`;\n\nreturn {\n  json: {\n    model: 'claude-sonnet-4-6',\n    max_tokens: 2048,\n    system: systemPrompt,\n    messages: [{ role: 'user', content: userMessage }]\n  }\n};"
+      },
+      "id": "36493d03-2c40-4a2a-ad58-2463e614ef75",
+      "name": "Build Claude Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1120, 416]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key",        "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1424, 272],
+      "id": "b7aee5a6-a3d9-40be-b726-076114ee499c",
+      "name": "HTTP Request"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.item.json;\nif (!response.content || !response.content[0]) throw new Error('Keine Antwort von Claude');\nconst rawText = response.content[0].text;\nlet parsed;\ntry { parsed = JSON.parse(rawText.replace(/```json\\n?/gi,'').replace(/```\\n?/g,'').trim()); }\ncatch(e) {\n  const match = rawText.match(/\\{[\\s\\S]*\\}/);\n  if (match) { try { parsed = JSON.parse(match[0]); } catch(e2) { throw new Error('Kein valides JSON'); } }\n  else throw new Error('Kein JSON gefunden');\n}\nconst i = response.usage?.input_tokens || 0;\nconst o = response.usage?.output_tokens || 0;\nreturn { json: {\n  v1_caption: parsed.variante_1?.caption || '', v1_hook: parsed.variante_1?.hook_preview || '', v1_ton: parsed.variante_1?.ton || 'informativ',\n  v2_caption: parsed.variante_2?.caption || '', v2_hook: parsed.variante_2?.hook_preview || '', v2_ton: parsed.variante_2?.ton || 'persoenlich',\n  v3_caption: parsed.variante_3?.caption || '', v3_hook: parsed.variante_3?.hook_preview || '', v3_ton: parsed.variante_3?.ton || 'motivierend',\n  hashtags_set_1:   Array.isArray(parsed.hashtag_set_1) ? parsed.hashtag_set_1.join(' ') : '',\n  hashtags_set_2:   Array.isArray(parsed.hashtag_set_2) ? parsed.hashtag_set_2.join(' ') : '',\n  hashtags_array_1: parsed.hashtag_set_1 || [],\n  input_tokens: i, output_tokens: o,\n  cost_eur: Math.round((i*0.000003+o*0.000015)*100)/100,\n  generated_at: new Date().toISOString(),\n  model: 'claude-sonnet-4-20250514'\n}};"
+      },
+      "id": "57be5480-4fab-4cc1-8ab2-4001ec4130ca",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1664, 272]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combineBy": "combineByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [1888, 416],
+      "id": "654e0010-779b-4673-8810-dd29fc300b41",
+      "name": "Merge SharePoint + Claude"
+    },
+    {
+      "parameters": {
+        "jsCode": "const json = $input.item.json;\nconst f = json.Felder || json.fields || {};\n\n// Item-ID sauber: parseInt + trim gegen Leerzeichen in URL\nconst rawId = json.AUSWEIS || json.id || json.ID || 0;\nconst itemId = parseInt(String(rawId).trim(), 10);\n\n// Datum formatieren: \"11052026\" → \"11.05.2026\"\nconst rawDatum = String(f.Field_4 || f.field_4 || '');\nconst digits = rawDatum.replace(/\\D/g,'');\nconst datumFormatiert = digits.length >= 8\n  ? digits.substring(0,2)+'.'+digits.substring(2,4)+'.'+digits.substring(4,8)\n  : rawDatum || '(kein Datum)';\n\nreturn { json: { ...json,\n  sharepoint_item_id: itemId,\n  thema:   f.Field_1 || f.field_1 || f.Title || '(kein Thema)',\n  datum:   datumFormatiert,\n  uhrzeit: f.Field_5 || f.field_5 || '(keine Uhrzeit)',\n}};"
+      },
+      "id": "e173b760-b534-454f-86c5-e47151d9e87a",
+      "name": "Felder aufbereiten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2112, 416]
+    },
+    {
+      "parameters": {
+        "resource": "chatMessage",
+        "operation": "sendAndWait",
+        "chatId": {
+          "__rl": true,
+          "value": "19:meeting_MWViMzNlYmYtNTY1OS00NzM1LTlmMDAtNjRmZjA0YjY3OGFl@thread.v2",
+          "mode": "list",
+          "cachedResultName": "Social Media (meeting)",
+          "cachedResultUrl": "https://teams.microsoft.com/l/chat/19%3Ameeting_MWViMzNlYmYtNTY1OS00NzM1LTlmMDAtNjRmZjA0YjY3OGFl%40thread.v2/0?tenantId=b349f8e5-511c-485a-be28-55e420a6a5e1"
+        },
+        "message": "=🌟 Neuer Post zur Freigabe – {{ $json.generated_at.substring(0,10) }}\n\n📋 Thema: {{ $json.thema }}\n🗓️ Geplant: {{ $json.datum }} um {{ $json.uhrzeit }} Uhr\n\n──────────────────────────────\nVARIANTE 1 – {{ $json.v1_ton }}\n\n{{ $json.v1_caption }}\n\n──────────────────────────────\nVARIANTE 2 – {{ $json.v2_ton }}\n\n{{ $json.v2_caption }}\n\n──────────────────────────────\nVARIANTE 3 – {{ $json.v3_ton }}\n\n{{ $json.v3_caption }}\n\n──────────────────────────────\n# Hashtags: {{ $json.hashtags_set_1 }}\n\n──────────────────────────────\n✅ Variante wählen (1, 2 oder 3)",
+        "responseType": "freeText",
+        "options": { "messageButtonLabel": "✅ Variante wählen (1, 2 oder 3)" }
+      },
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 2,
+      "position": [2336, 416],
+      "id": "1dc33f31-c90b-47ff-b894-eaffb1cd7b6c",
+      "name": "Send message and wait for response",
+      "webhookId": "a3b4cb5f-83bc-4711-a939-8e3799b4a447",
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "Gmvn1OD66IZoWsXh",
+          "name": "PF Microsoft Teams account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const json = $input.item.json;\nconst antwortRaw = String(json.Daten?.text || json.data?.text || json.data || json.response || json.text || '').trim();\nconst match = antwortRaw.match(/[123]/);\nif (!match) throw new Error(`Ungültige Antwort: \"${antwortRaw}\". Bitte 1, 2 oder 3.`);\nconst wahl = parseInt(match[0]);\nconst prev = $('Felder aufbereiten').item.json;\nconst v = {\n  1:{caption:prev.v1_caption, ton:prev.v1_ton, hook:prev.v1_hook},\n  2:{caption:prev.v2_caption, ton:prev.v2_ton, hook:prev.v2_hook},\n  3:{caption:prev.v3_caption, ton:prev.v3_ton, hook:prev.v3_hook}\n};\nconst g = v[wahl];\nreturn { json: { ...prev,\n  gewaehlte_variante: wahl,\n  final_caption:      g.caption,\n  final_ton:          g.ton,\n  final_hook:         g.hook,\n  final_hashtags:     prev.hashtags_set_1,\n  final_post:         g.caption + '\\n\\n' + prev.hashtags_set_1,\n  freigabe_zeitpunkt: new Date().toISOString(),\n}};"
+      },
+      "id": "407154e8-3351-4055-aad0-8507b7e547bb",
+      "name": "Variante auswählen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2560, 416]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $json.sharepoint_item_id }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type",  "value": "application/json" },
+            { "name": "Accept",        "value": "application/json" },
+            { "name": "X-HTTP-Method", "value": "MERGE" },
+            { "name": "IF-MATCH",      "value": "*" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "field_6",  "value": "Freigegeben" },
+            { "name": "field_11", "value": "Judith Fuchs" },
+            { "name": "field_10", "value": "=={{ $json.final_caption }}" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [2784, 416],
+      "id": "ce91f788-5240-4553-9bae-d360f5ffe89e",
+      "name": "SharePoint: REST API Update",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manueller Test-Trigger":   { "main": [[{"node": "Get many items",            "type": "main", "index": 0}]] },
+    "Get many items":           { "main": [[{"node": "If",                         "type": "main", "index": 0}]] },
+    "If": { "main": [[{"node":"Build Claude Payload","type":"main","index":0},{"node":"Merge SharePoint + Claude","type":"main","index":1}]] },
+    "Build Claude Payload":     { "main": [[{"node": "HTTP Request",               "type": "main", "index": 0}]] },
+    "HTTP Request":             { "main": [[{"node": "Parse Claude Response",      "type": "main", "index": 0}]] },
+    "Parse Claude Response":    { "main": [[{"node": "Merge SharePoint + Claude",  "type": "main", "index": 0}]] },
+    "Merge SharePoint + Claude":{ "main": [[{"node": "Felder aufbereiten",         "type": "main", "index": 0}]] },
+    "Felder aufbereiten":       { "main": [[{"node": "Send message and wait for response", "type": "main", "index": 0}]] },
+    "Send message and wait for response": { "main": [[{"node": "Variante auswählen", "type": "main", "index": 0}]] },
+    "Variante auswählen":       { "main": [[{"node": "SharePoint: REST API Update","type": "main", "index": 0}]] },
+    "SharePoint: REST API Update": { "main": [[]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "v14-final-2026-05-10",
+  "meta": {
+    "instanceId": "f40c6f6af7ce2011b04be6e4c65abbc6b998ddefd762d8f282912f30a607f9b9"
+  },
+  "id": "H08A9KQvgnAvAe1a",
+  "tags": []
+}

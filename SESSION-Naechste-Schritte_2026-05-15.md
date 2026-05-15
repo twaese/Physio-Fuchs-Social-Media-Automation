@@ -126,7 +126,8 @@ Basis: WF-03 v5 kopieren als v6, dann:
 ## 6. Onboarding-Prompt für die nächste Session
 
 > Working directory: `/Volumes/Physio_Fuchs/SocialMedia/`.
-> Lies bitte zuerst `CLAUDE.md`, dann `SESSION-Naechste-Schritte_2026-05-15.md`.
+> Lies bitte zuerst `CLAUDE.md`, dann diese Datei (`SESSION-Naechste-Schritte_2026-05-15.md`).
+> Historische Session-Notizen liegen in `99_Sessions/`.
 > Wir bauen heute WF-03 v6 mit direkter Canva REST API (statt Anthropic+MCP),
 > weil der MCP-Connector trotz korrektem OAuth-Token 401 vom Canva-MCP bekommt.
 > Vorab: Token-Lookup `/webhook/canva-token-current` prüfen, PF-2026-100 wieder

@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Physio Fuchs – Social Media Templates</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,600;1,300;1,400&family=Jost:wght@300;400;500&display=swap');
+:root{--brown:#5C3A1E;--brown-l:#8B6349;--green:#7A9B3C;--cream:#FAF6F0;--text:#3A2010}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Jost',sans-serif;background:#F0EBE3;padding:24px}
+h1{font-family:'Cormorant Garamond',serif;color:var(--brown);font-size:24px;font-weight:400;letter-spacing:.05em;margin-bottom:4px}
+.sub{color:var(--brown-l);font-size:11px;letter-spacing:.12em;text-transform:uppercase;margin-bottom:18px}
+.tabs{display:flex;gap:8px;margin-bottom:20px;flex-wrap:wrap}
+.tab{padding:7px 16px;border:1.5px solid var(--brown-l);background:transparent;color:var(--brown-l);font-family:'Jost',sans-serif;font-size:11px;letter-spacing:.1em;text-transform:uppercase;cursor:pointer;transition:all .2s;border-radius:2px}
+.tab.active{background:var(--brown);color:#fff;border-color:var(--brown)}
+.grid{display:flex;gap:28px;flex-wrap:wrap;justify-content:flex-start}
+.pw{text-align:center}
+.lbl{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--brown-l);margin-bottom:10px}
+.hidden{display:none!important}
+
+/* IG 1:1 */
+.ig{width:320px;height:320px;background:var(--cream);position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(92,58,30,.2)}
+/* FB landscape */
+.fb{width:420px;height:220px;background:var(--cream);position:relative;overflow:hidden;box-shadow:0 8px 32px rgba(92,58,30,.2)}
+
+/* TIPP TEMPLATE */
+.t-bar{background:var(--brown);height:5px;width:100%}
+.t-body{padding:18px 22px 12px;flex:1;position:relative}
+.t-tag{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--green);margin-bottom:8px}
+.t-h{font-family:'Cormorant Garamond',serif;font-size:24px;font-weight:600;color:var(--brown);line-height:1.2;margin-bottom:10px}
+.t-div{width:32px;height:1.5px;background:var(--green);margin-bottom:10px}
+.t-txt{font-size:10px;color:var(--text);line-height:1.7;opacity:.85}
+.t-foot{display:flex;align-items:center;justify-content:space-between;padding:8px 22px 14px;border-top:1px solid rgba(92,58,30,.12)}
+.brand{font-family:'Cormorant Garamond',serif;font-size:13px;color:var(--brown);letter-spacing:.07em}
+.brand-s{font-size:8px;letter-spacing:.1em;color:var(--brown-l);text-transform:uppercase}
+.logo-c{width:30px;height:30px;border:1.5px solid var(--brown);border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Cormorant Garamond',serif;font-size:12px;color:var(--brown);font-weight:600}
+.deco-abs{position:absolute;right:-8px;bottom:30px;width:80px;opacity:.1}
+
+/* ANGEBOT */
+.a-head{background:var(--brown);padding:24px 22px 18px;position:relative;overflow:hidden}
+.a-lbl{font-size:8px;letter-spacing:.2em;text-transform:uppercase;color:var(--green);margin-bottom:6px}
+.a-h{font-family:'Cormorant Garamond',serif;font-size:26px;font-weight:300;color:#fff;line-height:1.2}
+.a-body{padding:16px 22px;flex:1;display:flex;flex-direction:column;gap:8px}
+.a-item{display:flex;align-items:flex-start;gap:8px}
+.a-dot{width:5px;height:5px;background:var(--green);border-radius:50%;flex-shrink:0;margin-top:5px}
+.a-itxt{font-size:10px;color:var(--text);line-height:1.5}
+.cta{background:var(--green);color:#fff;font-size:9px;letter-spacing:.12em;text-transform:uppercase;padding:5px 12px;border-radius:1px;display:inline-block}
+
+/* ZITAT */
+.z-wrap{height:100%;display:flex;flex-direction:column;align-items:center;justify-content:center;padding:28px;position:relative}
+.z-ring{width:200px;height:200px;border:1px solid rgba(92,58,30,.12);border-radius:50%;position:absolute}
+.z-q{font-family:'Cormorant Garamond',serif;font-size:64px;color:var(--green);opacity:.22;position:absolute;top:16px;left:22px;line-height:1}
+.z-txt{font-family:'Cormorant Garamond',serif;font-size:19px;font-style:italic;color:var(--brown);text-align:center;line-height:1.5;position:relative;z-index:1}
+.z-auth{font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#5A7A28;margin-top:14px;position:relative;z-index:1}
+.z-brand{position:absolute;bottom:14px;right:20px;font-family:'Cormorant Garamond',serif;font-size:11px;color:var(--brown-l)}
+
+/* TEAM */
+.tm-photo{background:linear-gradient(135deg,#D4C4B0,#C5B49A);display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+.tm-ph-lbl{font-size:10px;letter-spacing:.1em;text-transform:uppercase;color:rgba(92,58,30,.4)}
+.tm-overlay{position:absolute;bottom:0;left:0;right:0;height:36px;background:linear-gradient(to top,var(--cream),transparent)}
+.tm-content{padding:12px 20px}
+.tm-tag{font-size:9px;letter-spacing:.18em;text-transform:uppercase;color:var(--green);margin-bottom:4px}
+.tm-name{font-family:'Cormorant Garamond',serif;font-size:20px;color:var(--brown);font-weight:600;margin-bottom:4px}
+.tm-txt{font-size:10px;color:var(--text);opacity:.8;line-height:1.5}
+
+/* FB two-col */
+.fb-left{background:var(--brown);display:flex;flex-direction:column;align-items:flex-start;justify-content:center;padding:20px;position:relative;overflow:hidden}
+.fb-right{flex:1;padding:20px 22px;display:flex;flex-direction:column;justify-content:center}
+
+/* Notice */
+.notice{background:#F5EFE8;border:1px solid rgba(92,58,30,.15);border-radius:3px;padding:12px 16px;margin-top:22px;font-size:11px;color:var(--brown-l);line-height:1.7}
+.notice strong{color:var(--brown);font-weight:500}
+</style>
+</head>
+<body>
+<h1>Physio Fuchs — Social Media Templates</h1>
+<p class="sub">Design-Entwurf · Instagram 1:1 &amp; Facebook · Alle Content-Typen</p>
+
+<div class="tabs">
+  <button class="tab active" onclick="sw('tipp',this)">Tipp / Ratgeber</button>
+  <button class="tab" onclick="sw('angebot',this)">Angebot / Leistung</button>
+  <button class="tab" onclick="sw('zitat',this)">Zitat / Motivation</button>
+  <button class="tab" onclick="sw('team',this)">Team / BTS</button>
+</div>
+
+<div class="grid">
+
+  <!-- INSTAGRAM -->
+  <div class="pw">
+    <div class="lbl">📱 Instagram Post · 1080×1080</div>
+
+    <!-- TIPP IG -->
+    <div class="ig" id="ig-tipp" style="display:flex;flex-direction:column">
+      <div class="t-bar"></div>
+      <div class="t-body" style="flex:1;display:flex;flex-direction:column">
+        <div class="t-tag">💡 Gesundheitstipp</div>
+        <div class="t-h">Rücken entlasten –<br>so geht's richtig</div>
+        <div class="t-div"></div>
+        <div class="t-txt">Regelmäßige Pausen alle 45 Min. aktivieren die Rückenmuskulatur und beugen Verspannungen vor.<br><br>Unser Tipp: 3 Min. Schulterkreisen reichen aus.</div>
+        <div class="deco-abs">
+          <svg viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg" fill="#5C3A1E"><ellipse cx="40" cy="32" rx="30" ry="30" transform="rotate(-20 40 32)"/><ellipse cx="50" cy="62" rx="24" ry="27" transform="rotate(15 50 62)"/><rect x="37" y="85" width="4" height="32" rx="2"/></svg>
+        </div>
+      </div>
+      <div class="t-foot">
+        <div><div class="brand">Physio Fuchs</div><div class="brand-s">Therapie · Training · Wellness</div></div>
+        <div class="logo-c">PF</div>
+      </div>
+    </div>
+
+    <!-- ANGEBOT IG -->
+    <div class="ig hidden" id="ig-angebot" style="display:flex;flex-direction:column">
+      <div class="a-head">
+        <div class="a-lbl">✦ Unser Angebot</div>
+        <div class="a-h">Personal Training<br>im Fokus</div>
+      </div>
+      <div class="a-body">
+        <div class="a-item"><div class="a-dot"></div><div class="a-itxt">Individueller Trainingsplan nach deinen Zielen</div></div>
+        <div class="a-item"><div class="a-dot"></div><div class="a-itxt">Therapeutisch begleitet &amp; zertifiziert</div></div>
+        <div class="a-item"><div class="a-dot"></div><div class="a-itxt">Therapie + Training kombinierbar</div></div>
+      </div>
+      <div class="t-foot">
+        <div><div class="brand">Physio Fuchs</div><div class="brand-s">@physiofuchs</div></div>
+        <div class="cta">Jetzt anfragen</div>
+      </div>
+    </div>
+
+    <!-- ZITAT IG -->
+    <div class="ig hidden" id="ig-zitat">
+      <div class="z-wrap">
+        <div class="z-ring"></div>
+        <div class="z-q">"</div>
+        <div class="z-txt">Bewegung ist<br>Medizin –<br>jeden Tag ein<br>Schritt voraus.</div>
+        <div class="z-auth">— Judith Fuchs · Physio Fuchs</div>
+        <div class="z-brand">Physio Fuchs</div>
+      </div>
+    </div>
+
+    <!-- TEAM IG -->
+    <div class="ig hidden" id="ig-team" style="display:flex;flex-direction:column">
+      <div class="tm-photo" style="height:55%;"><div class="tm-ph-lbl">📷 Foto</div><div class="tm-overlay"></div></div>
+      <div class="tm-content" style="flex:1">
+        <div class="tm-tag">👋 Unser Team</div>
+        <div class="tm-name">Judith Fuchs</div>
+        <div class="tm-txt">Physiotherapeutin &amp; Personal Trainerin<br>Leidenschaft für nachhaltige Gesundheit</div>
+      </div>
+      <div class="t-foot">
+        <div class="brand" style="font-size:11px">Physio Fuchs</div>
+        <div class="brand-s">Therapie · Training · Wellness</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- FACEBOOK -->
+  <div class="pw">
+    <div class="lbl">💻 Facebook Post · 1200×630</div>
+
+    <!-- TIPP FB -->
+    <div class="fb" id="fb-tipp" style="display:flex;flex-direction:row">
+      <div class="fb-left" style="width:38%">
+        <div class="t-tag">💡 Tipp</div>
+        <div class="t-h" style="color:#fff;font-size:20px">Rücken<br>entlasten</div>
+        <div class="brand" style="color:rgba(255,255,255,.45);font-size:10px;margin-top:14px">Physio Fuchs</div>
+        <div style="position:absolute;right:-18px;bottom:-18px;width:100px;opacity:.12">
+          <svg viewBox="0 0 80 120" xmlns="http://www.w3.org/2000/svg" fill="white"><ellipse cx="40" cy="32" rx="30" ry="30" transform="rotate(-20 40 32)"/><ellipse cx="50" cy="62" rx="24" ry="27" transform="rotate(15 50 62)"/><rect x="37" y="85" width="4" height="32" rx="2"/></svg>
+        </div>
+      </div>
+      <div class="fb-right">
+        <div class="t-div"></div>
+        <div class="t-txt" style="margin-bottom:14px">Regelmäßige Pausen alle 45 Min. aktivieren die Rückenmuskulatur. Unser Tipp: 3 Min. Schulterkreisen – einfach und wirksam.</div>
+        <div class="cta">Mehr erfahren</div>
+      </div>
+    </div>
+
+    <!-- ANGEBOT FB -->
+    <div class="fb hidden" id="fb-angebot" style="display:flex;flex-direction:row">
+      <div class="fb-left" style="width:38%">
+        <div class="a-lbl">✦ Leistung</div>
+        <div class="t-h" style="color:#fff;font-size:20px">Personal<br>Training</div>
+        <div class="brand" style="color:rgba(255,255,255,.45);font-size:10px;margin-top:14px">Physio Fuchs</div>
+      </div>
+      <div class="fb-right">
+        <div class="t-div"></div>
+        <div style="display:flex;flex-direction:column;gap:7px;margin-bottom:14px">
+          <div class="a-item"><div class="a-dot"></div><div class="a-itxt">Individuell nach deinen Zielen</div></div>
+          <div class="a-item"><div class="a-dot"></div><div class="a-itxt">Therapeutisch begleitet</div></div>
+          <div class="a-item"><div class="a-dot"></div><div class="a-itxt">Therapie + Training kombinierbar</div></div>
+        </div>
+        <div class="cta">Jetzt anfragen</div>
+      </div>
+    </div>
+
+    <!-- ZITAT FB -->
+    <div class="fb hidden" id="fb-zitat" style="display:flex;align-items:center;justify-content:center;padding:28px;gap:20px">
+      <div style="font-family:'Cormorant Garamond',serif;font-size:52px;color:var(--green);opacity:.25;line-height:1">"</div>
+      <div>
+        <div style="font-family:'Cormorant Garamond',serif;font-size:18px;font-style:italic;color:var(--brown);line-height:1.5">Bewegung ist Medizin –<br>jeden Tag ein Schritt voraus.</div>
+        <div style="font-size:9px;letter-spacing:.15em;text-transform:uppercase;color:#5A7A28;margin-top:10px">— Judith Fuchs · Physio Fuchs</div>
+      </div>
+    </div>
+
+    <!-- TEAM FB -->
+    <div class="fb hidden" id="fb-team" style="display:flex;flex-direction:row">
+      <div class="tm-photo" style="width:42%"><div class="tm-ph-lbl">📷 Foto</div></div>
+      <div style="flex:1;padding:18px 20px;display:flex;flex-direction:column;justify-content:center">
+        <div class="tm-tag">👋 Team</div>
+        <div class="tm-name">Judith Fuchs</div>
+        <div class="tm-txt">Physiotherapeutin &amp; Personal Trainerin<br>Leidenschaft für nachhaltige Gesundheit</div>
+        <div class="brand" style="font-size:11px;margin-top:10px">Physio Fuchs</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<div class="notice">
+  <strong>Brand-Farben:</strong> Braun #5C3A1E · Olivgrün #7A9B3C · Schriften: Cormorant Garamond (Headlines) + Jost (Text)<br>
+  <strong>Nächste Schritte:</strong> Canva-Vorlagen aus diesen Layouts erstellen → SharePoint Content Plan verknüpfen → n8n-Befüllungs-Workflow aufbauen.
+</div>
+
+<script>
+function sw(type, el) {
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  el.classList.add('active');
+  ['tipp','angebot','zitat','team'].forEach(t=>{
+    ['ig-','fb-'].forEach(p=>{
+      const e=document.getElementById(p+t);
+      if(e) e.classList.add('hidden');
+    });
+  });
+  ['ig-','fb-'].forEach(p=>{
+    const e=document.getElementById(p+type);
+    if(e) e.classList.remove('hidden');
+  });
+}
+</script>
+</body>
+</html>

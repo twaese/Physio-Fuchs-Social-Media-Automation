@@ -1,0 +1,453 @@
+{
+  "name": "PF – WF-08 Canva OAuth v2 (Webhook-Init)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF-08 – Canva OAuth (PKCE)\n\n**Drei Funktionen in einem Workflow:**\n\n1. **Init** (manueller Trigger) – generiert PKCE `code_verifier` und `code_challenge`, speichert Verifier in `staticData`, baut Authorize-URL und gibt sie aus. Du klickst die URL → Canva-Zustimmen → redirect zu Callback.\n\n2. **Callback** (Webhook `/canva-oauth-callback`) – empfängt `code`-Param, liest Verifier aus `staticData`, tauscht Code gegen Access+Refresh Token, speichert beide in `staticData`.\n\n3. **Refresh** (Schedule alle 3h) – nutzt Refresh Token, holt neues Access Token, speichert es zurück.\n\n**Voraussetzungen:**\n- Env-Variablen `CANVA_CLIENT_ID` und `CANVA_CLIENT_SECRET` in n8n gesetzt (NICHT in .env hier abgelegt, sondern in n8n Settings → Variables oder als Server-Env).\n- Canva-App mit Redirect-URL `https://n8n.srv1099163.hstgr.cloud/webhook/canva-oauth-callback`\n- Scopes: design:meta:read, design:content:read, design:content:write, asset:read\n\n**Token-Zugriff aus anderen Workflows:**\n```\n{{ $workflow.staticData.global.canva_access_token }}\n```\nNein, andere Workflows haben keinen Zugriff auf staticData dieses Workflows. Lösung: Token in eine SharePoint-Liste oder einen separaten Endpoint schreiben, oder Anthropic-Call direkt hier ausführen.\n\n**Pragmatischer Workaround:** dieser Workflow bietet einen zweiten Webhook `/canva-token-current` der den aktuellen Token zurückgibt. Andere Workflows callen diesen via HTTP.",
+        "height": 600,
+        "width": 460,
+        "color": 4
+      },
+      "id": "00000000-0000-0000-0000-000000000001",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -260,
+        -200
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "canva-oauth-init",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "00000000-0000-0000-0000-000000000010",
+      "name": "Webhook: Init (Authorize-URL holen)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        100
+      ],
+      "webhookId": "canva-oauth-init"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Init: PKCE generieren, Authorize-URL bauen\nconst crypto = require('crypto');\n\nconst CLIENT_ID = $env.CANVA_CLIENT_ID;\nif (!CLIENT_ID) throw new Error('Env CANVA_CLIENT_ID fehlt');\n\nconst REDIRECT_URI = 'https://n8n.srv1099163.hstgr.cloud/webhook/canva-oauth-callback';\nconst SCOPE = 'design:meta:read design:content:read design:content:write asset:read';\n\n// PKCE: random verifier (43-128 chars, URL-safe)\nconst codeVerifier = crypto.randomBytes(48).toString('base64url');\nconst codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');\nconst state = crypto.randomBytes(16).toString('hex');\n\n// Verifier in workflow staticData speichern\nconst sd = $getWorkflowStaticData('global');\nsd.canva_code_verifier = codeVerifier;\nsd.canva_oauth_state = state;\nsd.canva_init_at = new Date().toISOString();\n\nconst authorizeUrl = 'https://www.canva.com/api/oauth/authorize?'\n  + 'client_id=' + encodeURIComponent(CLIENT_ID)\n  + '&redirect_uri=' + encodeURIComponent(REDIRECT_URI)\n  + '&response_type=code'\n  + '&scope=' + encodeURIComponent(SCOPE)\n  + '&state=' + state\n  + '&code_challenge=' + codeChallenge\n  + '&code_challenge_method=S256';\n\nreturn [{ json: {\n  authorize_url: authorizeUrl,\n  hinweis: 'Diese URL im Browser öffnen, bei Canva zustimmen. Canva redirected dann zum Callback-Webhook.',\n  pkce_verifier_saved: true,\n  state\n}}];\n"
+      },
+      "id": "00000000-0000-0000-0000-000000000020",
+      "name": "Init: PKCE + Authorize-URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        100
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "canva-oauth-callback",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "00000000-0000-0000-0000-000000000030",
+      "name": "Webhook: OAuth-Callback",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        320
+      ],
+      "webhookId": "canva-oauth-callback"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Callback: Code von Canva empfangen, gegen Token tauschen\nconst CLIENT_ID = $env.CANVA_CLIENT_ID;\nconst CLIENT_SECRET = $env.CANVA_CLIENT_SECRET;\nif (!CLIENT_ID || !CLIENT_SECRET) throw new Error('Env CANVA_CLIENT_ID/SECRET fehlt');\n\nconst REDIRECT_URI = 'https://n8n.srv1099163.hstgr.cloud/webhook/canva-oauth-callback';\n\nconst query = $input.item.json.query ?? {};\nconst code = query.code;\nconst state = query.state;\nconst error = query.error;\n\nif (error) throw new Error('Canva OAuth-Fehler: ' + error + ' - ' + (query.error_description ?? ''));\nif (!code) throw new Error('Kein code im Callback');\n\nconst sd = $getWorkflowStaticData('global');\nconst codeVerifier = sd.canva_code_verifier;\nif (!codeVerifier) throw new Error('Kein code_verifier in staticData. WF-08 Init zuerst ausführen.');\n\n// Optional state-check\nif (sd.canva_oauth_state && state !== sd.canva_oauth_state) {\n  throw new Error('State-Mismatch: erwartet ' + sd.canva_oauth_state + ', bekommen ' + state);\n}\n\nreturn [{ json: {\n  code,\n  code_verifier: codeVerifier,\n  client_id: CLIENT_ID,\n  client_secret: CLIENT_SECRET,\n  redirect_uri: REDIRECT_URI,\n  basic_auth: 'Basic ' + Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')\n}}];\n"
+      },
+      "id": "00000000-0000-0000-0000-000000000040",
+      "name": "Callback: Code lesen + Verifier holen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.canva.com/rest/v1/oauth/token",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.basic_auth }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "authorization_code"
+            },
+            {
+              "name": "code",
+              "value": "={{ $json.code }}"
+            },
+            {
+              "name": "code_verifier",
+              "value": "={{ $json.code_verifier }}"
+            },
+            {
+              "name": "redirect_uri",
+              "value": "={{ $json.redirect_uri }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "00000000-0000-0000-0000-000000000050",
+      "name": "Canva: Token tauschen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Token speichern in staticData\nconst resp = $input.item.json;\nif (!resp.access_token) throw new Error('Kein access_token in Canva-Response: ' + JSON.stringify(resp));\n\nconst sd = $getWorkflowStaticData('global');\nsd.canva_access_token  = resp.access_token;\nsd.canva_refresh_token = resp.refresh_token;\nsd.canva_token_type    = resp.token_type ?? 'Bearer';\nsd.canva_expires_in    = resp.expires_in ?? 14400;\nsd.canva_obtained_at   = new Date().toISOString();\nsd.canva_expires_at    = new Date(Date.now() + (resp.expires_in ?? 14400) * 1000).toISOString();\n\n// Verifier ist verbraucht\nsd.canva_code_verifier = null;\n\nreturn [{ json: {\n  ok: true,\n  message: 'Canva Access Token erhalten und gespeichert',\n  expires_at: sd.canva_expires_at,\n  has_refresh_token: !!sd.canva_refresh_token,\n  access_token_preview: resp.access_token.slice(0, 20) + '…'\n}}];\n"
+      },
+      "id": "00000000-0000-0000-0000-000000000060",
+      "name": "Token speichern",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ '✅ Canva-Token gespeichert.\\n\\nAblauf: ' + $json.expires_at + '\\n\\nDieses Tab kann geschlossen werden.' }}",
+        "options": {}
+      },
+      "id": "00000000-0000-0000-0000-000000000070",
+      "name": "Antwort an Browser",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1180,
+        320
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 3
+            }
+          ]
+        }
+      },
+      "id": "00000000-0000-0000-0000-000000000080",
+      "name": "Trigger: Refresh alle 3h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        220,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Refresh: Token erneuern\nconst CLIENT_ID = $env.CANVA_CLIENT_ID;\nconst CLIENT_SECRET = $env.CANVA_CLIENT_SECRET;\nif (!CLIENT_ID || !CLIENT_SECRET) throw new Error('Env fehlen');\n\nconst sd = $getWorkflowStaticData('global');\nconst refreshToken = sd.canva_refresh_token;\nif (!refreshToken) throw new Error('Kein Refresh-Token. WF-08 Init+Callback zuerst durchlaufen.');\n\nreturn [{ json: {\n  refresh_token: refreshToken,\n  basic_auth: 'Basic ' + Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')\n}}];\n"
+      },
+      "id": "00000000-0000-0000-0000-000000000090",
+      "name": "Refresh: Token vorbereiten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.canva.com/rest/v1/oauth/token",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.basic_auth }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "refresh_token"
+            },
+            {
+              "name": "refresh_token",
+              "value": "={{ $json.refresh_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "00000000-0000-0000-0000-0000000000a0",
+      "name": "Canva: Refresh-Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        700,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Refreshten Token speichern\nconst resp = $input.item.json;\nif (!resp.access_token) throw new Error('Kein access_token im Refresh-Response: ' + JSON.stringify(resp));\n\nconst sd = $getWorkflowStaticData('global');\nsd.canva_access_token  = resp.access_token;\nif (resp.refresh_token) sd.canva_refresh_token = resp.refresh_token;\nsd.canva_expires_in    = resp.expires_in ?? 14400;\nsd.canva_obtained_at   = new Date().toISOString();\nsd.canva_expires_at    = new Date(Date.now() + (resp.expires_in ?? 14400) * 1000).toISOString();\n\nreturn [{ json: {\n  ok: true,\n  message: 'Canva Access Token refreshed',\n  expires_at: sd.canva_expires_at\n}}];\n"
+      },
+      "id": "00000000-0000-0000-0000-0000000000b0",
+      "name": "Refresh: speichern",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        940,
+        540
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "GET",
+        "path": "canva-token-current",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "00000000-0000-0000-0000-0000000000c0",
+      "name": "Webhook: Token-Lookup",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        220,
+        760
+      ],
+      "webhookId": "canva-token-current"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aktuellen Token aus staticData lesen und zurückgeben\nconst sd = $getWorkflowStaticData('global');\nconst token = sd.canva_access_token;\n\nif (!token) {\n  return [{ json: {\n    ok: false,\n    error: 'Kein Token gespeichert. WF-08 Init+Callback durchlaufen.'\n  }}];\n}\n\nconst expiresAt = sd.canva_expires_at;\nconst isExpired = expiresAt && new Date(expiresAt) < new Date();\n\nreturn [{ json: {\n  ok: !isExpired,\n  access_token: token,\n  expires_at: expiresAt,\n  is_expired: isExpired,\n  needs_refresh: isExpired\n}}];\n"
+      },
+      "id": "00000000-0000-0000-0000-0000000000d0",
+      "name": "Token-Lookup: aus staticData",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        460,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "00000000-0000-0000-0000-0000000000e0",
+      "name": "Token-Lookup Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        700,
+        760
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "00000000-0000-0000-0000-000000000025",
+      "name": "Respond Init: Authorize-URL",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        700,
+        100
+      ]
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook: OAuth-Callback": {
+      "main": [
+        [
+          {
+            "node": "Callback: Code lesen + Verifier holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Callback: Code lesen + Verifier holen": {
+      "main": [
+        [
+          {
+            "node": "Canva: Token tauschen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canva: Token tauschen": {
+      "main": [
+        [
+          {
+            "node": "Token speichern",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token speichern": {
+      "main": [
+        [
+          {
+            "node": "Antwort an Browser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger: Refresh alle 3h": {
+      "main": [
+        [
+          {
+            "node": "Refresh: Token vorbereiten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh: Token vorbereiten": {
+      "main": [
+        [
+          {
+            "node": "Canva: Refresh-Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canva: Refresh-Call": {
+      "main": [
+        [
+          {
+            "node": "Refresh: speichern",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Token-Lookup": {
+      "main": [
+        [
+          {
+            "node": "Token-Lookup: aus staticData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token-Lookup: aus staticData": {
+      "main": [
+        [
+          {
+            "node": "Token-Lookup Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Init (Authorize-URL holen)": {
+      "main": [
+        [
+          {
+            "node": "Init: PKCE + Authorize-URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init: PKCE + Authorize-URL": {
+      "main": [
+        [
+          {
+            "node": "Respond Init: Authorize-URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "timezone": "Europe/Berlin"
+  },
+  "versionId": "v2-webhook-init-2026-05-15",
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "physio-fuchs-social-media"
+  },
+  "id": "PF_WF-08_Canva_OAuth_v1",
+  "tags": [
+    {
+      "name": "Physio Fuchs"
+    },
+    {
+      "name": "OAuth"
+    },
+    {
+      "name": "Canva"
+    }
+  ]
+}

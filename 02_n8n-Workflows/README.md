@@ -12,11 +12,13 @@ diese Markdowns beschreiben Zweck, Trigger, Nodes und Felder.
 | ----- | ------------------------------- | ------------------------------------------- | ------------------------------------------------------- |
 | WF-00 | Datum-Initialbefüllung          | `PF_WF-00_Datum_Initialbefllung_v1.json`    | Einmaliges Befüllen leerer Datumsfelder im SP-Kalender  |
 | WF-01 | Formular → SharePoint           | `PF_WF-01_Formular_SharePoint_v1.json`      | Webhook-Empfang, neues SP-Item mit Status `Entwurf`     |
-| WF-02 | Caption-Generator               | `PF_WF-02_Caption_Generator_v17.json` (aktiv, v16 als Backup) | LLM erzeugt Caption + Hashtags + Bildbrief; Auto-Release-Branch für Standard-Posts ab v17 |
+| WF-02 | Caption-Generator               | `PF_WF-02_Caption_Generator_v17.json`       | LLM erzeugt Caption + Hashtags + Bildbrief; Auto-Release-Branch für Standard-Posts ab v17 |
 | WF-03 | Social Media Post               | `PF_WF-03_Social_Media_Post_v4.json`        | Canva-Grafik, Vorschau, Freigabe-Card, Posting          |
 | WF-04 | Monats-Scheduler Standard-Post  | `PF_WF-04_Monats_Scheduler_v1.json`         | Plant 1× pro Monat einen Standard-Feed-Post auf freien Tag |
 
-Alte Versionen liegen in `_Archiv/` (read-only, nicht löschen!).
+**Archivierte Workflow-Versionen** liegen in `_Archiv-Workflows/` (im Git
+versioniert, mit eigener README). **Sehr alte Workflows** vor der
+aktuellen Strukturierung liegen in `_Archiv/` (read-only, nicht im Git).
 
 ---
 

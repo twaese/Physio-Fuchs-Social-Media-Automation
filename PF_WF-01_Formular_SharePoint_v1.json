@@ -1,0 +1,157 @@
+{
+  "name": "PF \u2013 WF-01 Formular \u2192 SharePoint",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## PF \u2013 WF-01 Formular \u2192 SharePoint\n\n**Zweck:** Formular-Einreichung von Judith empfangen\nund als neues Item in der SharePoint-Liste anlegen.\n\n**Trigger:** POST-Webhook \u2192 URL als Ziel im HTML-Formular eintragen\n\n**Status nach Einreichung:** Entwurf\n\n**Status-Flow:**\nEntwurf \u2192 Freigegeben \u2192 Geplant \u2192 Ver\u00f6ffentlicht\n\n**Ablauf:**\nWebhook \u2192 Felder mappen \u2192 SharePoint Item erstellen\n\u2192 HTTP-Response (Formular) + Teams-Eingang melden",
+        "height": 180,
+        "width": 920,
+        "color": 5
+      },
+      "id": "wf01-sticky-main",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "content": "**Feldmapping Formular \u2192 SharePoint:**\n\nThema          \u2192 Title + field_1\nPost_Typ       \u2192 field_2\nContent_Brief  \u2192 field_3\nDatum          \u2192 field_4\nUhrzeit        \u2192 field_5\nStatus         \u2192 field_6 = 'Entwurf' (auto)\nHashtag_Thema  \u2192 field_7\nBild_Dateiname \u2192 field_8\nfield_9  = '' (Canva \u2013 auto WF-02)\nfield_10 = '' (Caption \u2013 auto WF-02)\nFreigabe_Person \u2192 field_11\nfield_12 = '' (IG-Post-ID \u2013 auto WF-03)\nKommentare     \u2192 field_13\n\nSite-GUID: c74040a2-...\nList-GUID: d17a6a6f-...\nCredential: PF Microsoft SharePoint",
+        "width": 320,
+        "color": 3
+      },
+      "id": "wf01-sticky-mapping",
+      "name": "Feldmapping",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 200]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sharepoint-content",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "wf01-webhook",
+      "name": "Formular Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [280, 440],
+      "webhookId": "pf-wf01-content-einreichung"
+    },
+    {
+      "parameters": {
+        "jsCode": "const body = $input.item.json.body || $input.item.json;\n\n// Datum: ISO-String → \"TTMMJJJJ\" für SharePoint\nfunction formatDatum(iso) {\n  if (!iso) return '';\n  const d = new Date(iso);\n  if (isNaN(d)) return iso;\n  const dd = String(d.getDate()).padStart(2,'0');\n  const mm = String(d.getMonth()+1).padStart(2,'0');\n  const yyyy = d.getFullYear();\n  return dd+mm+yyyy;\n}\n\n// Pflichtfeld prüfen\nconst thema = (body.Thema || body.thema || '').trim();\nif (!thema) throw new Error('Pflichtfeld Thema fehlt');\n\nconst postTyp   = (body.Post_Typ   || body.postTyp   || 'Standard').trim();\nconst brief     = (body.Content_Brief || body.textIdee || '').trim();\nconst datum     = formatDatum(body.Veroeffentlichungsdatum || body.wunschDatum || '');\nconst uhrzeit   = (body.Uhrzeit   || body.uhrzeit   || '').trim();\nconst hashtag   = (body.Hashtag_Thema || body.hashtag || '').trim();\nconst bild      = (body.Bild_Dateiname || body.bildBeschreibung || '').trim();\nconst freigabe  = (body.Freigabe_Person || 'Judith').trim();\nconst kommentar = (body.Kommentare || body.notiz || '').trim();\n\nreturn {\n  json: {\n    Title:    thema,\n    field_1:  thema,\n    field_2:  postTyp,\n    field_3:  brief,\n    field_4:  datum,\n    field_5:  uhrzeit,\n    field_6:  'Entwurf',\n    field_7:  hashtag,\n    field_8:  bild,\n    field_9:  '',\n    field_10: '',\n    field_11: freigabe,\n    field_12: '',\n    field_13: kommentar,\n    _eingereichtVon: body._eingereichtVon || 'Judith',\n    _eingereichtAm:  body._eingereichtAm  || new Date().toISOString(),\n    _postTyp: postTyp,\n    _datum:   datum\n  }\n};"
+      },
+      "id": "wf01-map-fields",
+      "name": "Felder mappen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [520, 440]
+    },
+    {
+      "parameters": {
+        "resource": "item",
+        "operation": "create",
+        "site": {
+          "__rl": true,
+          "value": "physiofuchs889.sharepoint.com,c74040a2-0d6b-4385-b514-fbd9830a56ac,7a7842d6-ea6c-440d-aeed-580bdd2a091c",
+          "mode": "list",
+          "cachedResultName": "Physio Fuchs Administration"
+        },
+        "list": {
+          "__rl": true,
+          "value": "d17a6a6f-e6ef-457d-a2a9-4c30ea56120f",
+          "mode": "list",
+          "cachedResultName": "PF-Content-Kalender-2026"
+        },
+        "additionalFields": {
+          "fields": [
+            { "fieldId": "Title",    "fieldValue": "={{ $json.Title }}" },
+            { "fieldId": "field_1",  "fieldValue": "={{ $json.field_1 }}" },
+            { "fieldId": "field_2",  "fieldValue": "={{ $json.field_2 }}" },
+            { "fieldId": "field_3",  "fieldValue": "={{ $json.field_3 }}" },
+            { "fieldId": "field_4",  "fieldValue": "={{ $json.field_4 }}" },
+            { "fieldId": "field_5",  "fieldValue": "={{ $json.field_5 }}" },
+            { "fieldId": "field_6",  "fieldValue": "={{ $json.field_6 }}" },
+            { "fieldId": "field_7",  "fieldValue": "={{ $json.field_7 }}" },
+            { "fieldId": "field_8",  "fieldValue": "={{ $json.field_8 }}" },
+            { "fieldId": "field_11", "fieldValue": "={{ $json.field_11 }}" },
+            { "fieldId": "field_13", "fieldValue": "={{ $json.field_13 }}" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [760, 440],
+      "id": "wf01-sp-create",
+      "name": "SharePoint: Item erstellen",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"ok\": true, \"message\": \"Beitrag gespeichert\", \"status\": \"Entwurf\" }",
+        "options": { "responseCode": 200 }
+      },
+      "id": "wf01-respond",
+      "name": "HTTP Response \u2192 Formular",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [1000, 320]
+    },
+    {
+      "parameters": {
+        "chatId": {
+          "__rl": true,
+          "value": "19:meeting_MWViMzNlYmYtNTY1OS00NzM1LTlmMDAtNjRmZjA0YjY3OGFl@thread.v2",
+          "mode": "list",
+          "cachedResultName": "Social Media (meeting)",
+          "cachedResultUrl": "https://teams.microsoft.com/l/chat/19%3Ameeting_MWViMzNlYmYtNTY1OS00NzM1LTlmMDAtNjRmZjA0YjY3OGFl%40thread.v2/0?tenantId=b349f8e5-511c-485a-be28-55e420a6a5e1"
+        },
+        "message": "=\ud83d\udce5 Neuer Content-Entwurf von {{ $json._eingereichtVon }}\n\n\ud83d\udccb Thema: {{ $json.field_1 }}\n\ud83c\udff7\ufe0f Typ: {{ $json._postTyp }}\n\ud83d\udcc5 Wunschdatum: {{ $json._datum || '(kein Datum)' }}\n\ud83d\udc64 Freigabe durch: {{ $json.field_11 }}\n\ud83d\udcac Brief: {{ $json.field_3 || '(kein Brief)' }}\n\nStatus: \ud83d\udfe1 Entwurf\n\n\u2192 SharePoint pr\u00fcfen, dann Status auf \u201eFreigegeben\u201c setzen\n\u2192 WF-02 generiert dann automatisch die Captions",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 2,
+      "position": [1000, 560],
+      "id": "wf01-teams-notify",
+      "name": "Teams: Eingang melden",
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "Gmvn1OD66IZoWsXh",
+          "name": "PF Microsoft Teams account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Formular Webhook": {
+      "main": [[{ "node": "Felder mappen", "type": "main", "index": 0 }]]
+    },
+    "Felder mappen": {
+      "main": [[{ "node": "SharePoint: Item erstellen", "type": "main", "index": 0 }]]
+    },
+    "SharePoint: Item erstellen": {
+      "main": [[
+        { "node": "HTTP Response \u2192 Formular", "type": "main", "index": 0 },
+        { "node": "Teams: Eingang melden",      "type": "main", "index": 0 }
+      ]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "v1-2026-05-11",
+  "meta": {
+    "instanceId": "f40c6f6af7ce2011b04be6e4c65abbc6b998ddefd762d8f282912f30a607f9b9"
+  },
+  "id": "PF-WF01-FORMULAR",
+  "tags": []
+}

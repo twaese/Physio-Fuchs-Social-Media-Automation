@@ -1,0 +1,381 @@
+{
+  "name": "PF – WF-03 Social Media Auto-Post",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## PF – WF-03 Social Media Auto-Post v4\n\n**Ablauf:**\nSharePoint (Status=Freigegeben)\n→ Felder aufbereiten\n→ Claude API + Canva MCP:\n   • Template DAHJW-GJz68 duplizieren\n   • [THEMA] ersetzen\n   • Als JPG exportieren\n   • URL zurückgeben\n→ Instagram: Media Container + Veröffentlichen\n→ Facebook: Beitrag\n→ SharePoint: Status = Veröffentlicht\n→ Teams: Erfolgsmeldung\n\n**Judith muss NUR:**\n1. Thema + Caption in SharePoint eintragen\n2. Status auf Freigegeben setzen\n→ Alles andere läuft automatisch!\n\n**Environment Variables:**\nANTHROPIC_API_KEY = sk-ant-...\nSHAREPOINT_SITE_ID = ...\nSHAREPOINT_LIST_ID = ...\nFB_PAGE_ID = ...\nTEAMS_TEAM_ID = ...\nTEAMS_CHANNEL_ID = ...",
+        "height": 300,
+        "width": 1060,
+        "color": 5
+      },
+      "id": "sticky-main",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "content": "**Changelog:**\n\nv4 – 2026-05-11\n• Claude API + Canva MCP\n• Template DAHJW-GJz68\n• Vollautomatisch!\n• Kein manueller Export\n\nv3 – 2026-05-11\n• Manueller Export nötig\n• Medienbruch\n\nv2 – 2026-05-11\n• Canva OAuth Problem\n\nv1 – 2026-05-11\n• Autofill (Enterprise)",
+        "width": 220,
+        "color": 6
+      },
+      "id": "sticky-changelog",
+      "name": "Changelog v4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [2600, 260]
+    },
+    {
+      "parameters": {
+        "content": "**⚠️ Canva Template vorbereiten:**\n\n1. Design DAHJW-GJz68 in Canva öffnen\n2. Text-Element für das Thema\n   exakt so beschriften: [THEMA]\n3. Design auf PUBLIC stellen\n   (Teilen → Öffentlich)\n\nClaude ersetzt [THEMA] automatisch\nmit dem Wert aus field_1 (Thema).",
+        "width": 280,
+        "color": 3
+      },
+      "id": "sticky-canva-prep",
+      "name": "Canva Vorbereitung",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1120, 0]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "weeks",
+              "triggerAtDay": [1, 3, 5],
+              "triggerAtHour": 9,
+              "triggerAtMinute": 0
+            }
+          ]
+        }
+      },
+      "id": "trigger-schedule",
+      "name": "Trigger: Mo/Mi/Fr 9:00 Uhr",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [240, 400]
+    },
+    {
+      "parameters": {
+        "resource": "listItem",
+        "operation": "getAll",
+        "siteId": "={{ $env.SHAREPOINT_SITE_ID }}",
+        "listId": "={{ $env.SHAREPOINT_LIST_ID }}",
+        "returnAll": true,
+        "simplify": true,
+        "options": {}
+      },
+      "id": "sp-get-items",
+      "name": "SharePoint: Freigegebene Posts",
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [460, 400],
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false },
+          "conditions": [
+            {
+              "id": "check-status",
+              "leftValue": "={{ $json.fields?.field_6 ?? $json.field_6 }}",
+              "rightValue": "Freigegeben",
+              "operator": { "type": "string", "operation": "equals" }
+            },
+            {
+              "id": "check-thema",
+              "leftValue": "={{ $json.fields?.field_1 ?? $json.field_1 }}",
+              "rightValue": "",
+              "operator": { "type": "string", "operation": "notEmpty" }
+            }
+          ],
+          "combinator": "and"
+        }
+      },
+      "id": "if-freigegeben",
+      "name": "Prüfe: Freigegeben + Thema?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 400]
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "a1",
+              "name": "item_id",
+              "value": "={{ $json.id }}",
+              "type": "string"
+            },
+            {
+              "id": "a2",
+              "name": "thema",
+              "value": "={{ $json.fields?.field_1 ?? $json.field_1 }}",
+              "type": "string"
+            },
+            {
+              "id": "a3",
+              "name": "caption",
+              "value": "={{ $json.fields?.field_3 ?? $json.field_3 }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "felder-aufbereiten",
+      "name": "Felder aufbereiten",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 280]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key", "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" },
+            { "name": "anthropic-beta", "value": "mcp-client-2025-04-04" },
+            { "name": "Content-Type", "value": "application/json" }
+          ]
+        },
+        "sendBody": true,
+        "bodyContentType": "json",
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"claude-sonnet-4-20250514\",\n  \"max_tokens\": 1024,\n  \"system\": \"Du bist ein Canva-Automatisierungsassistent für Physio Fuchs. Führe exakt die angeforderten Canva-Aktionen aus. Gib am Ende NUR die Export-Download-URL zurück – keinen anderen Text, keine Erklärungen, nur die URL.\",\n  \"messages\": [\n    {\n      \"role\": \"user\",\n      \"content\": \"Führe folgende Schritte für Physio Fuchs Instagram-Post aus:\\n\\n1. Öffne das Design mit ID: DAHJW-GJz68\\n2. Starte eine Editing-Transaktion\\n3. Ersetze den Text [THEMA] durch: {{ $json.thema }}\\n4. Committe die Transaktion\\n5. Exportiere das Design als JPG (höchste Qualität)\\n6. Gib NUR die Download-URL zurück\\n\\nNur die URL, kein anderer Text.\"\n    }\n  ],\n  \"mcp_servers\": [\n    {\n      \"type\": \"url\",\n      \"url\": \"https://mcp.canva.com/mcp\",\n      \"name\": \"canva\"\n    }\n  ]\n}",
+        "options": {}
+      },
+      "id": "claude-canva-export",
+      "name": "Claude + Canva: Design exportieren",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 280]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Claude API Response verarbeiten\nconst response = $input.item.json;\n\n// Text aus content blocks extrahieren\nlet imageUrl = '';\n\nif (response.content && Array.isArray(response.content)) {\n  for (const block of response.content) {\n    if (block.type === 'text' && block.text) {\n      const text = block.text.trim();\n      // URL extrahieren (beginnt mit https://)\n      const urlMatch = text.match(/https:\\/\\/[^\\s]+/);\n      if (urlMatch) {\n        imageUrl = urlMatch[0];\n        break;\n      }\n    }\n  }\n}\n\nif (!imageUrl) {\n  throw new Error('Keine Bild-URL in Claude Response gefunden: ' + JSON.stringify(response.content));\n}\n\nreturn {\n  image_url: imageUrl,\n  caption: $('Felder aufbereiten').item.json.caption,\n  thema: $('Felder aufbereiten').item.json.thema,\n  item_id: $('Felder aufbereiten').item.json.item_id\n};"
+      },
+      "id": "url-extrahieren",
+      "name": "Bild-URL extrahieren",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1340, 280]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v25.0/17841461169626096/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "specifyBody": "fieldsBelow",
+        "bodyParameters": {
+          "parameters": [
+            { "name": "image_url", "value": "={{ $json.image_url }}" },
+            { "name": "caption", "value": "={{ $json.caption }}" }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ig-media-container",
+      "name": "Instagram: Media Container erstellen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 280],
+      "credentials": {
+        "facebookGraphApi": { "name": "PF Facebook Graph account" }
+      }
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "seconds"
+      },
+      "id": "warten-ig",
+      "name": "Warten 15s (Instagram Processing)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1780, 280],
+      "webhookId": "wf03-wait-ig-v4"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v25.0/17841461169626096/media_publish",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "specifyBody": "fieldsBelow",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('Instagram: Media Container erstellen').item.json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "ig-publish",
+      "name": "Instagram: Post veröffentlichen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 200],
+      "credentials": {
+        "facebookGraphApi": { "name": "PF Facebook Graph account" }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/{{ $env.FB_PAGE_ID }}/photos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "specifyBody": "fieldsBelow",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $('Bild-URL extrahieren').item.json.image_url }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $('Bild-URL extrahieren').item.json.caption }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "fb-publish",
+      "name": "Facebook: Beitrag veröffentlichen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [2000, 360],
+      "credentials": {
+        "facebookGraphApi": { "name": "PF Facebook Graph account" }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "listItem",
+        "operation": "update",
+        "siteId": "={{ $env.SHAREPOINT_SITE_ID }}",
+        "listId": "={{ $env.SHAREPOINT_LIST_ID }}",
+        "itemId": "={{ $('Bild-URL extrahieren').item.json.item_id }}",
+        "dataToSend": "defineBelow",
+        "fieldsUi": {
+          "fieldValues": [
+            { "fieldId": "field_6", "fieldValue": "Veröffentlicht" }
+          ]
+        }
+      },
+      "id": "sp-update-status",
+      "name": "SharePoint: Status Veröffentlicht",
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [2220, 280],
+      "credentials": {
+        "microsoftSharePointOAuth2Api": { "name": "PF Microsoft SharePoint account" }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "create",
+        "teamId": "={{ $env.TEAMS_TEAM_ID }}",
+        "channelId": "={{ $env.TEAMS_CHANNEL_ID }}",
+        "content": "=✅ **Post veröffentlicht!**\n\n📌 **Thema:** {{ $('Bild-URL extrahieren').item.json.thema }}\n📸 **Instagram:** {{ $('Instagram: Post veröffentlichen').item.json.id }}\n📘 **Facebook:** {{ $('Facebook: Beitrag veröffentlichen').item.json.id }}\n🕐 {{ $now.format('DD.MM.YYYY') }} um {{ $now.format('HH:mm') }} Uhr\n\n_Automatisch via PF Social Media Auto-Post_"
+      },
+      "id": "teams-success",
+      "name": "Teams: Erfolgsbenachrichtigung",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 2,
+      "position": [2440, 280],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": { "name": "PF Microsoft Teams-Konto" }
+      }
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "end1",
+              "name": "info",
+              "value": "Kein freigegebener Content oder Thema fehlt",
+              "type": "string"
+            }
+          ]
+        }
+      },
+      "id": "kein-content",
+      "name": "Kein Content – Ende",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [900, 520]
+    }
+  ],
+  "connections": {
+    "Trigger: Mo/Mi/Fr 9:00 Uhr": {
+      "main": [[{ "node": "SharePoint: Freigegebene Posts", "type": "main", "index": 0 }]]
+    },
+    "SharePoint: Freigegebene Posts": {
+      "main": [[{ "node": "Prüfe: Freigegeben + Thema?", "type": "main", "index": 0 }]]
+    },
+    "Prüfe: Freigegeben + Thema?": {
+      "main": [
+        [{ "node": "Felder aufbereiten", "type": "main", "index": 0 }],
+        [{ "node": "Kein Content – Ende", "type": "main", "index": 0 }]
+      ]
+    },
+    "Felder aufbereiten": {
+      "main": [[{ "node": "Claude + Canva: Design exportieren", "type": "main", "index": 0 }]]
+    },
+    "Claude + Canva: Design exportieren": {
+      "main": [[{ "node": "Bild-URL extrahieren", "type": "main", "index": 0 }]]
+    },
+    "Bild-URL extrahieren": {
+      "main": [[{ "node": "Instagram: Media Container erstellen", "type": "main", "index": 0 }]]
+    },
+    "Instagram: Media Container erstellen": {
+      "main": [[{ "node": "Warten 15s (Instagram Processing)", "type": "main", "index": 0 }]]
+    },
+    "Warten 15s (Instagram Processing)": {
+      "main": [[
+        { "node": "Instagram: Post veröffentlichen", "type": "main", "index": 0 },
+        { "node": "Facebook: Beitrag veröffentlichen", "type": "main", "index": 0 }
+      ]]
+    },
+    "Instagram: Post veröffentlichen": {
+      "main": [[{ "node": "SharePoint: Status Veröffentlicht", "type": "main", "index": 0 }]]
+    },
+    "Facebook: Beitrag veröffentlichen": {
+      "main": [[{ "node": "SharePoint: Status Veröffentlicht", "type": "main", "index": 0 }]]
+    },
+    "SharePoint: Status Veröffentlicht": {
+      "main": [[{ "node": "Teams: Erfolgsbenachrichtigung", "type": "main", "index": 0 }]]
+    }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "v4-2026-05-11",
+  "meta": {
+    "instanceId": "f40c6f6af7ce2011b04be6e4c65abbc6b998ddefd762d8f282912f30a607f9b9"
+  },
+  "id": "PF-WF03-v4",
+  "tags": ["physio-fuchs", "social-media", "canva", "claude-api"]
+}

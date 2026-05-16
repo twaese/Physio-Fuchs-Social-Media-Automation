@@ -23,6 +23,27 @@
 
 ## 2. Was als Nächstes ansteht
 
+### 2.0 Image-Hosting für Meta-Posting (BLOCKER vor 2.1)
+
+**Problem entdeckt am Nachmittag:** SharePoint-Library `Social-Media-Assets` ist trotz Tenant + Site auf „Jeder mit Link" konfiguriert nicht ohne Anmeldung erreichbar — Test im Incognito gab immer Login-Prompt. Vermutung: M365-Group-Privacy von „Privat Team"-Site überschreibt Site-Sharing-Settings.
+
+**Plan B (entschieden):** Bilder zusätzlich nach GitHub pushen → URL = `raw.githubusercontent.com/...` → garantiert public.
+
+**Du machst (Setup ~10 Min):**
+1. GitHub PAT erzeugen (Settings → Developer settings → PAT → Fine-grained):
+   - Repository: `Physio-Fuchs-Social-Media-Automation`
+   - Permission: `Contents: Read and write`
+2. Token kopieren
+3. Auf VPS: `/docker/n8n/.env` → `GITHUB_TOKEN=ghp_xxxxxx` ergänzen
+4. `docker compose restart n8n` damit Env-Var greift
+
+**Claude macht (~30 Min):** WF-02 v18.2 erweitern:
+- Pro Bild nach Gotenberg-Render: HTTP-Node `PUT /repos/twaese/Physio-Fuchs-Social-Media-Automation/contents/04_Canva-Vorlagen/generated-posts/{itemId}_ig.png`
+- Body: `{"message": "Auto-post bild", "content": "<base64-encoded PNG>"}`
+- Response: GitHub-Raw-URL
+- In `field_9` / `Bild_FB_Dateiname` statt SP-URL die GitHub-URL speichern
+- SP-Upload bleibt parallel (Backup-Archiv)
+
 ### 2.1 WF-03 v6 bauen (1–1,5 h)
 
 Pipeline-Abschluss: Karenz-Wartung + Posting auf Instagram + Facebook.

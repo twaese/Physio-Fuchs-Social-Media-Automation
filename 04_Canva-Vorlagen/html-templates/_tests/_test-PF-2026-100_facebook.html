@@ -1,0 +1,355 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Facebook-Post Vorschau – PF-2026-100</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  /*
+   * FACEBOOK-Post-Mockup für PF-2026-100.
+   * Unterschiede zu Instagram:
+   *  - Bild 1:1 (1080×1080) statt 4:5
+   *  - FB-UI: Caption STEHT ÜBER dem Bild, nicht darunter
+   *  - Andere Action-Bar (Gefällt mir / Kommentieren / Teilen)
+   *  - „Mehr anzeigen" funktioniert anders (FB faltet bei ~5 Zeilen ein)
+   *  - Hashtags wirken auf FB schwächer — laut CLAUDE.md gehören sie
+   *    als 1. Kommentar drunter, nicht in den Post-Text
+   */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f0f2f5;
+    padding: 40px 20px;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: #050505;
+  }
+  .post {
+    max-width: 540px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+
+  /* FB-Header */
+  .fb-header {
+    display: flex; align-items: flex-start;
+    padding: 12px 16px 0;
+  }
+  .fb-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%;
+    background: #fff;
+    border: 1px solid #ddd;
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+  .fb-avatar img {
+    width: 100%; height: 100%; object-fit: cover;
+  }
+  .fb-meta {
+    margin-left: 8px; flex: 1;
+  }
+  .fb-pagename {
+    font-weight: 600; font-size: 15px; color: #050505;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .fb-pagename .verified {
+    color: #1877f2; font-size: 13px;
+  }
+  .fb-time {
+    color: #65676b; font-size: 13px;
+    margin-top: 2px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .fb-time::after { content: "·  🌍"; font-size: 11px; }
+  .fb-dots {
+    color: #65676b; font-size: 18px; padding: 4px;
+  }
+  .fb-follow {
+    color: #1877f2; font-weight: 600; font-size: 14px;
+    padding: 6px 12px;
+  }
+
+  /* FB-Caption (ÜBER dem Bild) */
+  .fb-caption {
+    padding: 12px 16px 14px;
+    font-size: 15px; line-height: 1.34;
+    color: #050505;
+  }
+  .fb-caption ol {
+    margin: 6px 0 6px 22px;
+  }
+  .fb-caption .more {
+    color: #65676b; cursor: pointer;
+  }
+
+  /* FB-Bild (1:1) */
+  .fb-image {
+    width: 540px; height: 540px;
+    background: #7E9963;
+    color: #F4EFE2;
+    padding: 36px 36px 36px;
+    display: flex; flex-direction: column;
+    font-family: 'EB Garamond', Garamond, Georgia, serif;
+    border-top: 1px solid #efefef;
+    border-bottom: 1px solid #efefef;
+  }
+  .fb-img-header {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 8px;
+  }
+  .fb-img-logo { display: flex; align-items: center; gap: 6px; }
+  .fb-img-logo img { height: 42px; width: 42px; }
+  .fb-img-logo .lt {
+    font-size: 7px; font-weight: 600;
+    letter-spacing: 1.4px; text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .fb-img-logo .lt .sub {
+    display: block; font-weight: 300; font-size: 5px;
+    letter-spacing: 1px; color: #E8E3D4; margin-top: 2px;
+  }
+  .fb-img-datum {
+    font-size: 9px; font-weight: 300; color: #E8E3D4;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .fb-img-titel {
+    font-size: 38px; font-weight: 700; line-height: 1.05;
+    letter-spacing: -0.5px; color: #7C6149;
+    margin: 16px 0 14px;
+  }
+  .fb-img-divider {
+    width: 35px; height: 1px; background: #E8E3D4;
+    opacity: 0.6; margin-bottom: 14px;
+  }
+  .fb-img-text {
+    font-size: 15px; line-height: 1.55; flex: 1;
+  }
+  .fb-img-text strong {
+    color: #F4EFE2; font-weight: 700;
+    display: block; margin-top: 3px;
+  }
+  .fb-img-footer {
+    display: flex; align-items: flex-end;
+    justify-content: space-between;
+    border-top: 1px solid rgba(244,239,226,0.25);
+    padding-top: 12px; gap: 16px;
+  }
+  .fb-img-cta {
+    font-size: 11px; font-weight: 600;
+  }
+  .fb-img-cta::before { content: "→  "; color: #E8E3D4; }
+  .fb-img-sig {
+    display: flex; align-items: center; gap: 7px;
+  }
+  .fb-img-sig img {
+    width: 35px; height: 35px;
+    border-radius: 50%; object-fit: cover;
+    border: 1px solid #E8E3D4;
+  }
+  .fb-img-sig .name {
+    font-style: italic; font-size: 11px;
+    text-align: right; white-space: nowrap; line-height: 1.1;
+  }
+  .fb-img-sig .name .handle {
+    display: block; font-style: normal; font-weight: 300;
+    font-size: 7px; color: #E8E3D4;
+    letter-spacing: 1px; margin-top: 1px;
+  }
+
+  /* FB Reaktionen + Aktionsbar */
+  .fb-reactions {
+    padding: 8px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; color: #65676b;
+  }
+  .fb-react-icons {
+    display: flex; align-items: center; gap: 0;
+  }
+  .fb-react-icon {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid #fff; display: inline-block;
+    margin-left: -4px;
+  }
+  .fb-react-icon.like { background: #1877f2; }
+  .fb-react-icon.love { background: #f33e58; }
+  .fb-react-icon.care { background: #f7b125; }
+  .fb-react-count { margin-left: 6px; }
+  .fb-comments-count { color: #65676b; }
+
+  .fb-actions {
+    border-top: 1px solid #ced0d4;
+    border-bottom: 1px solid #ced0d4;
+    margin: 0 16px;
+    padding: 4px 0;
+    display: flex; justify-content: space-around;
+  }
+  .fb-action {
+    flex: 1; text-align: center; padding: 8px 0;
+    color: #65676b; font-weight: 600; font-size: 14px;
+    cursor: pointer;
+  }
+  .fb-action::before {
+    content: "👍 "; font-weight: normal; margin-right: 4px;
+  }
+  .fb-action.comment::before { content: "💬 "; }
+  .fb-action.share::before { content: "↗ "; }
+
+  /* Erster Kommentar (Hashtags hier — FB-Best-Practice) */
+  .fb-first-comment {
+    padding: 12px 16px 14px;
+    display: flex; gap: 8px;
+    background: #f7f8fa;
+  }
+  .fb-first-comment .av {
+    width: 32px; height: 32px; border-radius: 50%;
+    background: #ddd; overflow: hidden; flex-shrink: 0;
+  }
+  .fb-first-comment .av img { width: 100%; height: 100%; object-fit: cover; }
+  .fb-first-comment .bubble {
+    background: #fff;
+    border-radius: 16px;
+    padding: 8px 12px;
+    font-size: 13px;
+    line-height: 1.35;
+    flex: 1;
+  }
+  .fb-first-comment .bubble .who {
+    font-weight: 600; font-size: 13px;
+  }
+  .fb-first-comment .bubble .hashtags {
+    color: #1877f2; word-break: break-word; margin-top: 4px;
+  }
+
+  .meta {
+    max-width: 540px; margin: 24px auto 0; padding: 16px;
+    font-size: 12px; color: #555; background: #fff;
+    border-radius: 8px; border-left: 3px solid #1877f2;
+  }
+  .meta strong { color: #1877f2; }
+  .meta table { width: 100%; margin-top: 8px; border-collapse: collapse; }
+  .meta td { padding: 3px 6px; vertical-align: top; }
+  .meta td:first-child { color: #999; width: 200px; font-family: monospace; font-size: 11px; }
+</style>
+</head>
+<body>
+
+  <div class="post">
+
+    <!-- FB-Header -->
+    <div class="fb-header">
+      <div class="fb-avatar">
+        <img src="../assets/pf-logo-medaillon.png" alt="Physio Fuchs">
+      </div>
+      <div class="fb-meta">
+        <div class="fb-pagename">Physio Fuchs <span class="verified">✓</span></div>
+        <div class="fb-time">Vor 1 Std</div>
+      </div>
+      <div class="fb-dots">⋯</div>
+    </div>
+
+    <!-- FB-Caption STEHT ÜBER dem Bild -->
+    <div class="fb-caption">
+      Drei kleine Schreibtisch-Übungen für Ihre Mittagspause:
+      <ol>
+        <li>Schultern kreisen</li>
+        <li>Rumpf drehen</li>
+        <li>Beine strecken</li>
+      </ol>
+      Bei Beschwerden bitte ärztlich oder physiotherapeutisch abklären lassen.
+      <br><br>
+      Welche Übung tut Ihrem Körper am besten? <span class="more">Mehr ansehen</span>
+    </div>
+
+    <!-- FB-Bild 1:1 -->
+    <div class="fb-image">
+      <div class="fb-img-header">
+        <div class="fb-img-logo">
+          <img src="../assets/pf-logo-medaillon.png" alt="Logo">
+          <div class="lt">
+            Physio Fuchs
+            <span class="sub">Ratingen-Lintorf</span>
+          </div>
+        </div>
+        <div class="fb-img-datum">16.05.2026</div>
+      </div>
+
+      <div class="fb-img-titel">Drei Mini-Übungen für die Mittagspause</div>
+      <div class="fb-img-divider"></div>
+      <div class="fb-img-text">
+        Direkt am Schreibtisch, ohne Equipment:
+        <strong>1. Schultern kreisen</strong>
+        <strong>2. Rumpf drehen</strong>
+        <strong>3. Beine strecken</strong>
+      </div>
+
+      <div class="fb-img-footer">
+        <div class="fb-img-cta">Speichern für die nächste Pause</div>
+        <div class="fb-img-sig">
+          <div class="name">
+            Judith Fuchs
+            <span class="handle">@physiofuchs</span>
+          </div>
+          <img src="../assets/judith-byline-circle.png" alt="Judith Fuchs">
+        </div>
+      </div>
+    </div>
+
+    <!-- FB Reaktionen -->
+    <div class="fb-reactions">
+      <div>
+        <span class="fb-react-icons">
+          <span class="fb-react-icon like"></span>
+          <span class="fb-react-icon love"></span>
+          <span class="fb-react-icon care"></span>
+        </span>
+        <span class="fb-react-count">Du und 42 weitere</span>
+      </div>
+      <div class="fb-comments-count">5 Kommentare · 3 Mal geteilt</div>
+    </div>
+
+    <!-- FB-Actions -->
+    <div class="fb-actions">
+      <div class="fb-action">Gefällt mir</div>
+      <div class="fb-action comment">Kommentieren</div>
+      <div class="fb-action share">Teilen</div>
+    </div>
+
+    <!-- Erster Kommentar: Hashtags (FB-Best-Practice) -->
+    <div class="fb-first-comment">
+      <div class="av">
+        <img src="../assets/pf-logo-medaillon.png" alt="Physio Fuchs">
+      </div>
+      <div class="bubble">
+        <div class="who">Physio Fuchs</div>
+        <div class="hashtags">
+          #physiofuchs #physiotherapie #büroübungen #rückengesundheit #pause
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- Daten-Aufschlüsselung -->
+  <div class="meta">
+    <strong>Facebook-Variante PF-2026-100</strong>
+    <table>
+      <tr><td>Image-Format</td><td>1080×1080 (1:1) — FB-empfohlen</td></tr>
+      <tr><td>Image-Quelle</td><td>PF_Feed_FB_Standard.html via Gotenberg</td></tr>
+      <tr><td>Caption-Position</td><td>ÜBER dem Bild (anders als IG)</td></tr>
+      <tr><td>Hashtags</td><td>als 1. Kommentar drunter (laut CLAUDE.md/Tonalität)</td></tr>
+      <tr><td>Caption-Text</td><td>identisch zu IG (field_10), aber ohne Hashtags</td></tr>
+      <tr><td>Hashtag-Block</td><td>field_7, separat als FB-Kommentar gepostet</td></tr>
+    </table>
+    <p style="margin-top:10px; color:#777;">
+      WF-03 macht für FB:
+      <strong>1.</strong> Post mit Caption + Bild via Meta-Graph<br>
+      <strong>2.</strong> Direkt danach Comment mit Hashtags via Meta-Graph<br>
+      → Hashtags wirken auf FB nicht als Discovery-Signal, sollen aber für
+      Themen-Wiedererkennung trotzdem da sein.
+    </p>
+  </div>
+
+</body>
+</html>

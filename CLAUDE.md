@@ -48,27 +48,34 @@ Spätere Erweiterungen: TikTok, YouTube Shorts, LinkedIn (geplant, noch nicht ak
 ## 3. Status-Flow eines Posts
 
 ```
-Entwurf → Bereit → Freigegeben → Geplant → Veröffentlicht
+Entwurf → Bereit → Geplant → Veröffentlicht
+    │         └──► Geblockt              (HWG-Filter-Match, Judith prüft)
+    └──► Wartet-auf-Avatar               (Reel/Übung/Story, Avatar-Flag = off)
 ```
 
-- **Entwurf** – Frisch aus dem Formular, Caption/Grafik fehlen noch.
-- **Bereit** – Caption + Grafik sind fertig, **wartet auf Judiths Freigabe**.
-- **Freigegeben** – Judith hat in Teams/SharePoint „OK" gegeben.
+- **Entwurf** – Frisch aus dem Formular, Caption/Bild/Video fehlen noch.
+- **Wartet-auf-Avatar** – Reel/Übung/Story, parkt bis `AVATAR_ENABLED=true` in WF-02.
+- **Bereit** – Caption + Bild/Video sind fertig, HWG-Filter sauber, **24h-Karenz** läuft.
+- **Geblockt** – HWG-Filter hat eine verdächtige Caption erkannt, Judith prüft.
 - **Geplant** – n8n hat den Post bei Meta zur Veröffentlichung eingestellt.
 - **Veröffentlicht** – Post ist live, IG-Post-ID ist im SharePoint hinterlegt.
 
-Claude darf **niemals selbstständig** den Status auf „Freigegeben",
-„Geplant" oder „Veröffentlicht" setzen. `Entwurf → Bereit` darf
-WF-02 automatisiert setzen (sobald Caption + Grafik fertig sind),
-alle anderen Übergänge brauchen Judith oder den Posting-Workflow.
+**Grundprinzip – Vollautomatik:** Judith macht ausschließlich Einträge
+über das HTML-Formular. Alle weiteren Schritte (Caption, Bild, Planung,
+Posting) laufen **ohne manuelle Freigabe**. Zwei Notbremsen sichern ab:
 
-**Ausnahme – Auto-Release für Standard-Feed-Posts:** Für monatlich von
-WF-04 automatisch eingeplante Standard-Feed-Posts (Tipp, FAQ, BTS,
-Praxis-News, Aktion, …) darf WF-03 Phase B2 den Status `Bereit → Freigegeben`
-ohne Teams-Card durchschalten. Reels, Stories und `Übung` (Format
-„Übung der Woche") sind **immer** ausgenommen – dort bleibt die manuelle Freigabe durch Judith
-verbindlich. Details: `00_Konzept/Status-Flow.md` Abschnitt 2a und
-`02_n8n-Workflows/WF-04_Monats-Scheduler-Standard-Post.md`.
+1. **HWG-Filter** in WF-02: Caption-Blacklist auf Heilversprechen
+   (`heilt`, `kuriert`, `garantiert`, `schmerzfrei in X Tagen`, …).
+   Match → Status `Geblockt`, Teams-Card an Judith. Kein Posting.
+2. **24h-Karenz** in WF-03: Posts gehen frühestens 24h nach Erreichen von
+   `Bereit` live. Judith kann in der SharePoint-Ansicht „Geht morgen live"
+   jederzeit einen Post zurück auf `Entwurf` setzen.
+
+Claude darf **niemals selbstständig** den Status auf `Geplant` oder
+`Veröffentlicht` setzen – das macht WF-03 nach erfolgreicher Meta-API-Antwort.
+`Entwurf → Bereit` darf WF-02 automatisiert setzen (Caption + Bild fertig
+UND HWG-Filter grün). Details: `00_Konzept/Status-Flow.md`,
+`01_Prompts/HWG-Blacklist.md`.
 
 ---
 
@@ -202,26 +209,26 @@ Bestätigung von Thomas:
 ## 7. Wöchentlicher Standardablauf
 
 ```
-Montag       Judith trägt Themen/Ideen ins Formular ein  (manuell)
+laufend      Judith trägt Themen/Ideen ins Formular ein  (manuell)
              → Webhook → WF-01 → SharePoint (Status: Entwurf)
 
-Dienstag     WF-02 erzeugt Caption + Hashtags + Bildbrief
-             → SharePoint aktualisiert (Status bleibt Entwurf)
+stündl. Cron WF-02 verarbeitet alle Entwürfe:
+             - Caption + Hashtags via LLM
+             - HWG-Filter: Match → Status `Geblockt` + Teams-Card
+             - Bild via Gotenberg (HTML-Template → PNG/JPG)
+             - alles fertig + HWG sauber → Status `Bereit`,
+               24h-Karenz beginnt
 
-Mittwoch     WF-03 (Phase A) erzeugt Canva-Grafik / Reel-Skript
-             → Vorschau-Link in field_9
-             → Status: Bereit  (= wartet auf Judith)
-             → Teams-Card an Judith
-
-Donnerstag   Judith klickt Freigabe (Teams-Karte oder SharePoint)
-             → Status: Freigegeben
-
-Freitag      n8n plant Post bei Meta ein
-             → Status: Geplant
-
-Samstag/So.  Veröffentlichung gemäß Redaktionsplan
-             → Status: Veröffentlicht, IG-Post-ID gespeichert
+stündl. Cron WF-03 verarbeitet alle Bereit-Items:
+             - Karenz erreicht (>=24h seit `Bereit`)? Sonst skip.
+             - Post bei Meta einplanen → Status `Geplant`
+             - Nach Live-Schaltung → Status `Veröffentlicht`,
+               IG-Post-ID in field_12
 ```
+
+Judith ist nur involviert, wenn der HWG-Filter zugeschlagen hat
+(Status `Geblockt`) oder sie während der 24h-Karenz aktiv einen
+Post zurückzieht. Im Normalfall: 0 Klicks pro Post.
 
 Genauer beschrieben in `00_Konzept/Workflow-Konzept.md`.
 
@@ -258,3 +265,8 @@ Genauer beschrieben in `00_Konzept/Workflow-Konzept.md`.
 | 2026-05-14  | Initialversion der CLAUDE.md und Ordnerstruktur     | Claude / Thomas|
 | 2026-05-14  | Status `Bereit` als 5. Status aufgenommen           | Claude / Thomas|
 | 2026-05-14  | WF-04 (Monats-Scheduler) + Auto-Release-Sonderregel | Claude / Thomas|
+| 2026-05-16  | Vollautomatik: Freigabe-Schritt entfernt, Status    | Claude / Thomas|
+|             | `Geblockt` neu, HWG-Filter + 24h-Karenz als         |                |
+|             | Notbremsen. Canva-Pipeline → Gotenberg+HTML.        |                |
+| 2026-05-16  | Status `Wartet-auf-Avatar` ergänzt — Avatar-Branch  | Claude / Thomas|
+|             | Avatar-ready, via `AVATAR_ENABLED`-Flag aktivierbar |                |

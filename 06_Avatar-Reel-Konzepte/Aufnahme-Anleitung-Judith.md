@@ -83,7 +83,7 @@ Falls nicht: anpassen, neue Probe.
 
 > Hallo, mein Name ist Judith Fuchs und ich freue mich, dass Sie heute
 > hier sind. Ich bin Inhaberin der Physiotherapiepraxis Physio Fuchs in
-> Emden, und seit über zehn Jahren begleite ich Patientinnen und Patienten
+> Ratingen-Lintorf, und seit über zehn Jahren begleite ich Patientinnen und Patienten
 > auf ihrem Weg zu mehr Beweglichkeit, weniger Schmerzen und besserem
 > Körpergefühl.
 >

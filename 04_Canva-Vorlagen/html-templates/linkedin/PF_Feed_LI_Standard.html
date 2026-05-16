@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>PF Feed LinkedIn Standard</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,500&display=swap" rel="stylesheet">
+<style>
+  /*
+   * PHYSIO FUCHS – LinkedIn Feed Standard (1200×1200 Square)
+   *
+   * LinkedIn-Empfehlung: 1:1 für maximalen Feed-Anteil.
+   * 1200×1200 ist Standard, etwas größer als FB (1080×1080) für
+   * schärferes Rendering auf Desktop-Viewports.
+   *
+   * Tonalität ist im Caption-Text strenger (formaler, weniger Emojis,
+   * 3–5 Hashtags) — das bleibt aber Workflow-Aufgabe, nicht Template.
+   *
+   * Platzhalter werden von WF-02 ersetzt: {{TITEL}} {{TEXT}} {{CTA}} {{DATUM}}
+   */
+  :root {
+    --pf-green-mid:    #7E9963;
+    --pf-cream:        #F4EFE2;
+    --pf-cream-soft:   #E8E3D4;
+    --pf-brown:        #7C6149;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 1200px;
+    height: 1200px;
+    overflow: hidden;
+    background: var(--pf-green-mid);
+    color: var(--pf-cream);
+    font-family: 'EB Garamond', Garamond, Georgia, serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .canvas {
+    width: 1200px;
+    height: 1200px;
+    padding: 90px 90px 90px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 25px;
+  }
+
+  .logo {
+    display: flex; align-items: center; gap: 16px;
+  }
+  .logo img { height: 100px; width: 100px; display: block; }
+  .logo-text {
+    font-size: 18px; font-weight: 600;
+    letter-spacing: 2.5px;
+    text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .logo-text .sub {
+    display: block; font-weight: 300;
+    font-size: 13px; letter-spacing: 1.5px;
+    color: var(--pf-cream-soft); margin-top: 3px;
+  }
+
+  .datum {
+    font-size: 22px; font-weight: 300;
+    color: var(--pf-cream-soft);
+    letter-spacing: 1.5px; text-transform: uppercase;
+  }
+
+  .content {
+    flex: 1;
+    display: flex; flex-direction: column;
+    justify-content: center;
+    padding: 15px 0 30px;
+  }
+
+  .titel {
+    font-size: 86px; font-weight: 700;
+    line-height: 1.05; letter-spacing: -1px;
+    color: var(--pf-brown);
+    margin-bottom: 40px;
+    max-height: 290px; overflow: hidden;
+  }
+
+  .divider {
+    width: 75px; height: 2px;
+    background: var(--pf-cream-soft);
+    opacity: 0.6; margin-bottom: 30px;
+  }
+
+  .text {
+    font-size: 30px; font-weight: 400;
+    line-height: 1.5;
+    max-height: 240px; overflow: hidden;
+  }
+
+  .footer {
+    display: flex; align-items: flex-end;
+    justify-content: space-between; gap: 40px;
+    border-top: 1px solid rgba(244,239,226,0.25);
+    padding-top: 28px;
+  }
+
+  .cta {
+    font-size: 26px; font-weight: 600;
+    line-height: 1.3; flex: 1;
+    max-height: 75px; overflow: hidden;
+  }
+  .cta::before { content: "→  "; color: var(--pf-cream-soft); }
+
+  .signatur {
+    display: flex; align-items: center; gap: 16px;
+  }
+  .signatur img {
+    width: 80px; height: 80px;
+    border-radius: 50%; object-fit: cover;
+    border: 2px solid var(--pf-cream-soft);
+    flex-shrink: 0;
+  }
+  .signatur .name {
+    font-size: 24px; font-style: italic; font-weight: 500;
+    text-align: right; white-space: nowrap; line-height: 1.1;
+  }
+  .signatur .name .handle {
+    display: block; font-style: normal; font-weight: 400;
+    color: var(--pf-cream-soft); font-size: 16px;
+    letter-spacing: 1px; margin-top: 4px;
+  }
+</style>
+</head>
+<body>
+  <div class="canvas">
+
+    <header class="header">
+      <div class="logo">
+        <img src="../assets/pf-logo-medaillon.png" alt="Physio Fuchs Logo">
+        <div class="logo-text">
+          Physio Fuchs
+          <span class="sub">Ratingen-Lintorf</span>
+        </div>
+      </div>
+      <div class="datum">{{DATUM}}</div>
+    </header>
+
+    <main class="content">
+      <h1 class="titel">{{TITEL}}</h1>
+      <div class="divider"></div>
+      <p class="text">{{TEXT}}</p>
+    </main>
+
+    <footer class="footer">
+      <div class="cta">{{CTA}}</div>
+      <div class="signatur">
+        <div class="name">
+          Judith Fuchs
+          <span class="handle">Inhaberin · Physiotherapie</span>
+        </div>
+        <img src="../assets/judith-byline-circle.png" alt="Judith Fuchs">
+      </div>
+    </footer>
+
+  </div>
+</body>
+</html>

@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Instagram-Post Vorschau – PF-2026-100</title>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;600&display=swap" rel="stylesheet">
+<style>
+  /*
+   * MOCKUP: PF-2026-100 als fertiger Instagram-Post.
+   * Daten 1:1 aus SharePoint übernommen (gelesen 2026-05-16).
+   * Bild oben = was Gotenberg aus PF_Feed_Standard.html rendert.
+   * Caption unten = field_10 (Caption_Variante) aus SharePoint.
+   */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #efefef;
+    padding: 40px 20px;
+    font-family: 'Inter', -apple-system, system-ui, sans-serif;
+    color: #262626;
+  }
+  .post {
+    max-width: 540px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 2px 14px rgba(0,0,0,0.08);
+  }
+  .ig-header {
+    display: flex;
+    align-items: center;
+    padding: 14px 16px;
+    border-bottom: 1px solid #efefef;
+  }
+  .ig-avatar {
+    width: 38px; height: 38px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, #feda75, #d62976, #4f5bd5);
+    padding: 2px;
+  }
+  .ig-avatar img {
+    width: 100%; height: 100%; border-radius: 50%;
+    background: white; object-fit: cover; padding: 2px;
+  }
+  .ig-handle {
+    margin-left: 12px; font-weight: 600; font-size: 14px;
+  }
+  .ig-handle small {
+    display: block; color: #8e8e8e; font-weight: 400;
+    font-size: 12px; margin-top: 2px;
+  }
+  .ig-dots {
+    margin-left: auto; font-size: 20px; letter-spacing: 2px;
+  }
+
+  /* === BILD (Gotenberg-Output, hier 540×675 statt 1080×1350) === */
+  .ig-image {
+    width: 540px; height: 675px;
+    background: #7E9963;
+    color: #F4EFE2;
+    padding: 45px 45px 50px;
+    display: flex; flex-direction: column;
+    font-family: 'EB Garamond', Garamond, Georgia, serif;
+  }
+  .ig-img-header {
+    display: flex; align-items: center;
+    justify-content: space-between; margin-bottom: 15px;
+  }
+  .ig-img-logo { display: flex; align-items: center; gap: 7px; }
+  .ig-img-logo img { height: 50px; width: 50px; }
+  .ig-img-logo .lt {
+    font-size: 8px; font-weight: 600;
+    letter-spacing: 1.5px; text-transform: uppercase;
+    line-height: 1.1;
+  }
+  .ig-img-logo .lt .sub {
+    display: block; font-weight: 300; font-size: 6px;
+    letter-spacing: 1px; color: #E8E3D4; margin-top: 2px;
+  }
+  .ig-img-datum {
+    font-size: 10px; font-weight: 300; color: #E8E3D4;
+    letter-spacing: 1px; text-transform: uppercase;
+  }
+  .ig-img-titel {
+    font-size: 44px; font-weight: 700; line-height: 1.05;
+    letter-spacing: -0.5px; color: #7C6149;
+    margin: 25px 0 22px;
+  }
+  .ig-img-divider {
+    width: 40px; height: 1px; background: #E8E3D4;
+    opacity: 0.6; margin-bottom: 20px;
+  }
+  .ig-img-text {
+    font-size: 18px; line-height: 1.6; flex: 1;
+  }
+  .ig-img-text strong {
+    color: #F4EFE2; font-weight: 700;
+    display: block; margin-top: 4px;
+  }
+  .ig-img-footer {
+    display: flex; align-items: flex-end;
+    justify-content: space-between;
+    border-top: 1px solid rgba(244,239,226,0.25);
+    padding-top: 15px; gap: 20px;
+  }
+  .ig-img-cta {
+    font-size: 13px; font-weight: 600;
+  }
+  .ig-img-cta::before { content: "→  "; color: #E8E3D4; }
+  .ig-img-sig {
+    display: flex; align-items: center; gap: 8px;
+  }
+  .ig-img-sig img {
+    width: 40px; height: 40px;
+    border-radius: 50%; object-fit: cover;
+    border: 1px solid #E8E3D4;
+  }
+  .ig-img-sig .name {
+    font-style: italic; font-size: 12px;
+    text-align: right; white-space: nowrap; line-height: 1.1;
+  }
+  .ig-img-sig .name .handle {
+    display: block; font-style: normal; font-weight: 300;
+    font-size: 8px; color: #E8E3D4;
+    letter-spacing: 1px; margin-top: 2px;
+  }
+
+  /* === Instagram-Aktionen + Caption === */
+  .ig-actions {
+    padding: 8px 16px 4px; font-size: 22px; letter-spacing: 8px;
+  }
+  .ig-likes {
+    padding: 4px 16px; font-weight: 600; font-size: 14px;
+  }
+  .ig-caption {
+    padding: 6px 16px 12px; font-size: 14px; line-height: 1.45;
+  }
+  .ig-caption .handle {
+    font-weight: 600; margin-right: 6px;
+  }
+  .ig-caption .more { color: #8e8e8e; }
+  .ig-caption .hashtags { color: #00376b; word-break: break-word; }
+  .ig-caption ol {
+    margin: 6px 0 6px 22px;
+  }
+  .ig-time {
+    padding: 0 16px 14px; font-size: 11px; color: #8e8e8e;
+    text-transform: uppercase; letter-spacing: 0.5px;
+  }
+
+  .meta {
+    max-width: 540px; margin: 24px auto 0; padding: 16px;
+    font-size: 12px; color: #555; background: #fff;
+    border-radius: 8px; border-left: 3px solid #7E9963;
+  }
+  .meta strong { color: #46683C; }
+  .meta table { width: 100%; margin-top: 8px; border-collapse: collapse; }
+  .meta td { padding: 3px 6px; vertical-align: top; }
+  .meta td:first-child { color: #999; width: 140px; font-family: monospace; font-size: 11px; }
+</style>
+</head>
+<body>
+
+  <div class="post">
+
+    <div class="ig-header">
+      <div class="ig-avatar">
+        <img src="../assets/pf-logo-medaillon.png" alt="Physio Fuchs">
+      </div>
+      <div class="ig-handle">
+        physiofuchs
+        <small>Ratingen-Lintorf</small>
+      </div>
+      <div class="ig-dots">···</div>
+    </div>
+
+    <!-- BILD-TEIL: das ist das, was Gotenberg rendert -->
+    <div class="ig-image">
+      <div class="ig-img-header">
+        <div class="ig-img-logo">
+          <img src="../assets/pf-logo-medaillon.png" alt="Logo">
+          <div class="lt">
+            Physio Fuchs
+            <span class="sub">Ratingen-Lintorf</span>
+          </div>
+        </div>
+        <div class="ig-img-datum">16.05.2026</div>
+      </div>
+
+      <div class="ig-img-titel">Drei Mini-Übungen für die Mittagspause</div>
+      <div class="ig-img-divider"></div>
+      <div class="ig-img-text">
+        Direkt am Schreibtisch, ohne Equipment:
+        <strong>1. Schultern kreisen</strong>
+        <strong>2. Rumpf drehen</strong>
+        <strong>3. Beine strecken</strong>
+      </div>
+
+      <div class="ig-img-footer">
+        <div class="ig-img-cta">Speichern für die nächste Pause</div>
+        <div class="ig-img-sig">
+          <div class="name">
+            Judith Fuchs
+            <span class="handle">@physiofuchs</span>
+          </div>
+          <img src="../assets/judith-byline-circle.png?v=2" alt="Judith Fuchs">
+        </div>
+      </div>
+    </div>
+
+    <div class="ig-actions">♡   ◯   ↗                          ⌃</div>
+    <div class="ig-likes">98 „Gefällt mir"-Angaben</div>
+
+    <!-- CAPTION-TEIL: das ist field_10 / Caption_Variante aus SharePoint -->
+    <div class="ig-caption">
+      <p>
+        <span class="handle">physiofuchs</span>
+        Drei kleine Schreibtisch-Übungen für Ihre Mittagspause:
+      </p>
+      <ol>
+        <li>Schultern kreisen</li>
+        <li>Rumpf drehen</li>
+        <li>Beine strecken</li>
+      </ol>
+      <p>Bei Beschwerden bitte ärztlich oder physiotherapeutisch abklären lassen.</p>
+      <p style="margin-top:8px;">Welche Übung tut Ihrem Körper am besten?</p>
+      <p style="margin-top:10px;" class="hashtags">
+        #physiofuchs #physiotherapie #büroübungen #rückengesundheit #pause
+      </p>
+    </div>
+
+    <div class="ig-time">Vor 1 Stunde</div>
+
+  </div>
+
+  <!-- Daten-Aufschlüsselung -->
+  <div class="meta">
+    <strong>Quelle: SharePoint PF-2026-100</strong> (gelesen 2026-05-16)
+    <table>
+      <tr><td>Title</td><td>PF-2026-100</td></tr>
+      <tr><td>Thema</td><td>Haltung</td></tr>
+      <tr><td>Post_Typ</td><td>Tipp</td></tr>
+      <tr><td>Content_Brief</td><td>WF-03 v5 Trockentest: Drei kleine Schreibtisch-Übungen für die Mittagspause.</td></tr>
+      <tr><td>Veröffentl.datum</td><td>16.05.2026 09:00</td></tr>
+      <tr><td>Status</td><td>Freigegeben</td></tr>
+      <tr><td>Hashtag_Thema</td><td>Büroübungen</td></tr>
+      <tr><td>Caption_Variante</td><td>(siehe Mockup oben, full text aus SP)</td></tr>
+      <tr><td>Freigabe_Person</td><td>Judith</td></tr>
+      <tr><td>Canva_Template_ID</td><td>DAHJW_-mBBk <em>(wird in v18 ignoriert — Gotenberg ersetzt Canva)</em></td></tr>
+    </table>
+    <p style="margin-top:10px; color:#777;">
+      Für das <strong>Bild</strong> habe ich Hook + 3 Übungspunkte + CTA aus den SP-Feldern abgeleitet — der Hook ist nicht 1:1 das `Content_Brief`, sondern eine WF-02-Verkürzung für die 1080×1350-Fläche (max ~50 Zeichen für die Headline). Die <strong>Caption</strong> drunter ist 1:1 die `Caption_Variante`.
+    </p>
+  </div>
+
+</body>
+</html>

@@ -2,19 +2,13 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>LinkedIn-Post Vorschau – PF-2026-100</title>
-<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+<title>LinkedIn-Post Vorschau – PF-2026-100 (v7)</title>
 <style>
   /*
-   * LINKEDIN-Post-Mockup für PF-2026-100.
-   * Unterschiede zu Instagram + Facebook:
-   *  - Profil-Header zeigt Person/Seite + Tagline + Followerzahl
-   *  - Caption ÜBER dem Bild, sehr ausführlich erlaubt (3000 Zeichen)
-   *  - „… mehr" Knopf bei ~3 Zeilen Caption
-   *  - Reaktionen sind anders: Like / Celebrate / Support / Love / Insightful / Funny
-   *  - Hashtags inline am Ende der Caption (3–5, formaler, oft Capital)
-   *  - Bild 1:1 (1200×1200, hier 540×540 für Mockup)
-   *  - Tonalität: formaler, weniger Emojis, B2B-orientiert
+   * MOCKUP: PF-2026-100 als LinkedIn-Post.
+   * Bild = Live-Embed von PF_Feed_v7.html.
+   * Caption-Stil formaler/ausführlicher als IG, B2B-Tonalität.
+   * Hashtags 3-5 Stück, CamelCase, am Caption-Ende.
    */
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -33,49 +27,37 @@
     overflow: hidden;
   }
 
-  /* LI-Header */
   .li-header {
     display: flex; align-items: flex-start;
     padding: 12px 16px 0;
   }
   .li-avatar {
     width: 48px; height: 48px;
-    border-radius: 50%;
-    background: #fff;
-    border: 1px solid #eaeaea;
-    overflow: hidden;
+    border-radius: 50%; background: #fff;
+    border: 1px solid #eaeaea; overflow: hidden;
     flex-shrink: 0;
   }
-  .li-avatar img {
-    width: 100%; height: 100%; object-fit: cover;
-  }
-  .li-meta {
-    margin-left: 8px; flex: 1; line-height: 1.3;
-  }
+  .li-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .li-meta { margin-left: 8px; flex: 1; line-height: 1.3; }
   .li-pagename {
     font-weight: 600; font-size: 14px; color: rgba(0,0,0,0.9);
   }
   .li-tagline {
-    color: rgba(0,0,0,0.6); font-size: 12px;
-    margin-top: 1px;
+    color: rgba(0,0,0,0.6); font-size: 12px; margin-top: 1px;
   }
   .li-followers {
-    color: rgba(0,0,0,0.6); font-size: 12px;
-    margin-top: 1px;
+    color: rgba(0,0,0,0.6); font-size: 12px; margin-top: 1px;
   }
   .li-time {
-    color: rgba(0,0,0,0.6); font-size: 12px;
-    margin-top: 1px;
+    color: rgba(0,0,0,0.6); font-size: 12px; margin-top: 1px;
     display: flex; align-items: center; gap: 4px;
   }
   .li-time::after { content: "·  🌐"; font-size: 11px; }
   .li-follow-btn {
     color: #0a66c2; font-weight: 600; font-size: 14px;
-    padding: 8px 14px;
-    flex-shrink: 0;
+    padding: 8px 14px; flex-shrink: 0;
   }
 
-  /* LI-Caption ÜBER dem Bild */
   .li-caption {
     padding: 10px 16px 12px;
     font-size: 14px; line-height: 1.43;
@@ -86,92 +68,28 @@
     color: rgba(0,0,0,0.6); cursor: pointer; font-weight: 600;
   }
   .li-caption .hashtag {
-    color: #0a66c2;
-    font-weight: 600;
+    color: #0a66c2; font-weight: 600;
   }
 
-  /* LI-Bild 1:1 */
+  /* === LI-Bild (Live-Embed v7) === */
   .li-image {
-    width: 552px; height: 552px;
-    background: #7E9963;
-    color: #F4EFE2;
-    padding: 38px 38px 38px;
-    display: flex; flex-direction: column;
-    font-family: 'EB Garamond', Garamond, Georgia, serif;
+    width: 552px; height: 690px;
+    overflow: hidden; position: relative;
   }
-  .li-img-header {
-    display: flex; align-items: center;
-    justify-content: space-between; margin-bottom: 10px;
-  }
-  .li-img-logo { display: flex; align-items: center; gap: 8px; }
-  .li-img-logo img { height: 46px; width: 46px; }
-  .li-img-logo .lt {
-    font-size: 8px; font-weight: 600;
-    letter-spacing: 1.4px; text-transform: uppercase;
-    line-height: 1.1;
-  }
-  .li-img-logo .lt .sub {
-    display: block; font-weight: 300; font-size: 6px;
-    letter-spacing: 1px; color: #E8E3D4; margin-top: 2px;
-  }
-  .li-img-datum {
-    font-size: 10px; font-weight: 300; color: #E8E3D4;
-    letter-spacing: 1px; text-transform: uppercase;
-  }
-  .li-img-titel {
-    font-size: 40px; font-weight: 700; line-height: 1.05;
-    letter-spacing: -0.5px; color: #7C6149;
-    margin: 20px 0 16px;
-  }
-  .li-img-divider {
-    width: 38px; height: 1px; background: #E8E3D4;
-    opacity: 0.6; margin-bottom: 16px;
-  }
-  .li-img-text {
-    font-size: 16px; line-height: 1.55; flex: 1;
-  }
-  .li-img-text strong {
-    color: #F4EFE2; font-weight: 700;
-    display: block; margin-top: 3px;
-  }
-  .li-img-footer {
-    display: flex; align-items: flex-end;
-    justify-content: space-between;
-    border-top: 1px solid rgba(244,239,226,0.25);
-    padding-top: 14px; gap: 18px;
-  }
-  .li-img-cta {
-    font-size: 12px; font-weight: 600;
-  }
-  .li-img-cta::before { content: "→  "; color: #E8E3D4; }
-  .li-img-sig {
-    display: flex; align-items: center; gap: 7px;
-  }
-  .li-img-sig img {
-    width: 38px; height: 38px;
-    border-radius: 50%; object-fit: cover;
-    border: 1px solid #E8E3D4;
-  }
-  .li-img-sig .name {
-    font-style: italic; font-size: 12px;
-    text-align: right; white-space: nowrap; line-height: 1.1;
-  }
-  .li-img-sig .name .handle {
-    display: block; font-style: normal; font-weight: 300;
-    font-size: 8px; color: #E8E3D4;
-    letter-spacing: 1px; margin-top: 1px;
+  .li-image iframe {
+    width: 1080px; height: 1350px;
+    transform: scale(0.5111);
+    transform-origin: top left;
+    border: 0; display: block;
   }
 
-  /* LI Reaktionen */
   .li-reactions {
     padding: 8px 16px;
     display: flex; align-items: center; justify-content: space-between;
     font-size: 13px; color: rgba(0,0,0,0.6);
     border-bottom: 1px solid rgba(0,0,0,0.08);
   }
-  .li-react-icons {
-    display: flex; align-items: center;
-  }
+  .li-react-icons { display: flex; align-items: center; }
   .li-react-icon {
     width: 16px; height: 16px; border-radius: 50%;
     border: 2px solid #fff; display: inline-block;
@@ -181,9 +99,7 @@
   .li-react-icon.celebrate { background: #6dae4f; }
   .li-react-icon.insight { background: #f5b800; }
   .li-react-count { margin-left: 6px; }
-  .li-comments-count { color: rgba(0,0,0,0.6); }
 
-  /* LI Actions */
   .li-actions {
     padding: 4px 8px;
     display: flex; justify-content: space-around;
@@ -191,7 +107,6 @@
   .li-action {
     flex: 1; text-align: center; padding: 10px 0;
     color: rgba(0,0,0,0.6); font-weight: 600; font-size: 14px;
-    cursor: pointer;
   }
   .li-action::before { content: "👍 "; font-weight: normal; margin-right: 4px; }
   .li-action.comment::before { content: "💬 "; }
@@ -213,7 +128,6 @@
 
   <div class="post">
 
-    <!-- LI-Header -->
     <div class="li-header">
       <div class="li-avatar">
         <img src="../assets/judith-byline-circle.png" alt="Judith Fuchs">
@@ -227,7 +141,6 @@
       <div class="li-follow-btn">+ Folgen</div>
     </div>
 
-    <!-- LI-Caption ÜBER dem Bild — formaler, B2B-Stil -->
     <div class="li-caption">Wir hören es täglich in der Praxis: Nach acht Stunden am Schreibtisch wird der Rücken steif, der Nacken zieht, die Konzentration sinkt.
 
 Drei kleine Übungen, die wir unseren Patientinnen und Patienten als Mittagspausen-Routine empfehlen — direkt am Arbeitsplatz, ohne Equipment:
@@ -244,41 +157,11 @@ Bei anhaltenden Beschwerden empfehlen wir eine ärztliche oder physiotherapeutis
 
 <span class="hashtag">#Physiotherapie</span> <span class="hashtag">#Gesundheitamarbeitsplatz</span> <span class="hashtag">#Praevention</span> <span class="hashtag">#RatingenLintorf</span> <span class="hashtag">#PhysioFuchs</span></div>
 
-    <!-- LI-Bild 1:1 -->
+    <!-- Bild = Live-Embed v7 -->
     <div class="li-image">
-      <div class="li-img-header">
-        <div class="li-img-logo">
-          <img src="../assets/pf-logo-medaillon.png" alt="Logo">
-          <div class="lt">
-            Physio Fuchs
-            <span class="sub">Ratingen-Lintorf</span>
-          </div>
-        </div>
-        <div class="li-img-datum">16.05.2026</div>
-      </div>
-
-      <div class="li-img-titel">Drei Mini-Übungen für die Mittagspause</div>
-      <div class="li-img-divider"></div>
-      <div class="li-img-text">
-        Direkt am Schreibtisch, ohne Equipment:
-        <strong>1. Schultern kreisen</strong>
-        <strong>2. Rumpf drehen</strong>
-        <strong>3. Beine strecken</strong>
-      </div>
-
-      <div class="li-img-footer">
-        <div class="li-img-cta">Speichern für die nächste Pause</div>
-        <div class="li-img-sig">
-          <div class="name">
-            Judith Fuchs
-            <span class="handle">Inhaberin · Physiotherapie</span>
-          </div>
-          <img src="../assets/judith-byline-circle.png" alt="Judith Fuchs">
-        </div>
-      </div>
+      <iframe src="../instagram/PF_Feed_v7.html"></iframe>
     </div>
 
-    <!-- LI Reaktionen -->
     <div class="li-reactions">
       <div>
         <span class="li-react-icons">
@@ -288,10 +171,9 @@ Bei anhaltenden Beschwerden empfehlen wir eine ärztliche oder physiotherapeutis
         </span>
         <span class="li-react-count">Sebastian Müller und 67 weitere</span>
       </div>
-      <div class="li-comments-count">8 Kommentare · 4 Reposts</div>
+      <div>8 Kommentare · 4 Reposts</div>
     </div>
 
-    <!-- LI Action-Bar -->
     <div class="li-actions">
       <div class="li-action">Gefällt mir</div>
       <div class="li-action comment">Kommentieren</div>
@@ -301,24 +183,15 @@ Bei anhaltenden Beschwerden empfehlen wir eine ärztliche oder physiotherapeutis
 
   </div>
 
-  <!-- Daten-Aufschlüsselung -->
   <div class="meta">
     <strong>LinkedIn-Variante PF-2026-100</strong>
     <table>
-      <tr><td>Image-Format</td><td>1200×1200 (1:1) — LinkedIn-Standard</td></tr>
-      <tr><td>Image-Quelle</td><td>linkedin/PF_Feed_LI_Standard.html via Gotenberg</td></tr>
-      <tr><td>Caption-Position</td><td>ÜBER dem Bild (wie FB)</td></tr>
-      <tr><td>Caption-Stil</td><td>formaler, ausführlicher, B2B-orientiert</td></tr>
-      <tr><td>Hashtags</td><td>3–5, am Caption-Ende, CamelCase oder Capital (#Physiotherapie)</td></tr>
-      <tr><td>Personen-Avatar</td><td>Judith-Portrait statt Logo (LinkedIn ist persönlicher)</td></tr>
-      <tr><td>Signatur im Bild</td><td>„Inhaberin · Physiotherapie" statt @physiofuchs</td></tr>
+      <tr><td>Image-Quelle</td><td>Live-Embed PF_Feed_v7.html (1080×1350 Portrait)</td></tr>
+      <tr><td>Caption-Stil</td><td>formaler, ausführlicher, B2B-Tonalität</td></tr>
+      <tr><td>Hashtags</td><td>3–5, am Caption-Ende, CamelCase</td></tr>
+      <tr><td>Personen-Avatar</td><td>Judith-Portrait (LinkedIn ist persönliche Seite)</td></tr>
+      <tr><td>TODO</td><td>Eigene LinkedIn-Variante 1200×1200 Square (PF_Feed_LI_v1.html)</td></tr>
     </table>
-    <p style="margin-top:10px; color:#777;">
-      <strong>Wichtig für WF-02 v18 LinkedIn-Branch:</strong><br>
-      • Caption muss neu generiert werden (anderes Prompt als IG/FB — formaler Stil)<br>
-      • Hashtags müssen aus dem IG-Hashtag-Block reduziert + formaler umgewandelt werden<br>
-      • Avatar = Judith-Portrait, NICHT Logo (LinkedIn ist persönliche Seite, kein Page-Brand)
-    </p>
   </div>
 
 </body>

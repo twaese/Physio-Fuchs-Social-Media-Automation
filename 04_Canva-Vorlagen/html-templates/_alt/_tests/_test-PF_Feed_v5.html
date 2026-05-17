@@ -2,16 +2,17 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>PF Feed Instagram v2 — Foto + Banner-Overlay</title>
+<title>PF Feed v5 — Test</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
   /*
-   * PHYSIO FUCHS – Instagram Feed v7 (1080×1350)
+   * PHYSIO FUCHS – Instagram Feed v5 (1080×1350)
    * Foto-dominantes Editorial-Layout angelehnt an Canva-Vorlage.
-   * v7-Änderung ggü. v6: Ginkgo-Zweig ganz rechts (right: 0) im Banner,
-   * keine Rand-Distanz mehr.
+   * v5-Änderung ggü. v4: Ginkgo-Zweig vertikal mittig + rechtsbündig
+   * innerhalb des grünen Banners. Größe so reduziert dass er vollständig
+   * im Banner sitzt (kein Überhang).
    *
    * Architektur:
    *  - Vollflächen-Hintergrund-Foto (Praxis / Behandlung)
@@ -21,7 +22,7 @@
    *  - KEIN Body/CTA/Datum/Signatur im Bild — Caption liefert den Inhalt
    *
    * Platzhalter (von WF-02 ersetzt):
-   *   {{TITEL}}             — kurzer Hook, max 30 Zeichen
+   *   3 Mini-Übungen für die Mittagspause             — kurzer Hook, max 30 Zeichen
    *   {{BACKGROUND_PHOTO}}  — URL des Hintergrund-Fotos (Praxis-Behandlung)
    *
    * Fallback: assets/judith-behandlung-01.png
@@ -79,13 +80,14 @@
     /* overflow visible damit Ginkgo überlappen kann */
   }
 
-  /* Ginkgo-Zweig — ganz rechts (right: 0) im Banner, vertikal mittig */
+  /* Ginkgo-Zweig — freigestelltes RGBA-PNG,
+     rechtsbündig + vertikal mittig im Banner, vollständig innerhalb */
   .title-banner .ginkgo {
     position: absolute;
-    right: 0;
+    right: 20px;
     top: 50%;
     transform: translateY(-50%);
-    width: 360px;
+    width: 180px;
     height: auto;
     pointer-events: none;
   }
@@ -155,7 +157,7 @@
 
     <!-- Titel-Banner oben rechts mit Ginkgo-Deko -->
     <div class="title-banner">
-      <h1 class="titel">{{TITEL}}</h1>
+      <h1 class="titel">3 Mini-Übungen für die Mittagspause</h1>
       <img class="ginkgo" src="../assets/ginkgo-branch.png" alt="">
     </div>
 

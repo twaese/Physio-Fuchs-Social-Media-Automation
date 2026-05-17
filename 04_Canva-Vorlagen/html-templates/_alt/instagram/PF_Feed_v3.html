@@ -8,10 +8,10 @@
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
   /*
-   * PHYSIO FUCHS – Instagram Feed v7 (1080×1350)
+   * PHYSIO FUCHS – Instagram Feed v3 (1080×1350)
    * Foto-dominantes Editorial-Layout angelehnt an Canva-Vorlage.
-   * v7-Änderung ggü. v6: Ginkgo-Zweig ganz rechts (right: 0) im Banner,
-   * keine Rand-Distanz mehr.
+   * v3-Änderung ggü. v2: Ginkgo-Zweig jetzt sauber freigestelltes RGBA-PNG,
+   * volle Sichtbarkeit, kein mix-blend-mode-Trick mehr.
    *
    * Architektur:
    *  - Vollflächen-Hintergrund-Foto (Praxis / Behandlung)
@@ -79,13 +79,12 @@
     /* overflow visible damit Ginkgo überlappen kann */
   }
 
-  /* Ginkgo-Zweig — ganz rechts (right: 0) im Banner, vertikal mittig */
+  /* Ginkgo-Zweig — freigestelltes RGBA-PNG, voll sichtbar (kein Blend) */
   .title-banner .ginkgo {
     position: absolute;
-    right: 0;
-    top: 50%;
-    transform: translateY(-50%);
-    width: 360px;
+    right: -50px;
+    top: -40px;
+    width: 460px;
     height: auto;
     pointer-events: none;
   }

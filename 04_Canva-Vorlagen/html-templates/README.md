@@ -19,7 +19,7 @@ html-templates/
 │
 ├── instagram/                          ← 1080×1350 (4:5 Portrait)
 │   ├── PF_Feed_Standard.html           ← LIVE (von WF-02 referenziert)
-│   └── PF_Feed_v7.html                 ← aktueller Versions-Snapshot
+│   └── PF_Feed_v12.html                ← aktueller Versions-Snapshot
 │
 ├── facebook/                           ← 1080×1080 (1:1 Square)
 │   └── PF_Feed_FB_Standard.html        ← v1 (Foto-Layout TODO)
@@ -30,17 +30,25 @@ html-templates/
 ├── tiktok/                             ← später (1080×1920 für Cover/Slides)
 │   └── .gitkeep
 │
-├── _tests/                             ← Plattform-Mockups (Live-Embed v7)
-│   ├── _test-PF-2026-100.html              IG-UI mit echtem SP-Eintrag
-│   ├── _test-PF-2026-100_facebook.html     FB-UI mit echtem SP-Eintrag
-│   ├── _test-PF-2026-100_linkedin.html     LinkedIn-UI mit echtem SP-Eintrag
-│   └── _test-PF_Feed_v7.html               Pure-Render-Vorschau v7
+├── _tests/                             ← Plattform-Mockups (Live-Embed v12)
+│   ├── _active-preview.html                aktuelle Standard.html mit Beispiel-Text
+│   ├── _test-PF-2026-100.html              IG-UI mit echtem SP-Eintrag (iframet _active-preview)
+│   ├── _test-PF-2026-100_facebook.html     FB-UI mit echtem SP-Eintrag (iframet _active-preview)
+│   ├── _test-PF-2026-100_linkedin.html     LinkedIn-UI mit echtem SP-Eintrag (iframet _active-preview)
+│   └── _test-PF_Feed_v12.html              Pure-Render-Vorschau v12
 │
 └── _alt/                               ← Versions-Archiv (nicht aktiv)
     ├── instagram/PF_Feed_v1_text-heavy.html
-    ├── instagram/PF_Feed_v2.html .. v6.html
+    ├── instagram/PF_Feed_v2.html .. v11.html
     └── _tests/...                          alte Mockup-Versionen
 ```
+
+**Mockup-Update bei neuer Standard.html:**
+```bash
+cp instagram/PF_Feed_Standard.html _tests/_active-preview.html
+sed -i '' 's|{{TITEL}}|Beispiel-Titel hier|' _tests/_active-preview.html
+```
+→ Die 3 Plattform-Mockups ziehen die Änderung automatisch via iframe.
 
 **Versionierungs-Regel:**
 - `PF_Feed_Standard.html` ist die LIVE-Datei, von WF-02 (und damit
@@ -126,3 +134,5 @@ Für realistische Vorschau: `_tests/*.html` öffnen (Platzhalter bereits gefüll
 | 2026-05-16  | Initial: Instagram + Facebook Templates, plattform-getrennt  | Claude |
 | 2026-05-17  | v2-v7: Foto-dominantes Layout mit Banner + Ginkgo + Logo-Karte | Claude |
 | 2026-05-17  | Versionierung: Standard.html = live, vN.html = Snapshot, _alt/ = Archiv | Claude |
+| 2026-05-17  | v12 finalisiert: Logo 210px innerhalb kompakter Karte, „Physio Fuchs" Garamond 44px | Claude |
+| 2026-05-17  | _active-preview.html als zentraler Mockup-Embed-Pfad eingeführt | Claude |

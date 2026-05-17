@@ -2,13 +2,13 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>Instagram-Post Vorschau – PF-2026-100 (v7)</title>
+<title>Instagram-Post Vorschau – PF-2026-100 (live)</title>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
 <style>
   /*
    * MOCKUP: PF-2026-100 als Instagram-Post.
    * Daten 1:1 aus SharePoint (gelesen 2026-05-16).
-   * Bild oben = lebendige Vorschau von PF_Feed_v7.html via iframe.
+   * Bild oben = lebendige Vorschau von PF_Feed_Standard.html via iframe.
    * Caption unten = field_10 (Caption_Variante) aus SharePoint.
    */
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -52,7 +52,7 @@
   }
   .ig-dots { margin-left: auto; font-size: 20px; letter-spacing: 2px; }
 
-  /* === Bild (Live-Vorschau von PF_Feed_v7.html) === */
+  /* === Bild (Live-Vorschau von PF_Feed_Standard.html) === */
   .ig-image {
     width: 540px; height: 675px;
     overflow: hidden;
@@ -112,9 +112,9 @@
       <div class="ig-dots">···</div>
     </div>
 
-    <!-- Bild = Live-Embed von PF_Feed_v7.html -->
+    <!-- Bild = Live-Embed von PF_Feed_Standard.html -->
     <div class="ig-image">
-      <iframe src="../instagram/PF_Feed_v7.html#TITEL=3+Mini-Übungen+für+die+Mittagspause"></iframe>
+      <iframe src="_active-preview.html"></iframe>
     </div>
 
     <div class="ig-actions">♡   ◯   ↗                          ⌃</div>
@@ -151,10 +151,10 @@
       <tr><td>Veröffentl.datum</td><td>16.05.2026 09:00</td></tr>
       <tr><td>Status</td><td>Bereit (24h-Karenz läuft)</td></tr>
       <tr><td>Caption_Variante</td><td>(siehe Mockup oben, full text aus SP)</td></tr>
-      <tr><td>Template</td><td>instagram/PF_Feed_v7.html (Live-Embed)</td></tr>
+      <tr><td>Template</td><td>instagram/PF_Feed_Standard.html (Live-Embed)</td></tr>
     </table>
     <p style="margin-top:10px; color:#777;">
-      <strong>Bild-Komposition</strong> wird live aus <code>PF_Feed_v7.html</code> per iframe gezogen. Änderungen am Template sind sofort hier sichtbar.
+      <strong>Bild-Komposition</strong> wird live aus <code>PF_Feed_Standard.html</code> per iframe gezogen. Änderungen am Template sind sofort hier sichtbar.
     </p>
   </div>
 

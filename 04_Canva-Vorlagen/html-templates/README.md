@@ -12,27 +12,43 @@ html-templates/
 ├── README.md                           ← diese Datei
 ├── assets/                             ← geteilt über alle Plattformen
 │   ├── pf-logo-medaillon.png           ← Praxis-Logo (Ginkgo-Medaillon)
+│   ├── ginkgo-branch.png               ← Ginkgo-Zweig freigestellt (RGBA)
 │   ├── judith-byline-circle.png        ← Judith-Portrait (rund, 400×400)
-│   └── judith-portrait-bw-original.jpg ← Original-Foto (Backup)
+│   ├── judith-behandlung-01.png        ← Praxis-Behandlungs-Foto
+│   └── judith-portrait-bw-original.jpg ← Original-Headshot (Backup)
 │
 ├── instagram/                          ← 1080×1350 (4:5 Portrait)
-│   └── PF_Feed_Standard.html
+│   ├── PF_Feed_Standard.html           ← LIVE (von WF-02 referenziert)
+│   └── PF_Feed_v7.html                 ← aktueller Versions-Snapshot
 │
 ├── facebook/                           ← 1080×1080 (1:1 Square)
-│   └── PF_Feed_FB_Standard.html
+│   └── PF_Feed_FB_Standard.html        ← v1 (Foto-Layout TODO)
 │
-├── linkedin/                           ← später (1200×1200 oder 1200×627)
-│   └── .gitkeep
+├── linkedin/                           ← 1200×1200
+│   └── PF_Feed_LI_Standard.html        ← v1 (Foto-Layout TODO)
 │
 ├── tiktok/                             ← später (1080×1920 für Cover/Slides)
 │   └── .gitkeep
 │
-└── _tests/                             ← Mockups + Vorschau-Dateien
-    ├── _test-mit-content.html              IG mit Beispieltext
-    ├── _test-PF-2026-100.html              IG, echter SP-Eintrag
-    ├── _test-PF-2026-100_facebook.html     FB, echter SP-Eintrag
-    └── _test-instagram-vollpost.html       IG-Mockup mit Caption
+├── _tests/                             ← Plattform-Mockups (Live-Embed v7)
+│   ├── _test-PF-2026-100.html              IG-UI mit echtem SP-Eintrag
+│   ├── _test-PF-2026-100_facebook.html     FB-UI mit echtem SP-Eintrag
+│   ├── _test-PF-2026-100_linkedin.html     LinkedIn-UI mit echtem SP-Eintrag
+│   └── _test-PF_Feed_v7.html               Pure-Render-Vorschau v7
+│
+└── _alt/                               ← Versions-Archiv (nicht aktiv)
+    ├── instagram/PF_Feed_v1_text-heavy.html
+    ├── instagram/PF_Feed_v2.html .. v6.html
+    └── _tests/...                          alte Mockup-Versionen
 ```
+
+**Versionierungs-Regel:**
+- `PF_Feed_Standard.html` ist die LIVE-Datei, von WF-02 (und damit
+  Gotenberg-Render) referenziert. URL: `…/instagram/PF_Feed_Standard.html`.
+- Bei jeder Layout-Änderung wird der aktuelle Stand als `PF_Feed_vN.html`
+  abgelegt (Snapshot) UND `PF_Feed_Standard.html` aktualisiert.
+- Alte Versionen wandern nach `_alt/instagram/`.
+- So bleiben URLs für n8n stabil + jede Iteration nachvollziehbar.
 
 ---
 
@@ -108,3 +124,5 @@ Für realistische Vorschau: `_tests/*.html` öffnen (Platzhalter bereits gefüll
 | Datum       | Änderung                                                     | Wer    |
 | ----------- | ------------------------------------------------------------ | ------ |
 | 2026-05-16  | Initial: Instagram + Facebook Templates, plattform-getrennt  | Claude |
+| 2026-05-17  | v2-v7: Foto-dominantes Layout mit Banner + Ginkgo + Logo-Karte | Claude |
+| 2026-05-17  | Versionierung: Standard.html = live, vN.html = Snapshot, _alt/ = Archiv | Claude |

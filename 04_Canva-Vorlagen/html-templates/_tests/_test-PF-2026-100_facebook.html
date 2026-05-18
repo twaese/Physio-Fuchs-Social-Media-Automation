@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>Facebook-Post Vorschau – PF-2026-100 (v7)</title>
+<style>
+  /*
+   * MOCKUP: PF-2026-100 als Facebook-Post.
+   * Bild = Live-Embed von PF_Feed_Standard.html (Portrait 4:5).
+   * Caption = field_10 aus SharePoint, Hashtags als 1. Kommentar (FB-Praxis).
+   */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f0f2f5;
+    padding: 40px 20px;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: #050505;
+  }
+  .post {
+    max-width: 540px;
+    margin: 0 auto;
+    background: #fff;
+    border-radius: 8px;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+
+  .fb-header {
+    display: flex; align-items: flex-start;
+    padding: 12px 16px 0;
+  }
+  .fb-avatar {
+    width: 40px; height: 40px;
+    border-radius: 50%; background: #fff;
+    border: 1px solid #ddd; overflow: hidden;
+    flex-shrink: 0;
+  }
+  .fb-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .fb-meta { margin-left: 8px; flex: 1; }
+  .fb-pagename {
+    font-weight: 600; font-size: 15px; color: #050505;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .fb-pagename .verified { color: #1877f2; font-size: 13px; }
+  .fb-time {
+    color: #65676b; font-size: 13px; margin-top: 2px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .fb-time::after { content: "·  🌍"; font-size: 11px; }
+  .fb-dots { color: #65676b; font-size: 18px; padding: 4px; }
+
+  .fb-caption {
+    padding: 12px 16px 14px;
+    font-size: 15px; line-height: 1.34;
+    color: #050505;
+  }
+  .fb-caption ol { margin: 6px 0 6px 22px; }
+  .fb-caption .more { color: #65676b; cursor: pointer; }
+
+  .fb-image {
+    width: 540px; height: 675px;
+    overflow: hidden; position: relative;
+    border-top: 1px solid #efefef;
+    border-bottom: 1px solid #efefef;
+  }
+  .fb-image iframe {
+    width: 1080px; height: 1350px;
+    transform: scale(0.5); transform-origin: top left;
+    border: 0; display: block;
+  }
+
+  .fb-reactions {
+    padding: 8px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; color: #65676b;
+  }
+  .fb-react-icons { display: flex; align-items: center; gap: 0; }
+  .fb-react-icon {
+    width: 18px; height: 18px; border-radius: 50%;
+    border: 2px solid #fff; display: inline-block;
+    margin-left: -4px;
+  }
+  .fb-react-icon.like { background: #1877f2; }
+  .fb-react-icon.love { background: #f33e58; }
+  .fb-react-icon.care { background: #f7b125; }
+  .fb-react-count { margin-left: 6px; }
+
+  .fb-actions {
+    border-top: 1px solid #ced0d4;
+    border-bottom: 1px solid #ced0d4;
+    margin: 0 16px;
+    padding: 4px 0;
+    display: flex; justify-content: space-around;
+  }
+  .fb-action {
+    flex: 1; text-align: center; padding: 8px 0;
+    color: #65676b; font-weight: 600; font-size: 14px;
+  }
+  .fb-action::before { content: "👍 "; font-weight: normal; margin-right: 4px; }
+  .fb-action.comment::before { content: "💬 "; }
+  .fb-action.share::before { content: "↗ "; }
+
+  .fb-first-comment {
+    padding: 12px 16px 14px;
+    display: flex; gap: 8px;
+    background: #f7f8fa;
+  }
+  .fb-first-comment .av {
+    width: 32px; height: 32px; border-radius: 50%;
+    overflow: hidden; flex-shrink: 0;
+  }
+  .fb-first-comment .av img { width: 100%; height: 100%; object-fit: cover; }
+  .fb-first-comment .bubble {
+    background: #fff; border-radius: 16px; padding: 8px 12px;
+    font-size: 13px; line-height: 1.35; flex: 1;
+  }
+  .fb-first-comment .bubble .who { font-weight: 600; font-size: 13px; }
+  .fb-first-comment .bubble .hashtags {
+    color: #1877f2; word-break: break-word; margin-top: 4px;
+  }
+
+  .meta {
+    max-width: 540px; margin: 24px auto 0; padding: 16px;
+    font-size: 12px; color: #555; background: #fff;
+    border-radius: 8px; border-left: 3px solid #1877f2;
+  }
+  .meta strong { color: #1877f2; }
+  .meta table { width: 100%; margin-top: 8px; border-collapse: collapse; }
+  .meta td { padding: 3px 6px; vertical-align: top; }
+  .meta td:first-child { color: #999; width: 180px; font-family: monospace; font-size: 11px; }
+</style>
+</head>
+<body>
+
+  <div class="post">
+
+    <div class="fb-header">
+      <div class="fb-avatar">
+        <img src="../assets/pf-logo-medaillon.png" alt="Physio Fuchs">
+      </div>
+      <div class="fb-meta">
+        <div class="fb-pagename">Physio Fuchs <span class="verified">✓</span></div>
+        <div class="fb-time">Vor 1 Std</div>
+      </div>
+      <div class="fb-dots">⋯</div>
+    </div>
+
+    <div class="fb-caption">
+      Drei kleine Schreibtisch-Übungen für Ihre Mittagspause:
+      <ol>
+        <li>Schultern kreisen</li>
+        <li>Rumpf drehen</li>
+        <li>Beine strecken</li>
+      </ol>
+      Bei Beschwerden bitte ärztlich oder physiotherapeutisch abklären lassen.
+      <br><br>
+      Welche Übung tut Ihrem Körper am besten? <span class="more">Mehr ansehen</span>
+    </div>
+
+    <!-- Bild = Live-Embed v7 -->
+    <div class="fb-image">
+      <iframe src="_active-preview.html"></iframe>
+    </div>
+
+    <div class="fb-reactions">
+      <div>
+        <span class="fb-react-icons">
+          <span class="fb-react-icon like"></span>
+          <span class="fb-react-icon love"></span>
+          <span class="fb-react-icon care"></span>
+        </span>
+        <span class="fb-react-count">Du und 42 weitere</span>
+      </div>
+      <div>5 Kommentare · 3 Mal geteilt</div>
+    </div>
+
+    <div class="fb-actions">
+      <div class="fb-action">Gefällt mir</div>
+      <div class="fb-action comment">Kommentieren</div>
+      <div class="fb-action share">Teilen</div>
+    </div>
+
+    <div class="fb-first-comment">
+      <div class="av">
+        <img src="../assets/pf-logo-medaillon.png" alt="Physio Fuchs">
+      </div>
+      <div class="bubble">
+        <div class="who">Physio Fuchs</div>
+        <div class="hashtags">
+          #physiofuchs #physiotherapie #büroübungen #rückengesundheit #pause
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="meta">
+    <strong>Facebook-Variante PF-2026-100</strong>
+    <table>
+      <tr><td>Image-Quelle</td><td>Live-Embed PF_Feed_Standard.html (1080×1350 Portrait)</td></tr>
+      <tr><td>Caption-Position</td><td>ÜBER dem Bild (FB-typisch)</td></tr>
+      <tr><td>Hashtags</td><td>als 1. Kommentar drunter (FB-Best-Practice)</td></tr>
+      <tr><td>TODO</td><td>Eigene FB-Variante 1080×1080 Square (PF_Feed_FB_v1.html)</td></tr>
+    </table>
+  </div>
+
+</body>
+</html>

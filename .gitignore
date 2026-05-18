@@ -1,0 +1,62 @@
+# Physio Fuchs Social Media – Git Ignore
+
+# Archiv-Ordner: alte Workflow-Versionen mit potenziell veralteten Secrets
+# (laut CLAUDE.md §6.1 read-only, nicht versionspflichtig)
+_Archiv/
+
+# Backup-Dateien
+*.bak
+*.bak.*
+*.backup
+*~
+*.swp
+*.swo
+
+# macOS Metadata
+.DS_Store
+._*
+
+# Sensitive Daten – sollten NIE committed werden
+.env
+.env.*
+!.env.example
+secrets/
+*.key
+*.pem
+
+# Excel-Snapshot ist groß und wird aus SharePoint regeneriert
+PF-Content-Kalender-2026.xlsx
+
+# n8n Test-Outputs
+*.tmp
+.cache/
+
+# IDE / Editor
+.vscode/
+.idea/
+*.iml
+
+# Claude Code lokale Settings
+.claude/settings.local.json
+
+# Avatar-Trainings-Videos (große Files + personenbezogene Daten)
+06_Avatar-Reel-Konzepte/Judith-Trainings-Material/*
+!06_Avatar-Reel-Konzepte/Judith-Trainings-Material/README.md
+!06_Avatar-Reel-Konzepte/Judith-Trainings-Material/.gitkeep
+
+# Generelle Video-/Audio-Files (nirgendwo im Repo)
+*.mp4
+*.mov
+*.m4v
+*.avi
+*.mkv
+*.webm
+*.wav
+*.mp3
+*.aac
+*.m4a
+
+# Symbole-Instagramm: Bilder, nicht Code
+# (auskommentiert – kann auch ins Repo wenn gewünscht für Backup)
+# Symbole-Instagramm/
+.smbdelete*

@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>LinkedIn-Post Vorschau – PF-2026-100 (v7)</title>
+<style>
+  /*
+   * MOCKUP: PF-2026-100 als LinkedIn-Post.
+   * Bild = Live-Embed von PF_Feed_Standard.html.
+   * Caption-Stil formaler/ausführlicher als IG, B2B-Tonalität.
+   * Hashtags 3-5 Stück, CamelCase, am Caption-Ende.
+   */
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: #f3f2ef;
+    padding: 40px 20px;
+    font-family: -apple-system, "Segoe UI", Helvetica, Arial, sans-serif;
+    color: rgba(0,0,0,0.9);
+    font-size: 14px;
+  }
+  .post {
+    max-width: 552px;
+    margin: 0 auto;
+    background: #fff;
+    border: 1px solid rgba(0,0,0,0.08);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+
+  .li-header {
+    display: flex; align-items: flex-start;
+    padding: 12px 16px 0;
+  }
+  .li-avatar {
+    width: 48px; height: 48px;
+    border-radius: 50%; background: #fff;
+    border: 1px solid #eaeaea; overflow: hidden;
+    flex-shrink: 0;
+  }
+  .li-avatar img { width: 100%; height: 100%; object-fit: cover; }
+  .li-meta { margin-left: 8px; flex: 1; line-height: 1.3; }
+  .li-pagename {
+    font-weight: 600; font-size: 14px; color: rgba(0,0,0,0.9);
+  }
+  .li-tagline {
+    color: rgba(0,0,0,0.6); font-size: 12px; margin-top: 1px;
+  }
+  .li-followers {
+    color: rgba(0,0,0,0.6); font-size: 12px; margin-top: 1px;
+  }
+  .li-time {
+    color: rgba(0,0,0,0.6); font-size: 12px; margin-top: 1px;
+    display: flex; align-items: center; gap: 4px;
+  }
+  .li-time::after { content: "·  🌐"; font-size: 11px; }
+  .li-follow-btn {
+    color: #0a66c2; font-weight: 600; font-size: 14px;
+    padding: 8px 14px; flex-shrink: 0;
+  }
+
+  .li-caption {
+    padding: 10px 16px 12px;
+    font-size: 14px; line-height: 1.43;
+    color: rgba(0,0,0,0.9);
+    white-space: pre-line;
+  }
+  .li-caption .more {
+    color: rgba(0,0,0,0.6); cursor: pointer; font-weight: 600;
+  }
+  .li-caption .hashtag {
+    color: #0a66c2; font-weight: 600;
+  }
+
+  /* === LI-Bild (Live-Embed v7) === */
+  .li-image {
+    width: 552px; height: 690px;
+    overflow: hidden; position: relative;
+  }
+  .li-image iframe {
+    width: 1080px; height: 1350px;
+    transform: scale(0.5111);
+    transform-origin: top left;
+    border: 0; display: block;
+  }
+
+  .li-reactions {
+    padding: 8px 16px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; color: rgba(0,0,0,0.6);
+    border-bottom: 1px solid rgba(0,0,0,0.08);
+  }
+  .li-react-icons { display: flex; align-items: center; }
+  .li-react-icon {
+    width: 16px; height: 16px; border-radius: 50%;
+    border: 2px solid #fff; display: inline-block;
+    margin-left: -4px;
+  }
+  .li-react-icon.like { background: #0a66c2; }
+  .li-react-icon.celebrate { background: #6dae4f; }
+  .li-react-icon.insight { background: #f5b800; }
+  .li-react-count { margin-left: 6px; }
+
+  .li-actions {
+    padding: 4px 8px;
+    display: flex; justify-content: space-around;
+  }
+  .li-action {
+    flex: 1; text-align: center; padding: 10px 0;
+    color: rgba(0,0,0,0.6); font-weight: 600; font-size: 14px;
+  }
+  .li-action::before { content: "👍 "; font-weight: normal; margin-right: 4px; }
+  .li-action.comment::before { content: "💬 "; }
+  .li-action.repost::before { content: "🔁 "; }
+  .li-action.send::before { content: "✉️ "; }
+
+  .meta {
+    max-width: 552px; margin: 24px auto 0; padding: 16px;
+    font-size: 12px; color: #555; background: #fff;
+    border-radius: 8px; border-left: 3px solid #0a66c2;
+  }
+  .meta strong { color: #0a66c2; }
+  .meta table { width: 100%; margin-top: 8px; border-collapse: collapse; }
+  .meta td { padding: 3px 6px; vertical-align: top; }
+  .meta td:first-child { color: #999; width: 200px; font-family: monospace; font-size: 11px; }
+</style>
+</head>
+<body>
+
+  <div class="post">
+
+    <div class="li-header">
+      <div class="li-avatar">
+        <img src="../assets/judith-byline-circle.png" alt="Judith Fuchs">
+      </div>
+      <div class="li-meta">
+        <div class="li-pagename">Judith Fuchs</div>
+        <div class="li-tagline">Inhaberin · Physio Fuchs · Physiotherapie in Ratingen-Lintorf</div>
+        <div class="li-followers">412 Follower:innen</div>
+        <div class="li-time">Vor 1 Std.</div>
+      </div>
+      <div class="li-follow-btn">+ Folgen</div>
+    </div>
+
+    <div class="li-caption">Wir hören es täglich in der Praxis: Nach acht Stunden am Schreibtisch wird der Rücken steif, der Nacken zieht, die Konzentration sinkt.
+
+Drei kleine Übungen, die wir unseren Patientinnen und Patienten als Mittagspausen-Routine empfehlen — direkt am Arbeitsplatz, ohne Equipment:
+
+1. Schultern langsam kreisen (10×)
+2. Rumpf zu beiden Seiten drehen (5×)
+3. Beine unter dem Schreibtisch strecken (15 Sek)
+
+Zwei Minuten, jeden Tag. Mehr braucht es oft nicht, um den Tag deutlich beschwerdefreier zu Ende zu bringen.
+
+Bei anhaltenden Beschwerden empfehlen wir eine ärztliche oder physiotherapeutische Abklärung — präventiv handeln ist immer effektiver als reaktiv.
+
+<span class="more">… mehr</span>
+
+<span class="hashtag">#Physiotherapie</span> <span class="hashtag">#Gesundheitamarbeitsplatz</span> <span class="hashtag">#Praevention</span> <span class="hashtag">#RatingenLintorf</span> <span class="hashtag">#PhysioFuchs</span></div>
+
+    <!-- Bild = Live-Embed v7 -->
+    <div class="li-image">
+      <iframe src="_active-preview.html"></iframe>
+    </div>
+
+    <div class="li-reactions">
+      <div>
+        <span class="li-react-icons">
+          <span class="li-react-icon like"></span>
+          <span class="li-react-icon celebrate"></span>
+          <span class="li-react-icon insight"></span>
+        </span>
+        <span class="li-react-count">Sebastian Müller und 67 weitere</span>
+      </div>
+      <div>8 Kommentare · 4 Reposts</div>
+    </div>
+
+    <div class="li-actions">
+      <div class="li-action">Gefällt mir</div>
+      <div class="li-action comment">Kommentieren</div>
+      <div class="li-action repost">Wiederveröffentlichen</div>
+      <div class="li-action send">Senden</div>
+    </div>
+
+  </div>
+
+  <div class="meta">
+    <strong>LinkedIn-Variante PF-2026-100</strong>
+    <table>
+      <tr><td>Image-Quelle</td><td>Live-Embed PF_Feed_Standard.html (1080×1350 Portrait)</td></tr>
+      <tr><td>Caption-Stil</td><td>formaler, ausführlicher, B2B-Tonalität</td></tr>
+      <tr><td>Hashtags</td><td>3–5, am Caption-Ende, CamelCase</td></tr>
+      <tr><td>Personen-Avatar</td><td>Judith-Portrait (LinkedIn ist persönliche Seite)</td></tr>
+      <tr><td>TODO</td><td>Eigene LinkedIn-Variante 1200×1200 Square (PF_Feed_LI_v1.html)</td></tr>
+    </table>
+  </div>
+
+</body>
+</html>

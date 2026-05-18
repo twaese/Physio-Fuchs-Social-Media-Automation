@@ -1,0 +1,195 @@
+{
+  "name": "PF – WF-00 Datum Initialbefüllung",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## PF – WF-00 Datum Initialbefüllung\n\n**Zweck:** Einmalig alle SharePoint-Items OHNE Veröffentlichungsdatum\nmit wöchentlichem Abstand ab heute befüllen.\n\n**Logik:**\nItem 1 → heute + 7 Tage\nItem 2 → heute + 14 Tage\nItem 3 → heute + 21 Tage\n...\n\n**NUR EINMAL AUSFÜHREN!**\nDanach deaktivieren oder löschen.",
+        "height": 180,
+        "width": 700,
+        "color": 4
+      },
+      "id": "wf00-sticky",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "wf00-trigger",
+      "name": "Manueller Start",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        280,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "item",
+        "site": {
+          "__rl": true,
+          "value": "physiofuchs889.sharepoint.com,c74040a2-0d6b-4385-b514-fbd9830a56ac,7a7842d6-ea6c-440d-aeed-580bdd2a091c",
+          "mode": "list",
+          "cachedResultName": "Physio Fuchs Administration"
+        },
+        "list": {
+          "__rl": true,
+          "value": "d17a6a6f-e6ef-457d-a2a9-4c30ea56120f",
+          "mode": "list",
+          "cachedResultName": "PF-Content-Kalender-2026"
+        },
+        "returnAll": true,
+        "simplify": false,
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [
+        520,
+        440
+      ],
+      "id": "wf00-get-items",
+      "name": "Alle Items laden",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = .all();\n\n// Nur Items ohne Veroeffentlichungsdatum (field_14)\nconst ohneDatum = items.filter(item => {\n  const f = item.json.fields || item.json;\n  return !f.field_14 || f.field_14 === '' || f.field_14 === null;\n});\n\nconsole.log('Gefunden: ' + items.length + ' Items total, ' + ohneDatum.length + ' ohne Datum');\n\n// Startdatum: heute + 7 Tage\nconst heute = new Date();\nheute.setHours(0,0,0,0);\n\nreturn ohneDatum.map((item, index) => {\n  const f = item.json.fields || item.json;\n  \n  // Datum berechnen: +7, +14, +21...\n  const d = new Date(heute);\n  d.setDate(d.getDate() + (7 * (index + 1)));\n  \n  const dd   = String(d.getDate()).padStart(2,'0');\n  const mm   = String(d.getMonth()+1).padStart(2,'0');\n  const yyyy = d.getFullYear();\n  const datum = yyyy+'-'+mm+'-'+dd+'T00:00:00Z';\n  \n  // Item-ID ermitteln\n  const itemId = parseInt(String(item.json.id || item.json.AUSWEIS || item.json.ID || 0).trim(), 10);\n  \n  return {\n    json: {\n      itemId,\n      datum,\n      index: index + 1,\n      thema: f.field_1 || f.Title || '(kein Thema)'\n    }\n  };\n});"
+      },
+      "id": "wf00-calc-dates",
+      "name": "Datum berechnen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        760,
+        440
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $json.itemId }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-HTTP-Method",
+              "value": "MERGE"
+            },
+            {
+              "name": "IF-MATCH",
+              "value": "*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"field_14\": \"{{ $json.datum }}\"\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [
+        1000,
+        440
+      ],
+      "id": "wf00-update-item",
+      "name": "SharePoint: Datum eintragen",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconsole.log(`✅ ${items.length} Items mit Datum befüllt`);\nreturn [{ json: { message: `${items.length} Items erfolgreich mit Datum befüllt`, fertig: true } }];"
+      },
+      "id": "wf00-summary",
+      "name": "Zusammenfassung",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        440
+      ]
+    }
+  ],
+  "connections": {
+    "Manueller Start": {
+      "main": [
+        [
+          {
+            "node": "Alle Items laden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Alle Items laden": {
+      "main": [
+        [
+          {
+            "node": "Datum berechnen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Datum berechnen": {
+      "main": [
+        [
+          {
+            "node": "SharePoint: Datum eintragen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SharePoint: Datum eintragen": {
+      "main": [
+        [
+          {
+            "node": "Zusammenfassung",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "v1-2026-05-11",
+  "meta": {
+    "instanceId": "f40c6f6af7ce2011b04be6e4c65abbc6b998ddefd762d8f282912f30a607f9b9"
+  },
+  "id": "PF-WF00-DATUM",
+  "tags": []
+}

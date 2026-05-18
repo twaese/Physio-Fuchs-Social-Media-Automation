@@ -1,0 +1,391 @@
+{
+  "name": "PF WF-03 Social Media Post v6",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF-03 v6 — Posting auf Instagram + Facebook\n\n**Was tut dieser Workflow:**\nStündlich alle SharePoint-Items mit `Status=Bereit` prüfen und posten:\n1. Karenz-Check: ≥24h seit letztem Modify\n2. Schedule-Check: geplantes Datum/Uhrzeit erreicht\n3. Instagram: Container + Wait 15s + Publish\n4. Facebook: Photo + Comment mit Hashtags\n5. Status → Veröffentlicht, Post-IDs in SP\n\n**Bilder kommen aus GitHub-Raw-URLs** (von WF-02 v18.2 gepusht).\n\n**Tokens (Env-Vars):**\n- IG_BUSINESS_ACCOUNT_ID hardcoded: 17841461169626096\n- FB_PAGE_ID = $env.FB_PAGE_ID\n- Auth via n8n facebookGraphApi-Credential",
+        "height": 380,
+        "width": 480,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2800,
+        -200
+      ],
+      "id": "doc-wf03-overview",
+      "name": "Doku: Overview"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2272,
+        100
+      ],
+      "id": "trigger-cron-wf03",
+      "name": "Cron: stündlich"
+    },
+    {
+      "parameters": {
+        "resource": "item",
+        "site": {
+          "__rl": true,
+          "value": "physiofuchs889.sharepoint.com,c74040a2-0d6b-4385-b514-fbd9830a56ac,7a7842d6-ea6c-440d-aeed-580bdd2a091c",
+          "mode": "list",
+          "cachedResultName": "Physio Fuchs Administration"
+        },
+        "list": {
+          "__rl": true,
+          "value": "d17a6a6f-e6ef-457d-a2a9-4c30ea56120f",
+          "mode": "list",
+          "cachedResultName": "PF-Content-Kalender-2026"
+        },
+        "options": {
+          "fields": [
+            "fields"
+          ]
+        },
+        "simplify": false,
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [
+        -2048,
+        100
+      ],
+      "id": "sp-get-bereit",
+      "name": "SP: Bereit-Items holen",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF-03 v6 Filter: Karenz-Check + Schedule-Check\nconst items = $input.all();\nconst now = new Date();\nconst KARENZ_HOURS = 24;\nconst results = [];\nconst skipped = [];\n\nfor (const item of items) {\n  const j = item.json;\n  const f = j.fields || {};\n  const status = f.field_6;\n  const modified = j.lastModifiedDateTime || j.Modified;\n  const datumRaw = f.Ver_x00f6_ffentlichungsdatum;\n  const uhrzeit = (f.field_5 || '09:00').trim();\n  const itemId = j.id || j.Ausweis || f.AUSWEIS;\n  const title = f.Title || f.Titel || '';\n\n  const reasons = [];\n  if (status !== 'Bereit') reasons.push(`status=${status}`);\n\n  // Karenz-Check: muss seit Status=Bereit mind. 24h vergangen sein\n  if (modified) {\n    const modifiedDate = new Date(modified);\n    const hoursSinceModified = (now - modifiedDate) / (1000 * 60 * 60);\n    if (hoursSinceModified < KARENZ_HOURS) {\n      reasons.push(`karenz_läuft (${hoursSinceModified.toFixed(1)}h von ${KARENZ_HOURS}h)`);\n    }\n  } else {\n    reasons.push('modified_fehlt');\n  }\n\n  // Schedule-Check: geplantes Datum + Uhrzeit erreicht?\n  if (datumRaw) {\n    const dateOnly = String(datumRaw).split('T')[0];\n    const scheduledTime = new Date(`${dateOnly}T${uhrzeit}:00`);\n    if (isNaN(scheduledTime)) {\n      reasons.push(`schedule_invalid (${dateOnly} ${uhrzeit})`);\n    } else if (scheduledTime > now) {\n      reasons.push(`scheduled_future (${dateOnly} ${uhrzeit})`);\n    }\n  } else {\n    reasons.push('veröffentlichungsdatum_leer');\n  }\n\n  // Bild-URLs müssen da sein\n  const igUrl = f.field_9 || '';\n  const fbUrl = f.Bild_FB_Dateiname || '';\n  if (!igUrl.startsWith('https://')) reasons.push('field_9_keine_url');\n  if (!fbUrl.startsWith('https://')) reasons.push('Bild_FB_Dateiname_keine_url');\n\n  if (reasons.length > 0) {\n    skipped.push({ id: itemId, title, reasons });\n    continue;\n  }\n\n  const hashtags = f.field_7 || '';\n  const caption = (f.field_10 || '').trim();\n\n  results.push({\n    json: {\n      item_id: itemId,\n      title,\n      image_url_ig: igUrl,\n      image_url_fb: fbUrl,\n      caption,\n      hashtags,\n      caption_with_hashtags: caption + (hashtags ? '\\n\\n' + hashtags : ''),\n      sp_fields: f,\n    }\n  });\n}\n\nif (results.length === 0) {\n  return [{ json: {\n    info: 'Keine Items posting-bereit',\n    today: now.toISOString().slice(0, 16),\n    karenz_hours: KARENZ_HOURS,\n    total_items: items.length,\n    skipped: skipped.slice(0, 20)\n  }}];\n}\n\nreturn results.slice(0, 1);  // 1 Item pro Cron-Lauf (multi-item bug in v6)"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1824,
+        100
+      ],
+      "id": "code-filter-karenz",
+      "name": "Filter: Karenz + Schedule"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v25.0/17841461169626096/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "specifyBody": "fieldsBelow",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $json.image_url_ig }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $json.caption_with_hashtags }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1600,
+        -50
+      ],
+      "id": "ig-container",
+      "name": "IG: Container erstellen"
+    },
+    {
+      "parameters": {
+        "amount": 15,
+        "unit": "seconds"
+      },
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -1376,
+        -50
+      ],
+      "id": "ig-wait-15s",
+      "name": "Wait 15s (IG Processing)",
+      "webhookId": "wf03-wait-15s"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v25.0/17841461169626096/media_publish",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "specifyBody": "fieldsBelow",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('IG: Container erstellen').item.json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1152,
+        -50
+      ],
+      "id": "ig-publish",
+      "name": "IG: Publish"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/{{ $env.FB_PAGE_ID }}/photos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "specifyBody": "fieldsBelow",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $('Filter: Karenz + Schedule').item.json.image_url_fb }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $('Filter: Karenz + Schedule').item.json.caption }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1600,
+        250
+      ],
+      "id": "fb-photo",
+      "name": "FB: Photo"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/{{ $('FB: Photo').item.json.post_id }}/comments",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "specifyBody": "fieldsBelow",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "message",
+              "value": "={{ $('Filter: Karenz + Schedule').item.json.hashtags }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1376,
+        250
+      ],
+      "id": "fb-comment",
+      "name": "FB: Hashtag-Comment"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build SP-Update Payload für Status=Veröffentlicht\nconst itemId = $('Filter: Karenz + Schedule').item.json.item_id;\nconst igResp = $('IG: Publish').item.json;\nconst fbResp = $('FB: Photo').item.json;\n\nconst igPostId = igResp.id || '';\nconst fbPostId = fbResp.id || fbResp.post_id || '';\n\nconst now = new Date().toISOString().replace('T', ' ').slice(0, 16);\nconst f = $('Filter: Karenz + Schedule').item.json.sp_fields;\nconst existingLog = f.field_13 || '';\nconst logEntry = `\\n${now} WF-03 v6: Veröffentlicht — IG ${igPostId || '✗'} / FB ${fbPostId || '✗'}`;\n\nreturn [{\n  json: {\n    _sp_item_id: itemId,\n    payload: {\n      field_6: 'Veröffentlicht',\n      field_12: igPostId,      // Instagram_Post_ID\n      field_13: existingLog + logEntry,\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -928,
+        100
+      ],
+      "id": "code-sp-update-published",
+      "name": "Code: SP-Update Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $json._sp_item_id }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-HTTP-Method",
+              "value": "MERGE"
+            },
+            {
+              "name": "IF-MATCH",
+              "value": "*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -704,
+        100
+      ],
+      "id": "sp-status-veroeffentlicht",
+      "name": "SP: Status Veröffentlicht"
+    }
+  ],
+  "connections": {
+    "Cron: stündlich": {
+      "main": [
+        [
+          {
+            "node": "SP: Bereit-Items holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SP: Bereit-Items holen": {
+      "main": [
+        [
+          {
+            "node": "Filter: Karenz + Schedule",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: Karenz + Schedule": {
+      "main": [
+        [
+          {
+            "node": "IG: Container erstellen",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "FB: Photo",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG: Container erstellen": {
+      "main": [
+        [
+          {
+            "node": "Wait 15s (IG Processing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 15s (IG Processing)": {
+      "main": [
+        [
+          {
+            "node": "IG: Publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG: Publish": {
+      "main": [
+        [
+          {
+            "node": "Code: SP-Update Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FB: Photo": {
+      "main": [
+        [
+          {
+            "node": "FB: Hashtag-Comment",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FB: Hashtag-Comment": {
+      "main": [
+        [
+          {
+            "node": "Code: SP-Update Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: SP-Update Payload": {
+      "main": [
+        [
+          {
+            "node": "SP: Status Veröffentlicht",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "v6"
+}

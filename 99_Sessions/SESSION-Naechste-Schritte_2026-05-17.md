@@ -1,13 +1,15 @@
-# Nächste Session – Pipeline-Finish: Bild-Hosting + WF-03 v6
+# Nächste Session – Pipeline-Finish: Bild-Hosting + WF-03 v6  ✅ ABGESCHLOSSEN
 
-**Stand:** 2026-05-17, mittags
-**Heute erreicht:** Foto-dominantes Layout v12 (Hintergrund-Foto + grüner Titel-Banner + Ginkgo + Logo-Karte) ist final, alle Plattform-Mockups sync.
+**Stand:** 2026-05-17, abends — **alles erledigt, Pipeline live!**
+**Heute erreicht:** Layout v12 final + GitHub-Push als Bild-Hosting + WF-03 v6 (Karenz + IG/FB-Posting) live + erster echter Post auf @physio_fuchs_lintorf und FB Page „Physio Fuchs Lintorf".
+
+➡️ **Folge-Session: `SESSION-Naechste-Schritte_2026-05-18.md`**
 
 ---
 
-## 1. Was als Nächstes ansteht
+## 1. Was als Nächstes ansteht (ABGEARBEITET)
 
-### 1.0 BLOCKER: Bild-Hosting für Meta-Posting
+### 1.0 BLOCKER: Bild-Hosting für Meta-Posting ✅
 
 **Problem aus Sitzung 16.05.:** SharePoint-Library-Bilder sind nicht öffentlich erreichbar (auch nach Tenant + Site-Sharing auf „Jeder", Login-Prompt im Incognito blieb). Meta kann sie nicht laden.
 
@@ -25,7 +27,7 @@
    ```
 3. `docker compose restart n8n` damit Env-Var greift
 
-### 1.1 WF-02 v18.2 — GitHub-Push erweitern (~30 Min Claude-Arbeit)
+### 1.1 WF-02 v18.2 — GitHub-Push erweitern ✅
 
 Nach jedem Gotenberg-Render (IG + FB) zusätzlich:
 
@@ -48,7 +50,7 @@ https://raw.githubusercontent.com/twaese/Physio-Fuchs-Social-Media-Automation/ma
 
 Diese URL kommt in `field_9` (IG) bzw. `Bild_FB_Dateiname` (FB) statt der internen SharePoint-URL. SharePoint-Doc-Library bleibt parallel als Audit-Backup.
 
-### 1.2 WF-03 v6 — Karenz + Meta Graph Posting (~1 h)
+### 1.2 WF-03 v6 — Karenz + Meta Graph Posting ✅
 
 Bauen ab v5-Architektur (Posting-Logik funktionierte schon), aber:
 - Canva-MCP komplett raus (Bilder kommen jetzt aus GitHub)
@@ -129,3 +131,7 @@ WF-03 v6 (Posting)
 | Datum       | Was                                                       | Wer    |
 | ----------- | --------------------------------------------------------- | ------ |
 | 2026-05-17  | Layout v12 final, alle Mockups sync, aufgeräumt          | Claude |
+| 2026-05-17  | GitHub-Push als Bild-Hosting in WF-02 v18.2 live          | Claude / Thomas |
+| 2026-05-17  | WF-03 v6 (Karenz + IG/FB Posting) gebaut + getestet + LIVE | Claude / Thomas |
+| 2026-05-17  | Erster echter Post auf @physio_fuchs_lintorf + FB Page    | Claude / Thomas |
+| 2026-05-17  | Alle WF-Doku + Konzept-Doku aktualisiert (v18.2 + v6)     | Claude |

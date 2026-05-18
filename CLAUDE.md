@@ -270,3 +270,23 @@ Genauer beschrieben in `00_Konzept/Workflow-Konzept.md`.
 |             | Notbremsen. Canva-Pipeline → Gotenberg+HTML.        |                |
 | 2026-05-16  | Status `Wartet-auf-Avatar` ergänzt — Avatar-Branch  | Claude / Thomas|
 |             | Avatar-ready, via `AVATAR_ENABLED`-Flag aktivierbar |                |
+| 2026-05-17  | Layout v12 final (Foto + Banner + Ginkgo + Logo)    | Claude / Thomas|
+| 2026-05-17  | WF-02 v18.2 live: GitHub-Push als public Bild-      | Claude / Thomas|
+|             | Hosting (statt SP-URL, da Meta SP-Auth nicht kann). |                |
+|             | `GITHUB_TOKEN` als neue Env-Var ergänzt.            |                |
+| 2026-05-17  | WF-03 v6 live: Karenz + Schedule-Filter + Meta      | Claude / Thomas|
+|             | Graph IG/FB Posting + SP-Status-Update. Erster      |                |
+|             | echter Post auf @physio_fuchs_lintorf + FB Page.    |                |
+|             | `FB_PAGE_ID`, `META_APP_ID` als Env-Vars ergänzt.   |                |
+| 2026-05-17  | Doku komplett aktualisiert (WF-02, WF-03, README,   | Claude         |
+|             | Workflow-Konzept, Session 18.5.)                    |                |
+| 2026-05-18  | Erster vollautomatischer Post: PF-2026-001 ohne     | Claude / Thomas|
+|             | manuellen Eingriff durch WF-02 → WF-03 → IG+FB live.|                |
+|             | Timezone-Bug in FilterKZ behoben (Berlin-Offset).   |                |
+| 2026-05-18  | WF-02 Merge-Code Doppel-Bug behoben: `.item`        | Claude / Thomas|
+|             | → `.first()` + field_9 → field_8. Bild_Dateiname    |                |
+|             | wird nun automatisch befüllt. Mit PF-2026-007       |                |
+|             | verifiziert. Pipeline 100% selbstheilend.           |                |
+| 2026-05-18  | Hashtag-Dopplung in IG-Caption gefixt: WF-02        | Claude / Thomas|
+|             | schreibt nur reine Caption in field_10, Hashtags    |                |
+|             | nur in field_7. WF-03 hängt für IG einmalig dran.   |                |

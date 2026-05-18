@@ -12,8 +12,8 @@ diese Markdowns beschreiben Zweck, Trigger, Nodes und Felder.
 | ----- | ------------------------------- | ------------------------------------------- | ------------------------------------------------------- |
 | WF-00 | Datum-Initialbefüllung          | `PF_WF-00_Datum_Initialbefllung_v1.json`    | Einmaliges Befüllen leerer Datumsfelder im SP-Kalender  |
 | WF-01 | Formular → SharePoint           | `PF_WF-01_Formular_SharePoint_v1.json`      | Webhook-Empfang, neues SP-Item mit Status `Entwurf`     |
-| WF-02 | Caption-Generator               | `PF_WF-02_Caption_Generator_v17.json`       | LLM erzeugt Caption + Hashtags + Bildbrief; Auto-Release-Branch für Standard-Posts ab v17 |
-| WF-03 | Social Media Post               | `PF_WF-03_Social_Media_Post_v4.json`        | Canva-Grafik, Vorschau, Freigabe-Card, Posting          |
+| WF-02 | Caption-Generator + Bild + GitHub-Push | `PF_WF-02_Caption_Generator_v18.2.json` | LLM-Caption, Gotenberg-Render (IG+FB), GitHub-Push als public Bild-Hosting, HWG-Filter, Status→Bereit |
+| WF-03 | Social Media Post (Karenz + Posting) | `PF_WF-03_Social_Media_Post_v6.json`      | Karenz 24h, Schedule-Check, Meta Graph Posting IG+FB, SP-Status→Veröffentlicht |
 | WF-04 | Monats-Scheduler Standard-Post  | `PF_WF-04_Monats_Scheduler_v1.json`         | Plant 1× pro Monat einen Standard-Feed-Post auf freien Tag |
 
 **Archivierte Workflow-Versionen** liegen in `_Archiv-Workflows/` (im Git
@@ -22,58 +22,49 @@ aktuellen Strukturierung liegen in `_Archiv/` (read-only, nicht im Git).
 
 ---
 
-## Datenfluss (vereinfacht)
+## Datenfluss (Stand 2026-05-17, Vollautomatik)
 
-### Wochenformat (Übung / Reel / Story)
+### Standard-Pipeline (Tipp / Standard / FAQ / Promo / Aktion / etc.)
 
 ```
 Judith ──► HTML-Formular ──► WF-01 ──► SharePoint (Status: Entwurf)
                                           │
-                                  WF-02 erzeugt Caption + Hashtags
-                                          │  (Status bleibt Entwurf)
-                                          ▼
-                                  WF-03 Phase A erzeugt Canva-Design
-                                          │  setzt Status: Bereit
-                                          ▼
-                                  Teams-Card an Judith
+                                  WF-02 v18.2 (stündl. Cron, 1 Item/Lauf):
+                                  - Claude erzeugt Caption + Hashtags
+                                  - HWG-Filter → bei Treffer: Status `Geblockt` + Teams-Alert
+                                  - HTML-Template + Gotenberg → IG+FB PNG
+                                  - GitHub-Push → public raw.githubusercontent URLs
+                                  - SP-Upload (Audit-Backup)
+                                  - Status: Bereit
                                           │
-                                  Judith klickt "Freigeben"
-                                          │  Status: Freigegeben
+                                          ▼ 24h-Karenz läuft
+                                          │
+                                  WF-03 v6 (stündl. Cron, 1 Item/Lauf):
+                                  - FilterKZ prüft: Karenz erfüllt + Datum erreicht
+                                  - IG: Container → Wait 15s → Publish
+                                  - FB: Photo → Hashtag-Comment (1. Kommentar)
+                                  - Status: Veröffentlicht + IG-Post-ID
+```
+
+### Reel / Übung / Story
+
+```
+Judith ──► HTML-Formular ──► WF-01 ──► SharePoint (Status: Entwurf)
+                                          │
+                                  WF-02 v18.2 Avatar-Skip:
+                                  - Validate: continue → kein Processing
+                                  - Item bleibt im Status `Entwurf`, wartet auf Avatar-Pipeline
+                                          │
                                           ▼
-                                  WF-03 Phase C plant bei Meta ein
-                                          │  Status: Geplant
-                                          ▼
-                                  WF-03 Phase D Live-Check
-                                          │  Status: Veröffentlicht
+                                  (geplant Track 2: D-ID Avatar + Voice-Clone)
+                                  AVATAR_ENABLED-Flag aktiviert dann eigenen Branch
 ```
 
-### Monatlicher Standard-Feed-Post (automatisch via WF-04)
+**Sicherheitsnetze (statt manueller Freigabe):**
+1. **HWG-Filter** in WF-02 (Heilversprechen-Blacklist) → Status `Geblockt`
+2. **24h-Karenz** in WF-03 (Filter Karenz+Schedule) → Judith kann während Karenz manuell zurückziehen
 
-```
-Cron 1. d. Monats ──► WF-04 sucht Kandidat im Pool
-                        │  field_2 ∈ Standard-Post-Typen, Status: Entwurf,
-                        │  field_4 leer
-                        ▼
-                      WF-04 lädt belegte Tage des Monats
-                        │  (Reels/Stories/freigegebene Posts)
-                        ▼
-                      WF-04 wählt freien Dienstag (Fallbacks s. Doku)
-                        │
-                        ▼
-                      SharePoint-Update: field_4 + field_5 + [AUTO_RELEASE]
-                        │  Status bleibt Entwurf
-                        ▼
-                      WF-02 erzeugt Caption + Hashtags
-                        │  Status: Bereit
-                        ▼
-                      WF-03 Phase B2 erkennt [AUTO_RELEASE]
-                        │  Status direkt: Freigegeben (keine Teams-Card)
-                        ▼
-                      WF-03 Phase C/D wie oben → Veröffentlicht
-```
-
-Reels, Stories und `Übung` laufen **nie** über Auto-Release –
-für sie gilt immer die manuelle Freigabe durch Judith.
+WF-04 (Monats-Scheduler) und Auto-Release-Mechanismen sind in der aktuellen Vollautomatik-Architektur **nicht mehr aktiv** — die manuellen Workflows wurden in den letzten Sessions durch HWG-Filter + Karenz ersetzt. WF-04-Doku bleibt vorerst für Referenz/Rollback liegen.
 
 ---
 
@@ -85,15 +76,22 @@ für sie gilt immer die manuelle Freigabe durch Judith.
 - Webhook-Pfade: `pf-wf<NN>-<thema>` (lowercase, bindestrich-separiert)
 
 ### Credentials (Platzhalter, nicht echte Werte!)
-| Name (in n8n)               | Verwendet in              |
-| --------------------------- | ------------------------- |
-| `PF Microsoft SharePoint`   | WF-01, WF-02, WF-03       |
-| `PF Microsoft Teams`        | WF-01, WF-03              |
-| `PF Anthropic / OpenAI`     | WF-02, WF-03              |
-| `PF Canva Connect`          | WF-03                     |
-| `PF Meta Graph API`         | WF-03                     |
+| Name (in n8n)                       | Verwendet in              |
+| ----------------------------------- | ------------------------- |
+| `PF Microsoft SharePoint account`   | WF-01, WF-02, WF-03       |
+| `PF Microsoft Teams`                | WF-01, WF-02 (HWG-Alert)  |
+| `PF Anthropic` (Claude)             | WF-02                     |
+| `PF Facebook Graph account`         | WF-03 (IG+FB Posting)     |
 
-Echte Tokens **nur** im n8n Credential Store, niemals in JSON oder hier.
+### Env-Vars (`/docker/n8n/.env`)
+| Name              | Verwendet in           |
+| ----------------- | ---------------------- |
+| `GITHUB_TOKEN`    | WF-02 GitHub-Push      |
+| `FB_PAGE_ID`      | WF-03 FB-Posting       |
+| `META_APP_ID`     | WF-03 (Referenz)       |
+
+**Wichtig:** Nach Env-Tausch immer `docker compose up -d --force-recreate n8n` (restart reicht NICHT).
+Echte Tokens **nur** im n8n Credential Store bzw. in der `.env`, niemals in JSON oder hier.
 
 ### Sticky Notes in n8n
 Jeder Workflow startet mit einer großen gelben Sticky-Note, die enthält:
@@ -121,6 +119,8 @@ Jeder Workflow startet mit einer großen gelben Sticky-Note, die enthält:
 
 ## Roadmap
 
+- **WF-02 v19**: paired-items-Refactor → Multi-Item-Modus (mehrere Posts pro Cron-Lauf)
+- **WF-02 v20 / WF-Avatar**: D-ID-Avatar-Branch live (Reel/Übung/Story) — bisher übersprungen
+- **WF-03 v7**: LinkedIn als 3. Plattform (sobald LinkedIn-Template fertig)
 - WF-05: Insights-Sync (Reach/Likes/Saves zurück in SharePoint)
 - WF-06: Kommentar-Monitor (DM/Comment-Triage in Teams)
-- WF-07: Avatar-Render-Bridge (HeyGen-API → MP4 → SharePoint)

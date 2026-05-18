@@ -136,3 +136,4 @@ Für realistische Vorschau: `_tests/*.html` öffnen (Platzhalter bereits gefüll
 | 2026-05-17  | Versionierung: Standard.html = live, vN.html = Snapshot, _alt/ = Archiv | Claude |
 | 2026-05-17  | v12 finalisiert: Logo 210px innerhalb kompakter Karte, „Physio Fuchs" Garamond 44px | Claude |
 | 2026-05-17  | _active-preview.html als zentraler Mockup-Embed-Pfad eingeführt | Claude |
+| 2026-05-17  | **Layout v12 in Produktion**: erster echter Post auf @physio_fuchs_lintorf + FB Page rendert mit `instagram/PF_Feed_Standard.html` und `facebook/PF_Feed_FB_Standard.html` über Gotenberg-Sidecar, gepusht via WF-02 v18.2 + WF-03 v6 | Claude / Thomas |

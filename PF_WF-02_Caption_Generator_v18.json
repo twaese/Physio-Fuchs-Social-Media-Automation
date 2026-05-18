@@ -1,0 +1,940 @@
+{
+  "name": "PF WF-02 Caption Generator v18",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF-02 v18 — Vollautomatik\n\n**Was tut dieser Workflow:**\nStündlich alle SharePoint-Items mit `Status=Entwurf` verarbeiten:\n1. Caption + Hashtags via Claude generieren\n2. HWG-Filter prüfen (Heilversprechen blockieren)\n3. HTML-Template rendern (Gotenberg) — Instagram + Facebook\n4. Bilder in SharePoint Doc-Library `Social-Media-Assets` hochladen\n5. Status setzen: `Bereit` / `Geblockt` / `Wartet-auf-Avatar`\n\n**Avatar-Posts** (Reel/Übung/Story) parken bis `AVATAR_ENABLED=true`.\n\n**KEIN Teams-Wait mehr** — Auto-Release. 24h-Karenz macht WF-03.\n\n**Build-Spec:** `02_n8n-Workflows/WF-02_v18_Build-Spec.md`",
+        "height": 360,
+        "width": 480,
+        "color": 4
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2800,
+        80
+      ],
+      "id": "3b4282a5-f63b-478a-a0ed-409953261555",
+      "name": "Doku: Overview"
+    },
+    {
+      "parameters": {
+        "content": "## Konstanten (in Code-Nodes dupliziert)\n\n```javascript\nconst AVATAR_ENABLED = false;\nconst AVATAR_PROVIDER = \"d-id\";\nconst AVATAR_ID = \"judith_v1\";\n\nconst GOTENBERG_URL = \"http://gotenberg:3000/forms/chromium/screenshot/html\";\n\nconst SP_SITE_URL = \"https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW\";\nconst SP_LIST_GUID = \"d17a6a6f-e6ef-457d-a2a9-4c30ea56120f\";\nconst SP_DOCLIB_GUID = \"c1f0a171-5df2-4c8b-9ab4-db3ed8e76266\";\nconst SP_DOCLIB_NAME = \"Social-Media-Assets\";\n\nconst REPO_RAW = \"https://raw.githubusercontent.com/twaese/Physio-Fuchs-Social-Media-Automation/main\";\nconst IG_TPL = REPO_RAW + \"/04_Canva-Vorlagen/html-templates/instagram/PF_Feed_Standard.html\";\nconst FB_TPL = REPO_RAW + \"/04_Canva-Vorlagen/html-templates/facebook/PF_Feed_FB_Standard.html\";\n```",
+        "height": 480,
+        "width": 480,
+        "color": 5
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -2800,
+        480
+      ],
+      "id": "f0c293ff-a33d-4c84-8d9b-1eca1d8bfe60",
+      "name": "Doku: Konstanten"
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours"
+            }
+          ]
+        }
+      },
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -2272,
+        304
+      ],
+      "id": "eb3ee415-7152-4888-a951-6181f7412a36",
+      "name": "Cron: stündlich"
+    },
+    {
+      "parameters": {
+        "resource": "item",
+        "site": {
+          "__rl": true,
+          "value": "physiofuchs889.sharepoint.com,c74040a2-0d6b-4385-b514-fbd9830a56ac,7a7842d6-ea6c-440d-aeed-580bdd2a091c",
+          "mode": "list",
+          "cachedResultName": "Physio Fuchs Administration"
+        },
+        "list": {
+          "__rl": true,
+          "value": "d17a6a6f-e6ef-457d-a2a9-4c30ea56120f",
+          "mode": "list",
+          "cachedResultName": "PF-Content-Kalender-2026"
+        },
+        "options": {
+          "fields": [
+            "fields"
+          ]
+        },
+        "simplify": false,
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [
+        -2048,
+        304
+      ],
+      "id": "b7eb5c30-d18c-4dbb-84b1-a76566bb5eba",
+      "name": "SP: Entwürfe holen",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// Validate + Route\nconst items = $input.all();\nconst results = [];\n\nfor (const item of items) {\n  const f = item.json.fields || {};\n  const postTyp = f.field_2 || f.Field_2 || '';\n  const status = f.field_6 || f.Field_6 || '';\n  const itemId = item.json.Ausweis || item.json.id || f.AUSWEIS || f.id;\n\n  if (status !== 'Entwurf') continue;\n  if (!postTyp) continue;\n\n  const avatarTypes = ['Reel', 'Übung', 'Story', 'Uebung'];\n  const branch = avatarTypes.includes(postTyp) ? 'avatar' : 'feed';\n\n  results.push({\n    json: {\n      _sp_item_id: itemId,\n      _post_typ: postTyp,\n      _branch: branch,\n      sp_fields: f,\n    }\n  });\n}\n// ... (alles wie vorher, aber am Ende):\n\n// TROCKENLAUF: nur 1 Item zurückgeben für Test\n// Später entfernen für Voll-Verarbeitung\nreturn results.slice(0, 1);"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1824,
+        304
+      ],
+      "id": "e92291ee-ec90-498a-bf12-f9d04b3ca31e",
+      "name": "Code: Validate + Route"
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json._branch }}",
+                    "rightValue": "feed",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "15321ac6-ae9f-47a2-8f77-aedf4f3ea948"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "feed"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json._branch }}",
+                    "rightValue": "avatar",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "5b80995d-d2dd-464a-a791-70008308ecf1"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "avatar"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -1600,
+        304
+      ],
+      "id": "361868e0-3ce0-41cb-a8b0-a4e0eea8793a",
+      "name": "Switch: Feed/Avatar"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Build Claude Payload für Caption-Generierung\nconst f = $json.sp_fields;\nconst pt = $json._post_typ;\n\n// Echte Field-Namen aus SharePoint:\n//  field_1 = Thema, field_3 = Content_Brief, field_7 = Hashtag_Thema\nconst thema       = f.field_1 || '';\nconst contentBrief = f.field_3 || '';\nconst hashtagThema = f.field_7 || '';\n\nconst PROMPT = `Du bist Texter für die Physio Fuchs Praxis in Ratingen-Lintorf.\nErzeuge eine Instagram-Caption für folgenden Post-Brief.\n\nPost-Typ: ${pt}\nThema: ${thema}\nContent-Brief: ${contentBrief}\nHashtag-Thema: ${hashtagThema}\n\nTonalität-Regeln (verbindlich):\n- \"Sie\"-Form, professionell, sympathisch, motivierend\n- KEINE Heilversprechen — verboten: \"heilt\", \"garantiert\", \"kuriert\", \"schmerzfrei in X Tagen\", \"beseitigt\"\n- KEINE Diagnosen\n- Maximal 3 Emojis, sparsam, fachlich passend\n- Bei Übungen: Hinweis ergänzen \"Bei anhaltenden Beschwerden bitte ärztlich abklären lassen\"\n- Inklusiv (\"Patientinnen und Patienten\", nicht Gender-Stern)\n\nAntworte AUSSCHLIESSLICH als JSON, ohne Markdown-Wrapping:\n{\n  \"titel\": \"<Bild-Headline, max 50 Zeichen>\",\n  \"text\": \"<Bild-Body, 2-3 kurze Sätze, max 200 Zeichen>\",\n  \"cta\": \"<Bild-CTA, max 50 Zeichen>\",\n  \"caption\": \"<volle Instagram-Caption, 2-3 Absätze, endet mit Frage>\",\n  \"hashtags\": [\"#tag1\", \"#tag2\", \"...\"]\n}\nHashtags: 8-15 Stück, mind. 2 lokale (Ratingen / Lintorf).`;\n\nreturn [{\n  json: {\n    _passthrough: $json,\n    model: 'claude-sonnet-4-6',\n    max_tokens: 2048,\n    messages: [{ role: 'user', content: PROMPT }]\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1344,
+        160
+      ],
+      "id": "cf482acb-2304-4720-b55b-e16494da6a75",
+      "name": "Code: Build Claude Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $json.model }}\",\n  \"max_tokens\": {{ $json.max_tokens }},\n  \"messages\": {{ JSON.stringify($json.messages) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -1120,
+        160
+      ],
+      "id": "13cb7c34-7f86-4b6e-8569-39935999c2bd",
+      "name": "HTTP: Claude Caption"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Parse Claude-Response, JSON extrahieren\nconst resp = $json;\nconst raw = resp.content?.[0]?.text || resp.completion || '';\n\nlet parsed;\ntry {\n  const match = raw.match(/\\{[\\s\\S]*\\}/);\n  parsed = JSON.parse(match ? match[0] : raw);\n} catch (e) {\n  throw new Error('Claude-Response nicht JSON-parsebar: ' + raw.slice(0, 200));\n}\n\nconst pt = $node['Code: Build Claude Payload'].json._passthrough;\n\nreturn [{\n  json: {\n    ...pt,\n    titel:    parsed.titel    || '',\n    text:     parsed.text     || '',\n    cta:      parsed.cta      || '',\n    caption:  parsed.caption  || '',\n    hashtags: Array.isArray(parsed.hashtags) ? parsed.hashtags : [],\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -896,
+        160
+      ],
+      "id": "1985ef2f-a817-4482-b835-2c50285cd632",
+      "name": "Code: Parse Claude"
+    },
+    {
+      "parameters": {
+        "jsCode": "// HWG-Filter: Caption gegen Heilversprechen-Blacklist prüfen\nconst HWG_PATTERNS = [\n  /\\bheilt\\b/i,\n  /\\bheilung\\b/i,\n  /\\bkuriert\\b/i,\n  /\\bgarantiert\\b/i,\n  /\\bgewährleistet?\\b/i,\n  /\\bverspricht\\b/i,\n  /\\bversprechen wir\\b/i,\n  /\\b(schmerzfrei|beschwerdefrei) in (\\d+|wenigen|kürzester) (tag|tage|tagen|woche|wochen)\\b/i,\n  /\\bwirkt (100 ?%|sicher|garantiert)\\b/i,\n  /\\bbeseitigt (schmerz|beschwerd|leiden)\\b/i,\n  /\\b(stellt|stellen wir) (ihre )?diagnose\\b/i,\n  /\\bbehandelt erfolgreich\\b/i,\n  /\\b(nebenwirkungsfrei|ohne nebenwirkungen)\\b/i,\n  /\\bbesser als (ärzt|operation|medikament)\\b/i,\n  /\\b(ersetzt|statt) (arzt|ärzt|operation|medikament)\\b/i,\n];\n\nconst f = $json;\nconst fullText = [f.titel, f.text, f.cta, f.caption].filter(Boolean).join(' ');\n\nconst matches = HWG_PATTERNS\n  .map(re => ({ pattern: re.source, hit: fullText.match(re) }))\n  .filter(x => x.hit);\n\nreturn [{\n  json: {\n    ...f,\n    _hwg_matches: matches.map(m => m.hit[0]),\n    _hwg_clean: matches.length === 0,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -672,
+        160
+      ],
+      "id": "3c634713-97c2-468c-b9b4-bae8d0641931",
+      "name": "Code: HWG-Filter"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json._hwg_clean }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              },
+              "id": "d126991f-52e9-4e8a-8898-988600949de4"
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -448,
+        160
+      ],
+      "id": "db6c5415-dec0-4502-90ad-8d97949fd3f9",
+      "name": "If: HWG sauber?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// HTML-Templates fetchen + Platzhalter füllen für IG und FB\nconst REPO_RAW = 'https://raw.githubusercontent.com/twaese/Physio-Fuchs-Social-Media-Automation/main';\nconst IG_TPL = REPO_RAW + '/04_Canva-Vorlagen/html-templates/instagram/PF_Feed_Standard.html';\nconst FB_TPL = REPO_RAW + '/04_Canva-Vorlagen/html-templates/facebook/PF_Feed_FB_Standard.html';\nconst ASSETS_BASE = REPO_RAW + '/04_Canva-Vorlagen/html-templates/assets/';\n\nconst f = $json;\nconst datum = new Date().toLocaleDateString('de-DE', {\n  day: '2-digit', month: '2-digit', year: 'numeric'\n});\n\nasync function fetchTemplate(url) {\n  const r = await this.helpers.httpRequest({ method: 'GET', url, returnFullResponse: false });\n  return typeof r === 'string' ? r : (r.body || r);\n}\n\nfunction substitute(html, vars) {\n  // Asset-Pfade auf absolute GitHub-Raw-URLs umschreiben\n  html = html.replace(/src=\"\\.\\.\\/assets\\//g, `src=\"${ASSETS_BASE}`);\n  // Platzhalter ersetzen\n  for (const [k, v] of Object.entries(vars)) {\n    html = html.replaceAll('{{' + k + '}}', String(v));\n  }\n  return html;\n}\n\nconst vars = {\n  TITEL: f.titel || '',\n  TEXT:  f.text  || '',\n  CTA:   f.cta   || '',\n  DATUM: datum,\n};\n\nconst igTplRaw = await fetchTemplate.call(this, IG_TPL);\nconst fbTplRaw = await fetchTemplate.call(this, FB_TPL);\n\nconst igHtml = substitute(igTplRaw, vars);\nconst fbHtml = substitute(fbTplRaw, vars);\n\nreturn [{\n  json: {\n    ...f,\n    _datum: datum,\n    _ig_html: igHtml,\n    _fb_html: fbHtml,\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -224,
+        80
+      ],
+      "id": "0bfb121b-f1a4-4f81-9a6e-1fc89b0ef5f8",
+      "name": "Code: HTML bauen (IG+FB)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://gotenberg:3000/forms/chromium/screenshot/html",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "ig_html_file"
+            },
+            {
+              "name": "format",
+              "value": "png"
+            },
+            {
+              "name": "width",
+              "value": "1080"
+            },
+            {
+              "name": "height",
+              "value": "1350"
+            },
+            {
+              "name": "optimizeForSpeed",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        0
+      ],
+      "id": "b3aa3552-d34a-4b42-8205-dd4986efb34b",
+      "name": "HTTP: Gotenberg IG"
+    },
+    {
+      "parameters": {
+        "jsCode": "// HTML als Binary File für Gotenberg-Multipart verfügbar machen\nconst html = $json._ig_html;\nconst buffer = Buffer.from(html, 'utf8');\nreturn [{\n  json: $json,\n  binary: {\n    ig_html_file: await this.helpers.prepareBinaryData(buffer, 'index.html', 'text/html')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "3f358f95-8b77-45e9-b73d-ba6753aa399b",
+      "name": "Code: IG HTML→Binary"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'c1f0a171-5df2-4c8b-9ab4-db3ed8e76266')/RootFolder/Files/add(url='{{ $('Code: Validate + Route').item.json._sp_item_id }}_ig.png',overwrite=true)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json;odata=verbose"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/octet-stream"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        0
+      ],
+      "id": "07bebe85-1b6a-4b1e-a7f8-a92ce8630127",
+      "name": "SP: Upload IG-Bild",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// HTML als Binary für FB-Gotenberg\nconst html = $node['Code: HTML bauen (IG+FB)'].json._fb_html;\nconst buffer = Buffer.from(html, 'utf8');\nreturn [{\n  json: $json,\n  binary: {\n    fb_html_file: await this.helpers.prepareBinaryData(buffer, 'index.html', 'text/html')\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        160
+      ],
+      "id": "f7415f20-2726-4b2c-8e23-05e8436b9dec",
+      "name": "Code: FB HTML→Binary"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "http://gotenberg:3000/forms/chromium/screenshot/html",
+        "sendBody": true,
+        "contentType": "multipart-form-data",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "parameterType": "formBinaryData",
+              "name": "files",
+              "inputDataFieldName": "fb_html_file"
+            },
+            {
+              "name": "format",
+              "value": "png"
+            },
+            {
+              "name": "width",
+              "value": "1080"
+            },
+            {
+              "name": "height",
+              "value": "1080"
+            },
+            {
+              "name": "optimizeForSpeed",
+              "value": "false"
+            }
+          ]
+        },
+        "options": {
+          "response": {
+            "response": {
+              "responseFormat": "file"
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        224,
+        160
+      ],
+      "id": "31f226f9-3e60-44e3-b05b-e8fd6ed28496",
+      "name": "HTTP: Gotenberg FB"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'c1f0a171-5df2-4c8b-9ab4-db3ed8e76266')/RootFolder/Files/add(url='{{ $('Code: Validate + Route').item.json._sp_item_id }}_fb.png',overwrite=true)",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json;odata=verbose"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/octet-stream"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "data",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        448,
+        160
+      ],
+      "id": "a4b4582a-034c-42d8-963b-1addf088594a",
+      "name": "SP: Upload FB-Bild",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const f = $('Code: HWG-Filter').item.json;\nconst itemId = $('Code: Validate + Route').item.json._sp_item_id;\n\nconst SP_BASE = 'https://physiofuchs889.sharepoint.com';\nconst LIB_PATH = '/sites/PhysioFuchsTW/SocialMediaAssets';\nconst igUrl = `${SP_BASE}${LIB_PATH}/${itemId}_ig.png`;\nconst fbUrl = `${SP_BASE}${LIB_PATH}/${itemId}_fb.png`;\n\nconst hashtagBlock = (f.hashtags || []).join(' ');\nconst captionFull = f.caption + '\\n\\n' + hashtagBlock;\n\nconst now = new Date().toISOString().replace('T', ' ').slice(0, 16);\nconst logEntry = `\\n${now} WF-02 v18: Caption+Bild fertig, HWG sauber, IG+FB hochgeladen, Status Bereit`;\nconst existingLog = f.sp_fields.field_13 || '';\n\nreturn [{\n  json: {\n    _sp_item_id: itemId,\n    payload: {\n      field_10: captionFull,\n      field_7:  hashtagBlock,\n      field_6:  'Bereit',\n      field_9:  igUrl,\n      Bild_FB_Dateiname: fbUrl,\n      field_13: existingLog + logEntry,\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        672,
+        80
+      ],
+      "id": "657958a3-c885-4d08-8a85-f4d314d523ba",
+      "name": "Code: Merge + Update-Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $json._sp_item_id }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-HTTP-Method",
+              "value": "MERGE"
+            },
+            {
+              "name": "IF-MATCH",
+              "value": "*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        896,
+        80
+      ],
+      "id": "a67d2a33-75c5-4d10-b596-e8b77bbd78e4",
+      "name": "SP: Status Bereit",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $('Code: Validate + Route').item.json._sp_item_id }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-HTTP-Method",
+              "value": "MERGE"
+            },
+            {
+              "name": "IF-MATCH",
+              "value": "*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"Caption_Variante\": {{ JSON.stringify($json.caption + \"\\n\\n\" + ($json.hashtags || []).join(\" \")) }},\n  \"Status\": \"Geblockt\",\n  \"Kommentare\": {{ JSON.stringify(($json.sp_fields.Kommentare || \"\") + \"\\n\" + new Date().toISOString().slice(0,16).replace(\"T\",\" \") + \" WF-02 v18: HWG-FILTER-MATCH → \" + ($json._hwg_matches || []).join(\", \") + \" → Status Geblockt, bitte prüfen\") }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -224,
+        304
+      ],
+      "id": "bd71c2de-2c0b-4108-a007-f133d505beb5",
+      "name": "SP: Status Geblockt",
+      "disabled": true
+    },
+    {
+      "parameters": {
+        "jsCode": "// Avatar-Check: Flag prüfen\nconst AVATAR_ENABLED = false;  // ← später auf true setzen wenn D-ID läuft\n\nreturn [{\n  json: {\n    ...$json,\n    _avatar_enabled: AVATAR_ENABLED\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1344,
+        512
+      ],
+      "id": "f87e2d47-72d6-475f-83ba-4a3c77dc1ccd",
+      "name": "Code: AVATAR_ENABLED?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "loose"
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json._avatar_enabled }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1120,
+        512
+      ],
+      "id": "2bbf709f-1436-4ad5-a325-8b2741936aad",
+      "name": "If: Avatar aktiv?"
+    },
+    {
+      "parameters": {
+        "content": "## Avatar-Branch (v19+)\n\nWenn `AVATAR_ENABLED=true`:\n1. Reel-Skript via Claude generieren\n2. HWG-Filter auf Skript\n3. POST D-ID API: Talking Photo + Voice\n4. Polling: Job fertig?\n5. MP4-URL in `field_9`\n6. Status: `Bereit`\n\nSiehe `06_Avatar-Reel-Konzepte/Avatar-Integration-Plan.md`",
+        "height": 240,
+        "width": 320,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -896,
+        384
+      ],
+      "id": "0efae8f2-5c7b-4797-8a44-c37676312760",
+      "name": "Doku: Avatar TODO (v19)"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $('Code: Validate + Route').item.json._sp_item_id }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-HTTP-Method",
+              "value": "MERGE"
+            },
+            {
+              "name": "IF-MATCH",
+              "value": "*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"Status\": \"Wartet-auf-Avatar\",\n  \"Kommentare\": {{ JSON.stringify(($json.sp_fields.Kommentare || \"\") + \"\\n\" + new Date().toISOString().slice(0,16).replace(\"T\",\" \") + \" WF-02 v18: Post-Typ \" + $json._post_typ + \" braucht Avatar-Pipeline (AVATAR_ENABLED=false) → geparkt, wartet auf Aktivierung\") }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -896,
+        640
+      ],
+      "id": "afe01115-aa71-4191-89e0-034c360a822e",
+      "name": "SP: Status Wartet-auf-Avatar",
+      "disabled": true
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Cron: stündlich": {
+      "main": [
+        [
+          {
+            "node": "SP: Entwürfe holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SP: Entwürfe holen": {
+      "main": [
+        [
+          {
+            "node": "Code: Validate + Route",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Validate + Route": {
+      "main": [
+        [
+          {
+            "node": "Switch: Feed/Avatar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Feed/Avatar": {
+      "main": [
+        [
+          {
+            "node": "Code: Build Claude Payload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: AVATAR_ENABLED?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Build Claude Payload": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Claude Caption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Claude Caption": {
+      "main": [
+        [
+          {
+            "node": "Code: Parse Claude",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Parse Claude": {
+      "main": [
+        [
+          {
+            "node": "Code: HWG-Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: HWG-Filter": {
+      "main": [
+        [
+          {
+            "node": "If: HWG sauber?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: HWG sauber?": {
+      "main": [
+        [
+          {
+            "node": "Code: HTML bauen (IG+FB)",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "SP: Status Geblockt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: HTML bauen (IG+FB)": {
+      "main": [
+        [
+          {
+            "node": "Code: IG HTML→Binary",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Code: FB HTML→Binary",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: IG HTML→Binary": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Gotenberg IG",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Gotenberg IG": {
+      "main": [
+        [
+          {
+            "node": "SP: Upload IG-Bild",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SP: Upload IG-Bild": {
+      "main": [
+        [
+          {
+            "node": "Code: Merge + Update-Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: FB HTML→Binary": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Gotenberg FB",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Gotenberg FB": {
+      "main": [
+        [
+          {
+            "node": "SP: Upload FB-Bild",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SP: Upload FB-Bild": {
+      "main": [
+        [
+          {
+            "node": "Code: Merge + Update-Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Merge + Update-Payload": {
+      "main": [
+        [
+          {
+            "node": "SP: Status Bereit",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: AVATAR_ENABLED?": {
+      "main": [
+        [
+          {
+            "node": "If: Avatar aktiv?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If: Avatar aktiv?": {
+      "main": [
+        [],
+        [
+          {
+            "node": "SP: Status Wartet-auf-Avatar",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "67e2f6b1-8407-4fd4-8fac-307c746ccec1",
+  "meta": {
+    "instanceId": "f40c6f6af7ce2011b04be6e4c65abbc6b998ddefd762d8f282912f30a607f9b9"
+  },
+  "id": "W1q6e0B79DBJpXhi",
+  "tags": []
+}

@@ -1,0 +1,172 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<title>PF Feed v5 — Test</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
+<style>
+  /*
+   * PHYSIO FUCHS – Instagram Feed v5 (1080×1350)
+   * Foto-dominantes Editorial-Layout angelehnt an Canva-Vorlage.
+   * v5-Änderung ggü. v4: Ginkgo-Zweig vertikal mittig + rechtsbündig
+   * innerhalb des grünen Banners. Größe so reduziert dass er vollständig
+   * im Banner sitzt (kein Überhang).
+   *
+   * Architektur:
+   *  - Vollflächen-Hintergrund-Foto (Praxis / Behandlung)
+   *    → object-position: top behält die obere Hälfte des 9:16-Quellfotos
+   *  - Schmaler grüner Titel-Banner oben (mit echtem Ginkgo-Branch-Asset)
+   *  - Kompakte weiße Logo-Karte unten links
+   *  - KEIN Body/CTA/Datum/Signatur im Bild — Caption liefert den Inhalt
+   *
+   * Platzhalter (von WF-02 ersetzt):
+   *   3 Mini-Übungen für die Mittagspause             — kurzer Hook, max 30 Zeichen
+   *   {{BACKGROUND_PHOTO}}  — URL des Hintergrund-Fotos (Praxis-Behandlung)
+   *
+   * Fallback: assets/judith-behandlung-01.png
+   */
+  :root {
+    --pf-green-bg:    #7E9963;
+    --pf-cream:       #F4EFE2;
+    --pf-cream-soft:  #E8E3D4;
+    --pf-brown:       #7C6149;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body {
+    width: 1080px;
+    height: 1350px;
+    overflow: hidden;
+    font-family: 'EB Garamond', Garamond, Georgia, serif;
+    -webkit-font-smoothing: antialiased;
+    background: #2F3A28;
+  }
+
+  .canvas {
+    position: relative;
+    width: 1080px;
+    height: 1350px;
+    overflow: hidden;
+  }
+
+  /* === Hintergrund-Foto === */
+  .bg-photo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center 28%;
+    /* 28%: zeigt die Gesichter im mittleren Bereich, schneidet weniger oben/unten ab */
+    z-index: 0;
+  }
+
+  /* === Titel-Banner oben === */
+  .title-banner {
+    position: absolute;
+    top: 60px;
+    right: 0;
+    width: 68%;
+    height: 280px;
+    background: var(--pf-green-bg);
+    color: var(--pf-cream);
+    padding: 28px 0 28px 60px;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    /* overflow visible damit Ginkgo überlappen kann */
+  }
+
+  /* Ginkgo-Zweig — freigestelltes RGBA-PNG,
+     rechtsbündig + vertikal mittig im Banner, vollständig innerhalb */
+  .title-banner .ginkgo {
+    position: absolute;
+    right: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 180px;
+    height: auto;
+    pointer-events: none;
+  }
+
+  .titel {
+    font-family: 'EB Garamond', Garamond, Georgia, serif;
+    font-size: 52px;
+    font-weight: 500;
+    line-height: 1.06;
+    letter-spacing: 0.5px;
+    color: var(--pf-cream);
+    text-transform: uppercase;
+    position: relative;
+    z-index: 1;
+    /* Text endet bei 55% der Banner-Breite, Ginkgo bekommt rechte 45% */
+    max-width: 55%;
+  }
+
+  /* === Weiße Logo-Karte unten links === */
+  .logo-card {
+    position: absolute;
+    bottom: 60px;
+    left: 0;
+    width: 38%;
+    background: #FFFFFF;
+    padding: 32px 40px 32px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 14px;
+    z-index: 2;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  }
+
+  .logo-card img {
+    width: 140px;
+    height: 140px;
+    display: block;
+  }
+
+  .logo-card .brand-text {
+    font-family: 'EB Garamond', Garamond, Georgia, serif;
+    font-size: 34px;
+    font-weight: 400;
+    letter-spacing: 10px;
+    /* zusätzliches Spacing für Wortabstand: ein zusätzliches Leerzeichen
+       im HTML zwischen PHYSIO und FUCHS reicht meist nicht — wir nutzen
+       gap zwischen Spans im Markup */
+    color: var(--pf-brown);
+    text-transform: uppercase;
+    text-align: center;
+    line-height: 1;
+    /* Klassisches Garamond-Glyph für optisches Premium-Feeling */
+    font-feature-settings: "lnum" 1, "kern" 1;
+  }
+  .logo-card .brand-text .word {
+    display: inline-block;
+    margin: 0 8px;
+  }
+</style>
+</head>
+<body>
+  <div class="canvas">
+
+    <!-- Hintergrund-Foto (Praxis-Behandlung) -->
+    <img class="bg-photo" src="../assets/judith-behandlung-01.png" alt="Physio Fuchs Behandlung">
+
+    <!-- Titel-Banner oben rechts mit Ginkgo-Deko -->
+    <div class="title-banner">
+      <h1 class="titel">3 Mini-Übungen für die Mittagspause</h1>
+      <img class="ginkgo" src="../assets/ginkgo-branch.png" alt="">
+    </div>
+
+    <!-- Logo-Karte unten links -->
+    <div class="logo-card">
+      <img src="../assets/pf-logo-medaillon.png" alt="Physio Fuchs Logo">
+      <div class="brand-text"><span class="word">Physio</span><span class="word">Fuchs</span></div>
+    </div>
+
+  </div>
+</body>
+</html>

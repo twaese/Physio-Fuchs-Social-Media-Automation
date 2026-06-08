@@ -1,6 +1,7 @@
 # WF-01 – Formular → SharePoint
 
-**JSON:** `PF_WF-01_Formular_SharePoint_v1.json` (Root)
+**JSON:** `PF_WF-01_v2_Konsolidiert.json` (Root, **aktiv seit 2026-06-08**)
+**Vorgänger:** `_Archiv-Workflows/PF_WF-01_Formular_SharePoint_v1.json`
 **Trigger:** Webhook (POST)
 **Endpoint:** `{{N8N_WEBHOOK_URL}}/webhook/sharepoint-content`
 **Webhook-ID:** `pf-wf01-content-einreichung`
@@ -31,11 +32,15 @@ SharePoint-Liste `PF-Content-Kalender-2026` an.
         │  - Site:  {{SHAREPOINT_SITE_GUID}}
         │  - Liste: {{SHAREPOINT_LIST_GUID}}
         ▼
-[4] Teams: Eingangs-Notification an Judith
-        │  "Neuer Entwurf gespeichert: <Thema>"
+[4] Teams: Eingang melden (HTML-Card an Judith, Channel "Socialmedia")
+        │  - Item-ID + Thema + Post-Typ + Datum/Uhrzeit
+        │  - Foto-Reminder mit vorgeschlagenem Dateinamen
+        │    PF_{year}_{itemId-3stellig}_thema.jpg
+        │  - Hinweis: Fallback auf Default-Bild wenn kein Foto
         ▼
 [5] HTTP-Response 200 ans Formular
-        │  { ok: true, itemId: ... }
+        │  { ok: true, status: "Entwurf",
+        │    item_id: <SP-ID>, thema: "<Thema>" }
 ```
 
 Bei Fehler in [2] oder [3]:
@@ -111,3 +116,15 @@ curl -X POST "{{N8N_WEBHOOK_URL}}/webhook/sharepoint-content" \
 - HTML-Formular: `physio_fuchs_form_v2.html`
 - SharePoint-Schema: `03_SharePoint/Liste-Schema.md`
 - Status-Flow: `00_Konzept/Status-Flow.md`
+- Foto-Naming-Konvention: `04_Canva-Vorlagen/Foto-Convention.md`
+
+---
+
+## Änderungshistorie
+
+| Datum       | Version | Was                                                       |
+| ----------- | ------- | --------------------------------------------------------- |
+| 2026-05-11  | v1      | Initial: Webhook → Code → SP-Create → Response            |
+| 2026-06-08  | v2      | Teams-Node aktiviert + HTML-Card mit Item-ID + Foto-      |
+|             |         | Reminder. HTTP-Response inkl. `item_id` + `thema`.        |
+|             |         | Sticky Notes auf aktuellen Status-Flow aktualisiert.      |

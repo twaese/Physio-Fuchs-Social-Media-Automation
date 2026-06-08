@@ -2,7 +2,7 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>PF Feed Instagram v2 — Foto + Banner-Overlay</title>
+<title>PF Feed Instagram v13 — Variables Foto (LIVE)</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
@@ -25,7 +25,10 @@
    *   {{TITEL}}             — kurzer Hook, max 30 Zeichen
    *   {{BACKGROUND_PHOTO}}  — URL des Hintergrund-Fotos (Praxis-Behandlung)
    *
-   * Fallback: assets/judith-behandlung-01.png
+   * v13-Änderung ggü. v12: Background-Foto ist jetzt VARIABEL pro Content.
+   * WF-02 v18.3 sucht im SP-Ordner /Content_Socialmedia/Fotos/{Jahr}/
+   * nach `PF_{Jahr}_{ItemID-3stellig}_*.jpg`. Fallback-Kaskade:
+   * Item-Foto → Stock-Pool → assets/judith-behandlung-01.png.
    */
   :root {
     --pf-green-bg:    #7E9963;
@@ -152,8 +155,8 @@
 <body>
   <div class="canvas">
 
-    <!-- Hintergrund-Foto (Praxis-Behandlung) -->
-    <img class="bg-photo" src="../assets/judith-behandlung-01.png" alt="Physio Fuchs Behandlung">
+    <!-- Hintergrund-Foto: WF-02 v18.3 setzt {{BACKGROUND_PHOTO}} dynamisch -->
+    <img class="bg-photo" src="{{BACKGROUND_PHOTO}}" alt="Physio Fuchs Praxis-Foto">
 
     <!-- Titel-Banner oben rechts mit Ginkgo-Deko -->
     <div class="title-banner">

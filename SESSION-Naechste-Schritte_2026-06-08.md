@@ -28,10 +28,11 @@
 
 ## Quick-Check Sessionstart
 
-- [ ] WF-02 v18.2 (alte) deaktivieren wenn nicht schon → v18.3 ist die aktive Pipeline
-- [ ] v18.3 als „Active" markieren wenn noch nicht
-- [ ] Foto-Convention an Judith schicken (Datei → Teams-Chat)
+- [x] WF-02 v18.2 (alte) deaktivieren wenn nicht schon → v18.3 ist die aktive Pipeline
+- [x] v18.3 als „Active" markieren wenn noch nicht
+- [x] Foto-Convention an Judith schicken (Datei → Teams-Chat)
 - [ ] Test mit Item ohne SP-Foto (Fallback-Pfad verifizieren)
+- [x] **WF-01 v2 live:** Teams-Card mit Item-ID + Foto-Reminder an Judith nach Formular-Einreichung
 
 ---
 

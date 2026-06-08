@@ -290,3 +290,9 @@ Genauer beschrieben in `00_Konzept/Workflow-Konzept.md`.
 | 2026-05-18  | Hashtag-Dopplung in IG-Caption gefixt: WF-02        | Claude / Thomas|
 |             | schreibt nur reine Caption in field_10, Hashtags    |                |
 |             | nur in field_7. WF-03 hängt für IG einmalig dran.   |                |
+| 2026-06-08  | WF-02 v18.3 live: variable Praxis-Fotos pro Content | Claude / Thomas|
+|             | via SP-Foto-Branch + GitHub-Push + Fallback-Kaskade.|                |
+|             | Tests mit PF-2026-010/-011/-017 erfolgreich.        |                |
+| 2026-06-08  | WF-01 v2 live: Teams-Card mit Item-ID + Foto-       | Claude / Thomas|
+|             | Reminder an Judith nach jeder Formular-Einreichung. |                |
+|             | HTTP-Response liefert item_id ans Formular zurück.  |                |

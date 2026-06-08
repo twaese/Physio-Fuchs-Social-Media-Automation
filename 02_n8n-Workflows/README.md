@@ -11,8 +11,8 @@ diese Markdowns beschreiben Zweck, Trigger, Nodes und Felder.
 | ID    | Name                            | JSON-Datei                                  | Zweck                                                   |
 | ----- | ------------------------------- | ------------------------------------------- | ------------------------------------------------------- |
 | WF-00 | Datum-Initialbefüllung          | `PF_WF-00_Datum_Initialbefllung_v1.json`    | Einmaliges Befüllen leerer Datumsfelder im SP-Kalender  |
-| WF-01 | Formular → SharePoint           | `PF_WF-01_Formular_SharePoint_v1.json`      | Webhook-Empfang, neues SP-Item mit Status `Entwurf`     |
-| WF-02 | Caption-Generator + Bild + GitHub-Push | `PF_WF-02_Caption_Generator_v18.2.json` | LLM-Caption, Gotenberg-Render (IG+FB), GitHub-Push als public Bild-Hosting, HWG-Filter, Status→Bereit |
+| WF-01 | Formular → SharePoint + Teams   | `PF_WF-01_v2_Konsolidiert.json`             | Webhook-Empfang, neues SP-Item mit Status `Entwurf`, Teams-Card mit Item-ID + Foto-Reminder an Judith |
+| WF-02 | Caption-Generator + Bild + GitHub-Push | `PF_WF-02_Caption_Generator_v18.3.json` | LLM-Caption, Foto-Branch (variables Praxis-Foto), Gotenberg-Render (IG+FB), GitHub-Push als public Bild-Hosting, HWG-Filter, Status→Bereit |
 | WF-03 | Social Media Post (Karenz + Posting) | `PF_WF-03_Social_Media_Post_v6.json`      | Karenz 24h, Schedule-Check, Meta Graph Posting IG+FB, SP-Status→Veröffentlicht |
 | WF-04 | Monats-Scheduler Standard-Post  | `PF_WF-04_Monats_Scheduler_v1.json`         | Plant 1× pro Monat einen Standard-Feed-Post auf freien Tag |
 

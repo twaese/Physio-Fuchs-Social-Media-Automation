@@ -4,6 +4,10 @@
 # (laut CLAUDE.md §6.1 read-only, nicht versionspflichtig)
 _Archiv/
 
+# Lokaler Symlink auf OneDrive-synchronisierte Praxis-Fotos
+# (verweist auf ~/Library/CloudStorage/... — Pfad pro Mac unterschiedlich)
+04_Canva-Vorlagen/SP-Praxis-Fotos
+
 # Backup-Dateien
 *.bak
 *.bak.*

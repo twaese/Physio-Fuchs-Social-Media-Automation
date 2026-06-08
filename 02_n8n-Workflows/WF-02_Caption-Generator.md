@@ -1,6 +1,7 @@
 # WF-02 – Caption-Generator + Bild-Render + GitHub-Push
 
 **JSON:** `PF_WF-02_Caption_Generator_v18.2.json` (Root, **aktive Version**)
+**In Vorbereitung:** v18.3 mit Foto-Branch — Spec siehe `WF-02_v18.3_Foto-Branch_Spec.md`
 **Vorgänger:** v17 (vor Gotenberg-Pipeline, archiviert), v16 (vor Auto-Release)
 
 **Trigger:** stündlicher Cron

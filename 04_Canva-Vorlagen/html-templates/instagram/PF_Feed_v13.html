@@ -2,27 +2,30 @@
 <html lang="de">
 <head>
 <meta charset="UTF-8">
-<title>PF Feed Facebook v2 — Variables Foto (LIVE)</title>
+<title>PF Feed Instagram v2 — Foto + Banner-Overlay</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=EB+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400&display=swap" rel="stylesheet">
 <style>
   /*
-   * PHYSIO FUCHS – Facebook Feed v1 (1080×1080 Square)
-   * Adaption des IG v12 Foto-Layouts für Square 1:1.
+   * PHYSIO FUCHS – Instagram Feed v12 (1080×1350)
+   * Foto-dominantes Editorial-Layout angelehnt an Canva-Vorlage.
+   * v12-Änderung ggü. v11: Logo wieder INNERHALB der weißen Karte
+   * (kein Überhang). Padding + Brand-Text komprimiert damit das große
+   * 210px-Logo in einer kompakten Karte Platz findet.
    *
-   * Architektur identisch zu IG:
-   *  - Vollflächen-Praxis-Foto
-   *  - Grüner Titel-Banner oben rechts mit Ginkgo
-   *  - Weiße Logo-Karte unten links
-   *
-   * Maße proportional reduziert wegen geringerer Höhe (1080 statt 1350).
+   * Architektur:
+   *  - Vollflächen-Hintergrund-Foto (Praxis / Behandlung)
+   *    → object-position: top behält die obere Hälfte des 9:16-Quellfotos
+   *  - Schmaler grüner Titel-Banner oben (mit echtem Ginkgo-Branch-Asset)
+   *  - Kompakte weiße Logo-Karte unten links
+   *  - KEIN Body/CTA/Datum/Signatur im Bild — Caption liefert den Inhalt
    *
    * Platzhalter (von WF-02 ersetzt):
-   *   {{TITEL}}             — kurzer Hook
-   *   {{BACKGROUND_PHOTO}}  — URL des Praxis-Fotos (variabel pro Content)
+   *   {{TITEL}}             — kurzer Hook, max 30 Zeichen
+   *   {{BACKGROUND_PHOTO}}  — URL des Hintergrund-Fotos (Praxis-Behandlung)
    *
-   * v2-Änderung ggü. v1: Background-Foto ist jetzt VARIABEL pro Content.
+   * v13-Änderung ggü. v12: Background-Foto ist jetzt VARIABEL pro Content.
    * WF-02 v18.3 sucht im SP-Ordner /Content_Socialmedia/Fotos/{Jahr}/
    * nach `PF_{Jahr}_{ItemID-3stellig}_*.jpg`. Fallback-Kaskade:
    * Item-Foto → Stock-Pool → assets/judith-behandlung-01.png.
@@ -38,7 +41,7 @@
 
   html, body {
     width: 1080px;
-    height: 1080px;
+    height: 1350px;
     overflow: hidden;
     font-family: 'EB Garamond', Garamond, Georgia, serif;
     -webkit-font-smoothing: antialiased;
@@ -48,48 +51,52 @@
   .canvas {
     position: relative;
     width: 1080px;
-    height: 1080px;
+    height: 1350px;
     overflow: hidden;
   }
 
+  /* === Hintergrund-Foto === */
   .bg-photo {
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
     object-fit: cover;
-    object-position: center 35%;
+    object-position: center 28%;
+    /* 28%: zeigt die Gesichter im mittleren Bereich, schneidet weniger oben/unten ab */
     z-index: 0;
   }
 
-  /* Titel-Banner — schmaler als bei IG (240px statt 280px), proportional */
+  /* === Titel-Banner oben === */
   .title-banner {
     position: absolute;
-    top: 50px;
+    top: 60px;
     right: 0;
-    width: 70%;
-    height: 240px;
+    width: 68%;
+    height: 280px;
     background: var(--pf-green-bg);
     color: var(--pf-cream);
-    padding: 24px 0 24px 50px;
+    padding: 28px 0 28px 60px;
     z-index: 2;
     display: flex;
     align-items: center;
+    /* overflow visible damit Ginkgo überlappen kann */
   }
 
+  /* Ginkgo-Zweig — ganz rechts (right: 0) im Banner, vertikal mittig */
   .title-banner .ginkgo {
     position: absolute;
     right: 0;
     top: 50%;
     transform: translateY(-50%);
-    width: 320px;
+    width: 360px;
     height: auto;
     pointer-events: none;
   }
 
   .titel {
     font-family: 'EB Garamond', Garamond, Georgia, serif;
-    font-size: 48px;
+    font-size: 52px;
     font-weight: 500;
     line-height: 1.06;
     letter-spacing: 0.5px;
@@ -97,13 +104,16 @@
     text-transform: uppercase;
     position: relative;
     z-index: 1;
+    /* Text endet bei 55% der Banner-Breite, Ginkgo bekommt rechte 45% */
     max-width: 55%;
   }
 
-  /* Logo-Karte */
+  /* === Weiße Logo-Karte unten links === */
+  /* Kompakte Karte mit großem Logo (210px) komplett innerhalb.
+     Padding + Brand-Text verkleinert damit Karte nicht zu hoch wird. */
   .logo-card {
     position: absolute;
-    bottom: 50px;
+    bottom: 60px;
     left: 0;
     width: 46%;
     background: #FFFFFF;
@@ -117,14 +127,14 @@
   }
 
   .logo-card img {
-    width: 200px;
-    height: 200px;
+    width: 210px;
+    height: 210px;
     display: block;
   }
 
   .logo-card .brand-text {
     font-family: 'EB Garamond', Garamond, Georgia, serif;
-    font-size: 42px;
+    font-size: 44px;
     font-weight: 600;
     letter-spacing: 2px;
     color: var(--pf-brown);
@@ -144,18 +154,22 @@
 </head>
 <body>
   <div class="canvas">
+
     <!-- Hintergrund-Foto: WF-02 v18.3 setzt {{BACKGROUND_PHOTO}} dynamisch -->
     <img class="bg-photo" src="{{BACKGROUND_PHOTO}}" alt="Physio Fuchs Praxis-Foto">
 
+    <!-- Titel-Banner oben rechts mit Ginkgo-Deko -->
     <div class="title-banner">
       <h1 class="titel">{{TITEL}}</h1>
       <img class="ginkgo" src="../assets/ginkgo-branch.png" alt="">
     </div>
 
+    <!-- Logo-Karte unten links -->
     <div class="logo-card">
       <img src="../assets/pf-logo-medaillon.png" alt="Physio Fuchs Logo">
       <div class="brand-text"><span class="word">Physio</span><span class="word">Fuchs</span></div>
     </div>
+
   </div>
 </body>
 </html>

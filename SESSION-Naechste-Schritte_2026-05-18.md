@@ -73,6 +73,17 @@ LinkedIn ist die 3. Plattform (Square 1200×1200). Foto-Layout v12 adaptieren an
 
 Avatar-Pipeline für Reel/Übung/Story. Items werden derzeit in WF-02 v18.2 mit `continue` übersprungen.
 
+**Plattform-Entscheidung (2026-05-18):** **D-ID** als Avatar-Anbieter — Begründung:
+- API-first (REST), saubere n8n-HTTP-Node-Integration
+- Voice-Clone integriert, kein 2. Anbieter nötig
+- 1 Foto + 30-90s Voice-Sample reichen für Custom Avatar (HeyGen braucht 5-Min-Training-Video)
+- Render-Zeit 1-3 Min für 30s Video → passt in stündlichen Cron
+- Pricing: $5/Monat Lite oder Pay-as-go ~$0,10-0,30/Min — geringes Einstiegsrisiko
+- DSGVO: EU-Server-Option im Pro-Plan
+- Alternativen evaluiert: HeyGen (Premium aber teurer + Training-Video aufwendig), Synthesia (Enterprise-Tier zu teuer), Tavus (eher Conversational-Use-Case), ElevenLabs+SyncSo (2 Anbieter, mehr Komplexität)
+
+Default-Provider in `06_Avatar-Reel-Konzepte/Avatar-Integration-Plan.md` ist bereits auf `"d-id"` gesetzt.
+
 **Setup-Reihenfolge:**
 1. **D-ID Account** anlegen, API-Key generieren
 2. **Voice-Clone** von Judith: 60 Sekunden Audio-Sample → D-ID Voice-Clone-Endpoint
@@ -126,6 +137,15 @@ Avatar-Pipeline für Reel/Übung/Story. Items werden derzeit in WF-02 v18.2 mit 
 > Bitte fragen, welche Priorität.
 
 ---
+
+## 2026-06-08 ergänzt — Foto-Branch vorbereitet
+
+- ✅ **GitHub-Repo wieder Public** (war versehentlich Private + umbenannt → Pipeline 404)
+- ✅ **HTML-Templates v13 (IG) / v2 (FB)** mit `{{BACKGROUND_PHOTO}}`-Platzhalter erstellt
+- ✅ **Foto-Convention.md** für Judith dokumentiert (Naming, Pfad, Fallback-Strategie)
+- ✅ **WF-02 v18.3 Spec** als Implementierungs-Anleitung geschrieben (`02_n8n-Workflows/WF-02_v18.3_Foto-Branch_Spec.md`)
+- ✅ **Mac-Symlink** auf SP-Praxis-Fotos angelegt (`04_Canva-Vorlagen/SP-Praxis-Fotos`)
+- ⏳ **n8n-Umbau** auf v18.3 noch ausstehend (~50 Min nach Spec)
 
 ## Heute (2026-05-18) erreicht
 

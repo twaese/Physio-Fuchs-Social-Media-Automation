@@ -64,12 +64,13 @@ sed -i '' 's|{{TITEL}}|Beispiel-Titel hier|' _tests/_active-preview.html
 
 Alle Templates nutzen dieselben Platzhalter (WF-02 ersetzt vor Gotenberg-Call):
 
-| Platzhalter   | Quelle (SharePoint) | Beispiel |
-|---------------|---------------------|----------|
-| `{{TITEL}}`   | von WF-02 aus `field_2`/`field_11` verkürzt | „Drei Mini-Übungen für die Mittagspause" |
-| `{{TEXT}}`    | von WF-02 aus Body abgeleitet | „Direkt am Schreibtisch, ohne Equipment: 1. … 2. … 3. …" |
-| `{{CTA}}`     | von WF-02 aus Caption-CTA abgeleitet | „Speichern für die nächste Pause" |
-| `{{DATUM}}`   | `field_4` (Veröffentlichungsdatum) | „16.05.2026" |
+| Platzhalter           | Quelle (SharePoint) | Beispiel |
+|-----------------------|---------------------|----------|
+| `{{TITEL}}`           | von WF-02 aus `field_2`/`field_11` verkürzt | „Drei Mini-Übungen für die Mittagspause" |
+| `{{TEXT}}`            | von WF-02 aus Body abgeleitet | „Direkt am Schreibtisch, ohne Equipment: 1. … 2. … 3. …" |
+| `{{CTA}}`             | von WF-02 aus Caption-CTA abgeleitet | „Speichern für die nächste Pause" |
+| `{{DATUM}}`           | `field_4` (Veröffentlichungsdatum) | „16.05.2026" |
+| `{{BACKGROUND_PHOTO}}`| ab v13/FB v2 (WF-02 v18.3): GitHub-URL des Item-Fotos aus SP `Content_Socialmedia/Fotos/{Jahr}/PF_{Jahr}_{ItemID}_*` | `https://raw.githubusercontent.com/.../PF_2026_010_schuhe_fuesse.jpg` |
 
 ---
 
@@ -137,3 +138,4 @@ Für realistische Vorschau: `_tests/*.html` öffnen (Platzhalter bereits gefüll
 | 2026-05-17  | v12 finalisiert: Logo 210px innerhalb kompakter Karte, „Physio Fuchs" Garamond 44px | Claude |
 | 2026-05-17  | _active-preview.html als zentraler Mockup-Embed-Pfad eingeführt | Claude |
 | 2026-05-17  | **Layout v12 in Produktion**: erster echter Post auf @physio_fuchs_lintorf + FB Page rendert mit `instagram/PF_Feed_Standard.html` und `facebook/PF_Feed_FB_Standard.html` über Gotenberg-Sidecar, gepusht via WF-02 v18.2 + WF-03 v6 | Claude / Thomas |
+| 2026-06-08  | **v13 (IG) + FB v2:** Background-Foto ist jetzt VARIABEL via `{{BACKGROUND_PHOTO}}`. Vorgesehen für WF-02 v18.3 Foto-Branch (siehe `02_n8n-Workflows/WF-02_v18.3_Foto-Branch_Spec.md` und `04_Canva-Vorlagen/Foto-Convention.md`). | Claude / Thomas |

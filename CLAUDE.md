@@ -296,3 +296,15 @@ Genauer beschrieben in `00_Konzept/Workflow-Konzept.md`.
 | 2026-06-08  | WF-01 v2 live: Teams-Card mit Item-ID + Foto-       | Claude / Thomas|
 |             | Reminder an Judith nach jeder Formular-Einreichung. |                |
 |             | HTTP-Response liefert item_id ans Formular zurück.  |                |
+| 2026-06-21  | Formular v4 live: Material-Quelle (Foto/Video/      | Claude / Thomas|
+|             | Stock/Ohne) + Sofort-Posten-Checkbox. WF-01 v4 +    |                |
+|             | neue SP-Spalte `Sofort_Posten` (Bool). HWG-/Karenz- |                |
+|             | Bypass via FilterKZ in WF-03 v7 (Spec).             |                |
+| 2026-06-21  | Workflow-Chain live: WF-01 → WF-02 direkt nach SP-  | Claude / Thomas|
+|             | Eintrag (Execute-Workflow-Node nach Teams-Notify),  |                |
+|             | WF-02 hat Execute-Workflow-Trigger parallel zum     |                |
+|             | Cron. End-to-End-Test grün mit Item #68. Wartezeit  |                |
+|             | für Caption+Bild reduziert von ~1h auf ~2s.         |                |
+| 2026-06-21  | n8n-Workflow-JSONs versioniert in `02_n8n-Work-     | Claude / Thomas|
+|             | flows/`, Pre-Eingriff-Snapshots in `_Backups/`.     |                |
+|             | Rollback per `n8n import:workflow` aus Backup-JSON. |                |

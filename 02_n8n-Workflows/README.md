@@ -29,7 +29,7 @@ aktuellen Strukturierung liegen in `_Archiv/` (read-only, nicht im Git).
 ```
 Judith ──► HTML-Formular ──► WF-01 ──► SharePoint (Status: Entwurf)
                                           │
-                                  WF-02 v18.2 (stündl. Cron, 1 Item/Lauf):
+                                  WF-02 v18.3 (stündl. Cron, 1 Item/Lauf):
                                   - Claude erzeugt Caption + Hashtags
                                   - HWG-Filter → bei Treffer: Status `Geblockt` + Teams-Alert
                                   - HTML-Template + Gotenberg → IG+FB PNG
@@ -51,7 +51,7 @@ Judith ──► HTML-Formular ──► WF-01 ──► SharePoint (Status: Ent
 ```
 Judith ──► HTML-Formular ──► WF-01 ──► SharePoint (Status: Entwurf)
                                           │
-                                  WF-02 v18.2 Avatar-Skip:
+                                  WF-02 v18.3 Avatar-Skip:
                                   - Validate: continue → kein Processing
                                   - Item bleibt im Status `Entwurf`, wartet auf Avatar-Pipeline
                                           │

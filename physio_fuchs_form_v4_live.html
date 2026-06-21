@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Physio Fuchs · Content Einreichung</title>
+<title>Physio Fuchs · Content Einreichung v4</title>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Lato:wght@300;400;700&display=swap');
 
@@ -89,7 +89,7 @@ label .req { color: var(--green); margin-left: 2px; }
 label .hint { font-size: 9px; letter-spacing: 0.3px; text-transform: none; color: var(--brown-pale); font-weight: 400; margin-left: 4px; }
 
 input[type="text"], input[type="date"], input[type="time"],
-textarea, select {
+input[type="file"], textarea, select {
   width: 100%; background: var(--white);
   border: 1.5px solid var(--cream-dark); border-radius: 4px;
   padding: 10px 14px; font-family: 'Lato', sans-serif;
@@ -98,7 +98,7 @@ textarea, select {
   outline: none; appearance: none; -webkit-appearance: none;
 }
 input[type="text"]:focus, input[type="date"]:focus, input[type="time"]:focus,
-textarea:focus, select:focus {
+input[type="file"]:focus, textarea:focus, select:focus {
   border-color: var(--brown-mid);
   box-shadow: 0 0 0 3px rgba(107,76,59,0.08);
 }
@@ -149,6 +149,45 @@ select {
 }
 .chip input:checked + label { background: var(--brown-dark); border-color: var(--brown-dark); color: var(--cream); }
 
+/* PHOTO OPTIONS */
+.photo-source-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+.photo-card input[type="radio"] { display: none; }
+.photo-card label {
+  min-height: 92px; display: flex; flex-direction: column; justify-content: center;
+  gap: 5px; padding: 12px 8px; background: var(--white);
+  border: 1.5px solid var(--cream-dark); border-radius: 6px;
+  cursor: pointer; transition: all 0.2s; text-align: center;
+  text-transform: none; letter-spacing: 0;
+}
+.photo-card label .pn { font-size: 11px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--brown-mid); }
+.photo-card label .pd { font-size: 9.5px; color: var(--brown-pale); line-height: 1.35; }
+.photo-card input[type="radio"]:checked + label {
+  border-color: var(--brown-mid); background: var(--cream-dark);
+  box-shadow: 0 2px 8px rgba(61,43,31,0.1);
+}
+.photo-detail {
+  background: rgba(255,255,255,0.62);
+  border: 1px solid var(--cream-dark);
+  border-radius: 6px;
+  padding: 14px;
+  margin: 12px 0 18px;
+}
+.photo-detail.hidden { display: none; }
+.privacy-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.privacy-card input { display: none; }
+.privacy-card label {
+  display: flex; align-items: center; justify-content: center;
+  min-height: 42px; padding: 10px 8px; background: var(--white);
+  border: 1.5px solid var(--cream-dark); border-radius: 4px;
+  cursor: pointer; transition: all 0.18s;
+  font-size: 11px; text-align: center;
+  text-transform: none; letter-spacing: 0; color: var(--brown-light);
+}
+.privacy-card input:checked + label {
+  background: var(--cream-dark); border-color: var(--brown-mid); color: var(--brown-dark);
+}
+.file-help { margin-top: 6px; font-size: 10px; color: var(--brown-pale); line-height: 1.45; }
+
 /* AUTO FIELDS */
 .auto-field-group {
   background: var(--auto-bg);
@@ -187,6 +226,33 @@ select {
 .freigabe-card input:checked + label {
   background: var(--cream-dark); border-color: var(--brown-mid); color: var(--brown-dark);
 }
+
+/* SOFORT-POSTEN */
+.sofort-card { display: block; cursor: pointer; }
+.sofort-card input[type="checkbox"] { display: none; }
+.sofort-box {
+  display: flex; align-items: center; gap: 12px;
+  padding: 14px 16px;
+  background: var(--white); border: 1.5px solid var(--cream-dark);
+  border-radius: 4px; transition: all 0.18s;
+}
+.sofort-box::before {
+  content: ''; width: 18px; height: 18px; flex-shrink: 0;
+  border: 1.5px solid var(--cream-dark); border-radius: 3px;
+  background: var(--white); transition: all 0.18s;
+}
+.sofort-card input[type="checkbox"]:checked + .sofort-box {
+  background: #fff8eb; border-color: var(--green); box-shadow: 0 0 0 1px var(--green);
+}
+.sofort-card input[type="checkbox"]:checked + .sofort-box::before {
+  background: var(--green); border-color: var(--green);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='3'%3E%3Cpath d='M5 12l5 5L20 7'/%3E%3C/svg%3E");
+  background-size: 14px 14px; background-position: center; background-repeat: no-repeat;
+}
+.sofort-icon { font-size: 22px; line-height: 1; flex-shrink: 0; }
+.sofort-text { flex: 1; display: flex; flex-direction: column; gap: 3px; text-transform: none; letter-spacing: 0; }
+.sofort-text strong { font-size: 13px; color: var(--brown-dark); font-weight: 700; letter-spacing: 0.3px; }
+.sofort-text small { font-size: 10px; color: var(--brown-pale); line-height: 1.4; font-weight: 400; }
 
 /* SUBMIT */
 .submit-area {
@@ -249,6 +315,8 @@ select {
 @media (max-width: 540px) {
   .form-row { grid-template-columns: 1fr; }
   .type-grid { grid-template-columns: repeat(2, 1fr); }
+  .photo-source-grid { grid-template-columns: 1fr; }
+  .privacy-grid { grid-template-columns: 1fr; }
   .freigabe-grid { grid-template-columns: 1fr; }
   main { padding: 22px 14px 40px; }
 }
@@ -308,6 +376,22 @@ select {
             <span class="ti">💬</span>
             <span class="tn">Zitat</span>
             <span class="td">Motivation</span>
+          </label>
+        </div>
+        <div class="type-card">
+          <input type="radio" name="Post_Typ" id="typ-reel" value="Reel">
+          <label for="typ-reel">
+            <span class="ti">🎞️</span>
+            <span class="tn">Reel</span>
+            <span class="td">Video</span>
+          </label>
+        </div>
+        <div class="type-card">
+          <input type="radio" name="Post_Typ" id="typ-video" value="Reel">
+          <label for="typ-video">
+            <span class="ti">▶️</span>
+            <span class="tn">Video</span>
+            <span class="td">Rohvideo</span>
           </label>
         </div>
         <div class="type-card">
@@ -386,7 +470,7 @@ select {
 
     <!-- Hashtag_Thema -->
     <div class="form-group">
-      <label for="Hashtag_Thema">
+      <label>
         Hashtag-Thema <span class="req">*</span>
         <span class="sp-badge">Hashtag_Thema</span>
         <span class="hint">Stichwort → Claude generiert Hashtags</span>
@@ -472,18 +556,157 @@ select {
       </div>
     </div>
 
-    <!-- ══ 4. BILD ══ -->
-    <div class="section-label">Bildmaterial
+    <div class="form-group">
+      <label class="sofort-card">
+        <input type="checkbox" id="Sofort_Posten" name="Sofort_Posten">
+        <span class="sofort-box">
+          <span class="sofort-icon">🚀</span>
+          <span class="sofort-text">
+            <strong>Sofort posten</strong>
+            <small>Überspringt die 24h-Karenz und das eingegebene Datum — Post geht beim nächsten WF-03-Lauf (max. 1 h) live.</small>
+          </span>
+          <span class="sp-badge">Sofort_Posten</span>
+        </span>
+      </label>
+    </div>
+
+    <!-- ══ 4. MATERIAL ══ -->
+    <div class="section-label">Material
       <span class="sp-badge">Bild_Dateiname</span>
+      <span class="sp-badge">Video_Upload</span>
+    </div>
+
+    <div class="form-group">
+      <label>Material-Quelle <span class="req">*</span></label>
+      <div class="photo-source-grid">
+        <div class="photo-card">
+          <input type="radio" name="Foto_Quelle" id="foto-upload" value="upload" required>
+          <label for="foto-upload">
+            <span class="pn">📷 Foto hochladen</span>
+            <span class="pd">Eigenes Praxisfoto direkt mitsenden</span>
+          </label>
+        </div>
+        <div class="photo-card">
+          <input type="radio" name="Foto_Quelle" id="video-upload" value="video">
+          <label for="video-upload">
+            <span class="pn">🎞️ Video hochladen</span>
+            <span class="pd">Rohvideo fuer Reel oder Story mitsenden</span>
+          </label>
+        </div>
+        <div class="photo-card">
+          <input type="radio" name="Foto_Quelle" id="foto-stock" value="stock">
+          <label for="foto-stock">
+            <span class="pn">🌿 Stockfoto</span>
+            <span class="pd">Passendes Praxisfoto automatisch wählen</span>
+          </label>
+        </div>
+        <div class="photo-card">
+          <input type="radio" name="Foto_Quelle" id="foto-none" value="none">
+          <label for="foto-none">
+            <span class="pn">Ohne Foto</span>
+            <span class="pd">Workflow nutzt Default, falls nötig</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <div class="photo-detail hidden" id="foto-upload-detail">
+      <div class="form-group">
+        <label for="Foto_Upload">
+          Foto-Datei
+          <span class="hint">JPG, PNG oder WebP · max. 10 MB</span>
+        </label>
+        <input type="file" id="Foto_Upload" name="Foto_Upload" accept=".jpg,.jpeg,.png,.webp,image/jpeg,image/png,image/webp">
+        <div class="file-help" id="foto-file-help">Der Dateiname wird nach dem Speichern automatisch aus Jahr, Item-ID und Motiv erzeugt.</div>
+      </div>
+    </div>
+
+    <div class="photo-detail hidden" id="video-upload-detail">
+      <div class="form-group">
+        <label for="Video_Upload">
+          Video-Datei
+          <span class="hint">MP4 oder MOV · max. 500 MB</span>
+        </label>
+        <input type="file" id="Video_Upload" name="Video_Upload" accept=".mp4,.mov,video/mp4,video/quicktime">
+        <div class="file-help" id="video-file-help">Das Video wird im passenden Reel-/Story-Projektordner als Rohmaterial gespeichert.</div>
+      </div>
+      <div class="form-group">
+        <label for="Video_Hinweis">
+          Video-Hinweis
+          <span class="hint">optional, hilft bei Schnitt, Hook und KI-Caption</span>
+        </label>
+        <textarea id="Video_Hinweis" name="Video_Hinweis" style="min-height:72px"
+          placeholder="Was ist im Video wichtig? z. B. Übung, Stimmung, gewünschter Fokus, was nicht gezeigt werden soll"></textarea>
+      </div>
+      <div class="form-group">
+        <label>Enthaelt der Ton Sprache?</label>
+        <div class="privacy-grid">
+          <div class="privacy-card">
+            <input type="radio" name="Ton_enthaelt_Sprache" id="ton-nein" value="nein">
+            <label for="ton-nein">Nein</label>
+          </div>
+          <div class="privacy-card">
+            <input type="radio" name="Ton_enthaelt_Sprache" id="ton-ja" value="ja">
+            <label for="ton-ja">Ja</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="Foto_Motiv">
+        Motiv- oder Materialbeschreibung
+        <span class="hint">optional, hilft bei Dateiname, Schnitt und Bildauswahl</span>
+      </label>
+      <input type="text" id="Foto_Motiv" name="Foto_Motiv"
+        placeholder="z. B. Füße auf Trainingsmatte, Nackenübung im Sitzen, Balance mit Band">
+    </div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label>Personen sichtbar? <span class="req">*</span></label>
+        <div class="privacy-grid">
+          <div class="privacy-card">
+            <input type="radio" name="Personen_sichtbar" id="personen-nein" value="nein" required>
+            <label for="personen-nein">Nein</label>
+          </div>
+          <div class="privacy-card">
+            <input type="radio" name="Personen_sichtbar" id="personen-ja" value="ja">
+            <label for="personen-ja">Ja</label>
+          </div>
+        </div>
+      </div>
+      <div class="form-group" id="consent-group">
+        <label>Einverständnis vorhanden?</label>
+        <div class="privacy-grid">
+          <div class="privacy-card">
+            <input type="radio" name="Einverstaendnis_vorhanden" id="consent-nein" value="nein">
+            <label for="consent-nein">Nein</label>
+          </div>
+          <div class="privacy-card">
+            <input type="radio" name="Einverstaendnis_vorhanden" id="consent-ja" value="ja">
+            <label for="consent-ja">Ja</label>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="form-group">
+      <label for="Zuschnitt_Hinweis">
+        Zuschnitt-Hinweis
+        <span class="hint">optional</span>
+      </label>
+      <textarea id="Zuschnitt_Hinweis" name="Zuschnitt_Hinweis" style="min-height:64px"
+        placeholder="z. B. Hände sichtbar lassen, Schuhe nicht abschneiden, Gesicht nicht im Fokus"></textarea>
     </div>
 
     <div class="form-group">
       <label for="Bild_Dateiname">
-        Bild-Dateiname / Beschreibung
-        <span class="hint">leer lassen = kein Bild vorhanden</span>
+        Bild-Dateiname / Alt-Hinweis
+        <span class="hint">optional, nur für Sonderfälle</span>
       </label>
       <input type="text" id="Bild_Dateiname" name="Bild_Dateiname"
-        placeholder="z. B. judith_behandlung_01.jpg  —  oder: Motiv-Idee beschreiben">
+        placeholder="Optionaler bestehender Dateiname oder interner Hinweis">
     </div>
 
     <!-- ══ 5. FREIGABE ══ -->
@@ -532,13 +755,13 @@ select {
       </div>
       <div class="auto-items">
         <div class="auto-item">
-          <code>Status</code> → <strong>Entwurf</strong>
+          <code>Status</code> → <strong>Entwurf</strong> oder <strong>Video eingegangen</strong>
         </div>
         <div class="auto-item">
-          <code>Caption_Variante</code> → Claude generiert
+          <code>Caption_Variante</code> → KI generiert
         </div>
         <div class="auto-item">
-          <code>Canva_Template_ID</code> → n8n wählt
+          <code>Canva_Template_ID</code> → n8n/Codex wählt
         </div>
         <div class="auto-item">
           <code>Instagram_Post_ID</code> → nach Posting
@@ -554,7 +777,7 @@ select {
       </button>
       <button type="button" class="btn-reset" onclick="resetForm()">Zurücksetzen</button>
       <div class="submit-note">
-        Status wird automatisch auf <strong>Entwurf</strong> oder <strong>Bereit</strong> gesetzt<br>
+        Status wird automatisch auf <strong>Entwurf</strong> oder <strong>Video eingegangen</strong> gesetzt<br>
         Thomas erhält eine Teams-Benachrichtigung
       </div>
     </div>
@@ -576,7 +799,7 @@ select {
 <script>
 // ══════════════════════════════════════════
 // ⚠️  n8n Webhook-URL hier eintragen:
-const N8N_WEBHOOK_URL = 'https://n8n.srv1099163.hstgr.cloud/webhook/sharepoint-content';
+const N8N_WEBHOOK_URL = 'https://n8n.srv1099163.hstgr.cloud/webhook/sharepoint-content-v4-test';
 // ══════════════════════════════════════════
 
 // Char Counter
@@ -591,10 +814,106 @@ briefInput.addEventListener('input', () => {
 // Datum: ab heute
 document.getElementById('Veroeffentlichungsdatum').min = new Date().toISOString().split('T')[0];
 
+const MAX_FOTO_BYTES = 10 * 1024 * 1024;
+const MAX_VIDEO_BYTES = 500 * 1024 * 1024;
+const FOTO_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const VIDEO_TYPES = ['video/mp4', 'video/quicktime'];
+const fotoUploadDetail = document.getElementById('foto-upload-detail');
+const videoUploadDetail = document.getElementById('video-upload-detail');
+const fotoUploadInput = document.getElementById('Foto_Upload');
+const videoUploadInput = document.getElementById('Video_Upload');
+const fotoFileHelp = document.getElementById('foto-file-help');
+const videoFileHelp = document.getElementById('video-file-help');
+
+function selectedRadio(name) {
+  return document.querySelector(`input[name="${name}"]:checked`)?.value || '';
+}
+
+function isVideoPostType() {
+  return ['Reel', 'Story', 'Übung', 'Uebung'].includes(selectedRadio('Post_Typ'));
+}
+
+function applyMaterialDefaultForPostType() {
+  const videoTypes = ['Reel', 'Story', 'Übung', 'Uebung'];
+  const fotoTypes = ['Standard', 'Tipp', 'Zitat', 'Team', 'Promo', 'FAQ', 'Aktion', 'Behind-the-Scenes'];
+  const postType = selectedRadio('Post_Typ');
+
+  if (videoTypes.includes(postType)) {
+    document.getElementById('video-upload').checked = true;
+  } else if (fotoTypes.includes(postType)) {
+    document.getElementById('foto-upload').checked = true;
+  }
+}
+
+function updateMaterialUi() {
+  const quelle = selectedRadio('Foto_Quelle');
+  const isFotoUpload = quelle === 'upload';
+  const isVideoUpload = quelle === 'video';
+  fotoUploadDetail.classList.toggle('hidden', !isFotoUpload);
+  videoUploadDetail.classList.toggle('hidden', !isVideoUpload);
+  fotoUploadInput.required = isFotoUpload;
+  videoUploadInput.required = isVideoUpload;
+  if (!isFotoUpload) {
+    fotoUploadInput.value = '';
+    fotoFileHelp.textContent = 'Der Dateiname wird nach dem Speichern automatisch aus Jahr, Item-ID und Motiv erzeugt.';
+  }
+  if (!isVideoUpload) {
+    videoUploadInput.value = '';
+    videoFileHelp.textContent = 'Das Video wird im passenden Reel-/Story-Projektordner als Rohmaterial gespeichert.';
+  }
+}
+
+document.querySelectorAll('input[name="Foto_Quelle"]').forEach(input => {
+  input.addEventListener('change', updateMaterialUi);
+});
+
+document.querySelectorAll('input[name="Post_Typ"]').forEach(input => {
+  input.addEventListener('change', () => {
+    applyMaterialDefaultForPostType();
+    updateMaterialUi();
+  });
+});
+
+fotoUploadInput.addEventListener('change', () => {
+  const file = fotoUploadInput.files[0];
+  if (!file) return;
+  if (!FOTO_TYPES.includes(file.type)) {
+    fotoUploadInput.value = '';
+    toast('Bitte JPG, PNG oder WebP verwenden.', 'error');
+    return;
+  }
+  if (file.size > MAX_FOTO_BYTES) {
+    fotoUploadInput.value = '';
+    toast('Das Foto ist größer als 10 MB.', 'error');
+    return;
+  }
+  const mb = (file.size / (1024 * 1024)).toFixed(1);
+  fotoFileHelp.textContent = `${file.name} · ${mb} MB · wird automatisch umbenannt.`;
+});
+
+videoUploadInput.addEventListener('change', () => {
+  const file = videoUploadInput.files[0];
+  if (!file) return;
+  const extOk = /\.(mp4|mov)$/i.test(file.name);
+  if (!VIDEO_TYPES.includes(file.type) && !extOk) {
+    videoUploadInput.value = '';
+    toast('Bitte MP4 oder MOV verwenden.', 'error');
+    return;
+  }
+  if (file.size > MAX_VIDEO_BYTES) {
+    videoUploadInput.value = '';
+    toast('Das Video ist größer als 500 MB.', 'error');
+    return;
+  }
+  const mb = (file.size / (1024 * 1024)).toFixed(1);
+  videoFileHelp.textContent = `${file.name} · ${mb} MB · wird als Rohvideo gespeichert.`;
+});
+
 // Reset
 function resetForm() {
   document.getElementById('contentForm').reset();
   briefCount.textContent = '0/800';
+  updateMaterialUi();
 }
 
 // Toast
@@ -608,12 +927,22 @@ function toast(msg, type = 'success') {
 
 // Validierung
 function validate() {
+  const fotoQuelle = selectedRadio('Foto_Quelle');
+  const personenSichtbar = selectedRadio('Personen_sichtbar');
+  const einverstaendnis = selectedRadio('Einverstaendnis_vorhanden');
+  const videoPost = isVideoPostType();
   const checks = [
     [() => !document.getElementById('Thema').value.trim(),           'Bitte ein Thema eingeben.',            'Thema'],
     [() => !document.querySelector('input[name="Post_Typ"]:checked'),  'Bitte ein Post-Format wählen.',        null],
     [() => !document.querySelector('input[name="Hashtag_Thema"]:checked'), 'Bitte ein Hashtag-Thema wählen.',  null],
     [() => !document.getElementById('Content_Brief').value.trim(),   'Bitte einen Content Brief eingeben.',   'Content_Brief'],
     [() => !document.getElementById('Veroeffentlichungsdatum').value, 'Bitte ein Datum wählen.',              'Veroeffentlichungsdatum'],
+    [() => !fotoQuelle,                                               'Bitte eine Material-Quelle wählen.',    null],
+    [() => videoPost && fotoQuelle !== 'video',                       'Für Reel, Story oder Übung bitte ein Video hochladen.', null],
+    [() => fotoQuelle === 'upload' && !fotoUploadInput.files[0],       'Bitte ein Foto auswählen.',             'Foto_Upload'],
+    [() => fotoQuelle === 'video' && !videoUploadInput.files[0],        'Bitte ein Video auswählen.',            'Video_Upload'],
+    [() => !personenSichtbar,                                         'Bitte angeben, ob Personen sichtbar sind.', null],
+    [() => personenSichtbar === 'ja' && einverstaendnis !== 'ja',      'Bei sichtbaren Personen ist eine Einverständnis-Erklärung nötig.', null],
     [() => !document.querySelector('input[name="Freigabe_Person"]:checked'), 'Bitte Freigabe-Person wählen.',  null],
   ];
   for (const [check, msg, focusId] of checks) {
@@ -629,7 +958,12 @@ function validate() {
 // Payload zusammenstellen – Feldnamen = SharePoint-Spaltennamen
 function buildPayload() {
   const v = id => document.getElementById(id)?.value?.trim() || '';
-  const r = name => document.querySelector(`input[name="${name}"]:checked`)?.value || '';
+  const r = selectedRadio;
+  const c = id => document.getElementById(id)?.checked === true;
+  const materialTyp = r('Foto_Quelle') === 'video' ? 'video'
+    : r('Foto_Quelle') === 'upload' ? 'foto'
+    : r('Foto_Quelle') === 'stock' ? 'stock'
+    : 'kein_upload';
   return {
     // Von Judith befüllt:
     Title:                   v('Thema'),           // SharePoint-Pflichtfeld = Thema
@@ -639,17 +973,27 @@ function buildPayload() {
     Content_Brief:           v('Content_Brief'),
     Veroeffentlichungsdatum: v('Veroeffentlichungsdatum'),
     Uhrzeit:                 v('Uhrzeit'),
+    Sofort_Posten:           c('Sofort_Posten'),   // true = Karenz + Datum überspringen
     Bild_Dateiname:          v('Bild_Dateiname'),
+    Material_Typ:            materialTyp,
+    Foto_Quelle:             r('Foto_Quelle'),
+    Foto_Motiv:              v('Foto_Motiv'),
+    Video_Hinweis:           v('Video_Hinweis'),
+    Ton_enthaelt_Sprache:    r('Ton_enthaelt_Sprache'),
+    Personen_sichtbar:       r('Personen_sichtbar'),
+    Einverstaendnis_vorhanden: r('Einverstaendnis_vorhanden'),
+    Zuschnitt_Hinweis:       v('Zuschnitt_Hinweis'),
     Freigabe_Person:         r('Freigabe_Person'),
     Kommentare:              v('Kommentare'),
     // Von n8n automatisch gesetzt:
-    Status:                  'Entwurf',  // immer Entwurf — WF-02 setzt auf Bereit nach Caption+Bild
+    Status:                  materialTyp === 'video' ? 'Video eingegangen' : 'Entwurf',
     Caption_Variante:        '',   // → Claude-Node befüllt
     Canva_Template_ID:       '',   // → n8n wählt nach Post_Typ
     Instagram_Post_ID:       '',   // → Buffer/Meta nach Posting
     // Meta:
     _eingereichtVon:         'Judith',
     _eingereichtAm:          new Date().toISOString(),
+    _workflowZiel:           materialTyp === 'video' ? 'video-reel-story' : 'foto-feed-post',
   };
 }
 
@@ -663,14 +1007,27 @@ document.getElementById('contentForm').addEventListener('submit', async (e) => {
   btn.disabled = true;
 
   try {
+    const payload = buildPayload();
+    const fotoFile = fotoUploadInput.files[0];
+    const videoFile = videoUploadInput.files[0];
+    const formData = new FormData();
+    formData.append('payload', JSON.stringify(payload));
+    if (fotoFile && payload.Foto_Quelle === 'upload') {
+      formData.append('foto', fotoFile);
+    }
+    if (videoFile && payload.Material_Typ === 'video') {
+      formData.append('video', videoFile);
+    }
+
     const resp = await fetch(N8N_WEBHOOK_URL, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(buildPayload())
+      body: formData
     });
 
     if (resp.ok) {
-      toast('✨ Beitrag in SharePoint gespeichert!', 'success');
+      toast(payload.Material_Typ === 'video'
+        ? '✨ Video ist angekommen und wird vorbereitet!'
+        : '✨ Beitrag und Foto-Daten gespeichert!', 'success');
       setTimeout(resetForm, 1000);
     } else {
       throw new Error(`HTTP ${resp.status}`);

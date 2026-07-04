@@ -20,6 +20,10 @@ _Archiv/
 .DS_Store
 ._*
 
+# Windows Metadata (Explorer-Thumbnails via SMB-Zugriff aufs NAS)
+Thumbs.db
+desktop.ini
+
 # Sensitive Daten – sollten NIE committed werden
 .env
 .env.*

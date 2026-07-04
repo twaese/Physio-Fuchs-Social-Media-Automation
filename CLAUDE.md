@@ -96,8 +96,7 @@ UND HWG-Filter grün). Details: `00_Konzept/Status-Flow.md`,
 ├── _Archiv/                           ← alte Versionen (nicht anfassen)
 ├── Symbole-Instagramm/                ← Highlight-Cover (nicht anfassen)
 ├── PF_WF-*.json                       ← aktive n8n-Workflows
-├── physio_fuchs_form_v2.html          ← Eingabeformular für Judith
-├── physio_fuchs_templates.html        ← Vorlagen-Übersicht (HTML)
+├── physio_fuchs_form_v4_live.html     ← Eingabeformular für Judith
 └── PF-Content-Kalender-2026.xlsx      ← Backup/Snapshot des Redaktionsplans
 ```
 

@@ -1,7 +1,7 @@
 # WF-03 – Social Media Post (Karenz + Posting IG + FB)
 
-**JSON:** `PF_WF-03_Social_Media_Post_v6.json` (Root, **aktive Version**)
-**Vorgänger:** v4 (Canva-basiert, archiviert), v5 (Pre-Flight-Spec, nie deployed)
+**JSON:** `PF_WF-03_Social_Media_Post_v7.1.json` (Root, **aktive Version**)
+**Vorgänger:** v4 (Canva-basiert, archiviert), v5 (Pre-Flight-Spec, nie deployed), v6 (archiviert 2026-07-13)
 
 **Trigger:** stündlicher Cron
 **Status-Filter (Input):** `field_6 = Bereit`
@@ -226,3 +226,11 @@ Auf Facebook gehören Hashtags als **erster Kommentar** unter den Post, nicht in
 - `02_n8n-Workflows/Gotenberg-Setup.md` (HTML-Render-Sidecar)
 - `00_Konzept/Status-Flow.md`
 - `04_Canva-Vorlagen/html-templates/README.md` (Layout v12, Live-Template)
+
+---
+
+## Änderungshistorie
+
+| Datum       | Was                                                                 | Wer             |
+| ----------- | ------------------------------------------------------------------- | --------------- |
+| 2026-07-13  | **v7.1 — Schedule-Datum-Fix (Berlin-TZ):** FilterKZ nahm das UTC-Datum aus `Veröffentlichungsdatum` (`split('T')[0]`). SharePoint speichert das Datum aber als „Vortag 22:00Z" (Berlin-Mitternacht in UTC) → geplanter Termin wurde 1 Tag zu früh berechnet; Item #73 („Haltungsschulung") ging um 13:01 statt 18:00 live (Karenz war die einzige verbleibende Bremse). Fix: `toLocaleDateString('en-CA', { timeZone: 'Europe/Berlin' })`. Verifiziert per Simulation (Sommer + Winter). Backup: `_Backups/PF_WF-03_v7_2026-07-13_1335_pre-datefix.json` | Claude / Thomas |

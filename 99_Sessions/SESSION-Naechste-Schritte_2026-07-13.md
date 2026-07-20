@@ -38,12 +38,33 @@ und gefixt** (Post ging 5h zu früh raus).
 
 ---
 
+## Nachtrag 2026-07-20 — CI-Farbe & Titel-Umbruch
+
+- ✅ **Alle 34 Bilder der 17 wartenden Posts tragen jetzt `#809B3D`.**
+  Nach deinen 24 Bildern (`b4d5c66`) trugen noch 15 Items (Termine
+  03.08.–21.12.) das alte Salbei `#7E9963` — wären also monatelang im
+  alten Grün live gegangen. Nachgezogen per gezielter Farbersetzung im
+  Bild (`baa857f`), gleiche Methode wie bei deinen 24: Dateinamen und
+  Bildinhalte unverändert, dadurch SharePoint-URLs und Captions
+  unberührt. Verifiziert: 34/34 exakt `#809B3D`, keine Änderung in
+  Fotozonen.
+- ✅ **Titel-Umbruch gefixt** (`a24c2e5`): Lange Wörter liefen bei
+  Instagram über den Textrahmen und überlappten den Ginkgo (sichtbar bei
+  Item #72 „Wasserbahnhof"). `hyphens: auto` + `overflow-wrap: break-word`
+  in IG-, FB- und LinkedIn-Template. Wirkt nur auf **neue** Renderings.
+- ℹ️ **Merkposten:** Bereits veröffentlichte Posts lassen sich nachträglich
+  nicht umfärben — Meta kopiert das Bild beim Posten auf den eigenen CDN.
+  Farbänderungen am Template müssen also *vor* dem Posting greifen.
+
+---
+
 ## Offene Punkte
 
 ### Muss beobachtet werden
 1. **Live-Verifikation Datum-Fix:** Beim nächsten terminierten Post müssen
    die Stunden-Läufe vor der Uhrzeit `scheduled_future` melden und der Post
    pünktlich rausgehen. (Judith-Eintrag abwarten, WF-03-Executions prüfen.)
+   → Nächste Gelegenheit: **Item #11 am 27.07., 10:00 Uhr**.
 
 ### Judith (manuell, Instagram)
 2. Highlights anlegen + neue Icons als Titelbilder setzen

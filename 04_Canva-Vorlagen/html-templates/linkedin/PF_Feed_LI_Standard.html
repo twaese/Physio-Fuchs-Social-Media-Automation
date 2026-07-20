@@ -86,6 +86,10 @@
     color: var(--pf-brown);
     margin-bottom: 40px;
     max-height: 290px; overflow: hidden;
+    /* Lange Wörter würden sonst am Rand abgeschnitten statt umbrochen */
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    overflow-wrap: break-word;
   }
 
   .divider {

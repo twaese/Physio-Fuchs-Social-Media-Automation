@@ -98,6 +98,11 @@
     position: relative;
     z-index: 1;
     max-width: 55%;
+    /* Lange Wörter sonst über den Ginkgo hinaus (siehe IG-Template):
+       zuerst sauber trennen, notfalls hart umbrechen. */
+    hyphens: auto;
+    -webkit-hyphens: auto;
+    overflow-wrap: break-word;
   }
 
   /* Logo-Karte */

@@ -83,11 +83,17 @@ ohne Nachinstallation korrekt dargestellt wird.
 
 ---
 
-## Noch offen
+## Prüfstand
 
-- Optische Endkontrolle: Auf diesem Mac ist kein LibreOffice installiert,
-  die Dokumente wurden nur strukturell geprüft (Tabellen, Textinhalt,
-  Umlaute), nicht gerendert.
+- **Struktur:** maschinell geprüft (Tabellen, Textinhalt, Umlaute, keine
+  Platzhalter-Reste)
+- **Layout:** von Thomas in Word gesichtet, Tabellen sitzen sauber
+  (2026-07-20)
+
+Hinweis für später: Auf diesem Mac ist kein LibreOffice installiert, ein
+automatisches Rendern zur Sichtprüfung ist daher nicht möglich. Nach
+Änderungen an den Skripten bitte ein Dokument von Hand öffnen — am besten
+`Datenschutz-in-Social-Media.docx`, das hat die breiteste Tabelle.
 
 ---
 
@@ -97,3 +103,4 @@ ohne Nachinstallation korrekt dargestellt wird.
 | --- | --- | --- |
 | 2026-07-20 | Initialversion — 7 Word-Dokumente für `00_Fuer_Judith/` | Claude / Thomas |
 | 2026-07-20 | Ergänzt: Datenschutz-Übersicht + Einwilligungen Avatar/Patient:innen (jetzt 10 Dokumente). Markdown-Quellen auf SharePoint archiviert. | Claude / Thomas |
+| 2026-07-20 | Layout in Word gesichtet und freigegeben. | Thomas |

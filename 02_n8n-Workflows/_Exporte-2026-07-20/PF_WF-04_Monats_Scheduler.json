@@ -1,0 +1,441 @@
+{
+  "name": "PF – WF-04 Monats-Scheduler Standard-Post",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "### Konfiguration\n\nDiese Werte werden im Code-Node `Plan: Kandidat + freier Tag` als Konstanten verwendet. Anpassen falls Judith einen anderen Standard-Wochentag will.\n\n```\nPREFERENCE_WEEKDAY  = 2   // 0=So 1=Mo 2=Di ... 6=Sa\nALTERNATE_WEEKDAY   = 4   // Donnerstag\nMIN_LEAD_DAYS       = 3\nPOSTING_TIME        = '09:00'\nREQUIRE_APPROVAL_FOR_STANDARD = false\n```\n\n**Pool-Post-Typen:**\n```\n['Standard','Tipp','FAQ','Praxis-News','Aktion',\n 'Mitarbeiter:in','Behind-the-Scenes','Team','Promo','Zitat']\n```\n\n**Blockierende Post-Typen für Belegt-Liste:**\n```\n['Reel','Story','Übung']\n(plus alle Items mit Status >= Bereit)\n```",
+        "height": 540,
+        "width": 380,
+        "color": 5
+      },
+      "id": "21b44cfc-830d-4ddc-bac2-a0c064e64c3e",
+      "name": "Konfiguration",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1456,
+        -400
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "chatMessage",
+        "chatId": {
+          "__rl": true,
+          "value": "19:meeting_MWViMzNlYmYtNTY1OS00NzM1LTlmMDAtNjRmZjA0YjY3OGFl@thread.v2",
+          "mode": "list",
+          "cachedResultName": "Social Media (meeting)",
+          "cachedResultUrl": "https://teams.microsoft.com/l/chat/19%3Ameeting_MWViMzNlYmYtNTY1OS00NzM1LTlmMDAtNjRmZjA0YjY3OGFl%40thread.v2/0?tenantId=b349f8e5-511c-485a-be28-55e420a6a5e1"
+        },
+        "message": "==📆 **WF-04: Standard-Post für diesen Monat geplant**\n\n🏷️ Typ: {{ $('Plan: Kandidat + freier Tag').item.json.candidate_typ }}\n📋 Thema: {{ $('Plan: Kandidat + freier Tag').item.json.candidate_thema }}\n📅 Datum: {{ $('Plan: Kandidat + freier Tag').item.json.chosen_de }} ({{ $('Plan: Kandidat + freier Tag').item.json.chosen_weekday }}) um {{ $('Plan: Kandidat + freier Tag').item.json.posting_time }}\n⚙️ Fallback verwendet: {{ $('Plan: Kandidat + freier Tag').item.json.fallback_used || 'nein – Wunsch-Wochentag' }}\n\n🟢 Auto-Release ist aktiv – keine manuelle Freigabe nötig.\n→ WF-02 generiert jetzt Caption + Hashtags\n→ WF-03 Phase B2 schaltet Status direkt auf „Freigegeben\"\n→ WF-03 Phase C postet zum geplanten Zeitpunkt zu IG + FB",
+        "options": {}
+      },
+      "id": "741bb46e-d501-4e73-9607-c676aade8d63",
+      "name": "Teams: Erfolg melden",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 2,
+      "position": [
+        3216,
+        -48
+      ],
+      "webhookId": "e59cf95f-8c33-4445-8fb3-6fd8de49f9c8",
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "Gmvn1OD66IZoWsXh",
+          "name": "PF Microsoft Teams account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "chatMessage",
+        "chatId": {
+          "__rl": true,
+          "value": "19:meeting_MWViMzNlYmYtNTY1OS00NzM1LTlmMDAtNjRmZjA0YjY3OGFl@thread.v2",
+          "mode": "list",
+          "cachedResultName": "Social Media (meeting)",
+          "cachedResultUrl": "https://teams.microsoft.com/l/chat/19%3Ameeting_MWViMzNlYmYtNTY1OS00NzM1LTlmMDAtNjRmZjA0YjY3OGFl%40thread.v2/0?tenantId=b349f8e5-511c-485a-be28-55e420a6a5e1"
+        },
+        "message": "==⚠️ **WF-04: Kein Standard-Post-Vorrat für Monat {{ $json.month }}/{{ $json.year }}**\n\nIch habe in `PF-Content-Kalender-2026` keinen Entwurf gefunden, der als Standard-Post in Frage kommt.\n\nWas du tun kannst:\n→ Lege im Formular einen neuen Entwurf an mit Post-Typ z.B. „Tipp\", „FAQ\", „BTS\" oder „Praxis-News\"\n→ Lasse das Datum leer – WF-04 wählt den Tag automatisch\n→ Beim nächsten manuellen Trigger oder am Monatsersten greift WF-04 wieder\n\nTipp: idealerweise 2–3 Entwürfe immer in der Pipeline halten.",
+        "options": {}
+      },
+      "id": "1800853d-ffb5-49f4-8435-45901f38a179",
+      "name": "Teams: Kein Pool",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 2,
+      "position": [
+        3216,
+        144
+      ],
+      "webhookId": "0b3c4d02-26c0-41af-b405-4256152f17f4",
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "Gmvn1OD66IZoWsXh",
+          "name": "PF Microsoft Teams account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "chatMessage",
+        "chatId": {
+          "__rl": true,
+          "value": "19:meeting_MWViMzNlYmYtNTY1OS00NzM1LTlmMDAtNjRmZjA0YjY3OGFl@thread.v2",
+          "mode": "list",
+          "cachedResultName": "Social Media (meeting)",
+          "cachedResultUrl": "https://teams.microsoft.com/l/chat/19%3Ameeting_MWViMzNlYmYtNTY1OS00NzM1LTlmMDAtNjRmZjA0YjY3OGFl%40thread.v2/0?tenantId=b349f8e5-511c-485a-be28-55e420a6a5e1"
+        },
+        "message": "==🛑 **WF-04: Kein freier Tag in Monat {{ $json.month }}/{{ $json.year }}**\n\nKandidat: {{ $json.candidate_typ }} – „{{ $json.candidate_thema }}\" (ID {{ $json.candidate_id }})\n\nProblem: Alle Werktage im laufenden Monat sind durch Reels, Stories oder bereits freigegebene Posts belegt.\n\nWas du tun kannst:\n→ Manuelle Planung des Eintrags in SharePoint (Datum + Uhrzeit setzen)\n→ ODER auf den nächsten Monat verschieben\n→ ODER Reel/Story-Termine prüfen, ob einer verlegt werden kann\n\nWF-04 wird diesen Monat keinen weiteren Versuch starten.",
+        "options": {}
+      },
+      "id": "8d20d58c-e450-483f-a4cf-b441fc695645",
+      "name": "Teams: Kein freier Tag",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 2,
+      "position": [
+        3216,
+        352
+      ],
+      "webhookId": "1cfded86-6720-48b4-8864-0042c7ca4253",
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "Gmvn1OD66IZoWsXh",
+          "name": "PF Microsoft Teams account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "content": "## WF-04 – Monats-Scheduler Standard-Post\n\n**Zweck:** 1× pro Monat einen Standard-Feed-Post automatisch auf einen freien Tag legen, ohne dass er mit Reels/Stories kollidiert. Freigabe-Schritt entfällt für Standard-Posts (Auto-Release).\n\n**Trigger:** Cron, jeden 1. d. Monats um 06:00 (Europe/Berlin).\n\n**Status-Effekt:** setzt `field_6 = Bereit`, schreibt `field_4` (Datum), `field_5` (Uhrzeit), ergänzt `field_13` (Log) um `[AUTO_RELEASE]`. Den weiteren Status-Wechsel auf `Freigegeben` macht WF-02 v17 (Auto-Release-Branch erkennt den Marker).\n\n**Konstanten in „Konfiguration\":**\n- `PREFERENCE_WEEKDAY = 2` (Dienstag)\n- `ALTERNATE_WEEKDAY = 4` (Donnerstag)\n- `MIN_LEAD_DAYS = 3`\n- `POSTING_TIME = '09:00'`\n\n**Pool-Post-Typen** (Reihenfolge FIFO über Created):\nStandard, Tipp, FAQ, Praxis-News, Aktion, Mitarbeiter:in, Behind-the-Scenes, Team, Promo, Zitat.\n\n**Wichtige Sicherheitsregeln:**\n- WF-04 schreibt NIE Caption, Hashtags, Vorschau-URL, Meta-Post-ID.\n- `Übung`, `Reel` und `Story` werden NIE als Standard-Post-Kandidat erkannt.\n- Auto-Release-Marker geht ins `field_13`-Log, damit WF-03 Phase B2 ihn erkennt.\n\nDoku: `02_n8n-Workflows/WF-04_Monats-Scheduler-Standard-Post.md`",
+        "height": 720,
+        "width": 460,
+        "color": 4
+      },
+      "id": "d39e5561-5e9e-405a-8eac-60d8a988440d",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        1984,
+        -656
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "months",
+              "triggerAtHour": 6
+            }
+          ]
+        }
+      },
+      "id": "c4dc460d-d20e-4b18-89a4-f64c0e16d6ae",
+      "name": "Trigger: 1. d. Monats 06:00",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        2032,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "item",
+        "site": {
+          "__rl": true,
+          "value": "physiofuchs889.sharepoint.com,c74040a2-0d6b-4385-b514-fbd9830a56ac,7a7842d6-ea6c-440d-aeed-580bdd2a091c",
+          "mode": "list",
+          "cachedResultName": "Physio Fuchs Administration"
+        },
+        "list": {
+          "__rl": true,
+          "value": "d17a6a6f-e6ef-457d-a2a9-4c30ea56120f",
+          "mode": "list",
+          "cachedResultName": "PF-Content-Kalender-2026"
+        },
+        "filter": "=",
+        "options": {
+          "fields": [
+            "fields"
+          ]
+        },
+        "simplify": false,
+        "requestOptions": {}
+      },
+      "id": "8d6ca0f2-57f1-4beb-bdb6-b88bc81b2bea",
+      "name": "SharePoint: Alle Items lesen",
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [
+        2256,
+        96
+      ],
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "// WF-04 Plan: Kandidat finden + freien Tag berechnen (v1.1, robust gegen DE/EN-Naming)\n//\n// Eingabe: alle Items der Liste (aus SharePoint getAll)\n// Ausgabe: 1 Item mit Feld 'decision' in {OK, NO_CANDIDATE, NO_FREE_DAY},\n//          plus debug_first_item für Diagnose.\n\n// === Konfiguration ===\nconst POOL_TYPES = [\n  'Standard','Tipp','FAQ','Praxis-News','Aktion',\n  'Mitarbeiter:in','Behind-the-Scenes','Team','Promo','Zitat'\n];\nconst BLOCKING_TYPES = ['Reel','Story','Übung'];\nconst ACTIVE_STATUSES = ['Bereit','Freigegeben','Geplant','Veröffentlicht'];\nconst PREFERENCE_WEEKDAY = 2;\nconst ALTERNATE_WEEKDAY  = 4;\nconst MIN_LEAD_DAYS      = 3;\nconst POSTING_TIME       = '09:00';\n\n// === Robuste Property-Lookups (DE+EN, Anzeigename+intern) ===\nconst pickField = (item, keys) => {\n  const sources = [item && item.fields, item && item.Felder, item];\n  for (const src of sources) {\n    if (!src || typeof src !== 'object') continue;\n    for (const k of keys) {\n      if (k in src && src[k] !== undefined) return src[k];\n    }\n  }\n  return null;\n};\nconst getTyp    = (it) => pickField(it, ['field_2','Field_2','Post_Typ','PostTyp']);\nconst getStatus = (it) => pickField(it, ['field_6','Field_6','Status']);\nconst getDatum  = (it) => pickField(it, ['Ver_x00f6_ffentlichungsdatum','Veröffentlichungsdatum','Veroeffentlichungsdatum','field_4','Field_4']);\nconst getId     = (it) => it?.id ?? pickField(it, ['Ausweis','ID','AUSWEIS']) ?? null;\nconst getThema  = (it) => pickField(it, ['field_1','Field_1','Thema','Title','Titel']) ?? '(ohne Thema)';\nconst getLog    = (it) => pickField(it, ['field_13','Field_13','Log','Kommentare']) ?? '';\nconst getCreated= (it) => it?.createdDateTime ?? pickField(it, ['Created','Erstellt']);\n\nconst isEmptyDatum = (v) => v === null || v === undefined || v === '' || v === '0';\n\n// === Einlesen ===\nconst items = $input.all().map(i => i.json);\n\n// Debug: erstes Item komplett ausgeben (als String, da n8n sonst trunciert)\nconst debug_first_item = items[0] ? JSON.stringify(items[0]).substring(0, 2000) : 'NO_ITEMS';\n\n// === Aktuellen Monat bestimmen ===\nconst now = new Date();\nconst year = now.getFullYear();\nconst month = now.getMonth();\nconst monthStart = new Date(Date.UTC(year, month, 1));\nconst nextMonthStart = new Date(Date.UTC(year, month + 1, 1));\n\n// === Schritt 1: Kandidat finden ===\nconst poolCandidates = items.filter(it => {\n  const typ = getTyp(it);\n  const status = getStatus(it);\n  const datum = getDatum(it);\n  return POOL_TYPES.includes(typ) && status === 'Entwurf' && isEmptyDatum(datum);\n}).sort((a,b) => {\n  const ca = new Date(getCreated(a) || 0).getTime();\n  const cb = new Date(getCreated(b) || 0).getTime();\n  return ca - cb;\n});\n\n// Debug: was haben die Items so für Werte?\nconst debug_items_summary = items.slice(0, 5).map(it => ({\n  id: getId(it),\n  thema: getThema(it),\n  typ: getTyp(it),\n  status: getStatus(it),\n  datum: getDatum(it),\n  isEmpty: isEmptyDatum(getDatum(it))\n}));\n\nif (poolCandidates.length === 0) {\n  return [{\n    json: {\n      decision: 'NO_CANDIDATE',\n      year, month: month + 1,\n      reason: 'Kein Entwurf-Item mit Pool-Post-Typ und leerem Veröffentlichungsdatum gefunden.',\n      debug_total_items: items.length,\n      debug_items_summary,\n      debug_first_item\n    }\n  }];\n}\n\nconst candidate = poolCandidates[0];\nconst candidate_id = getId(candidate);\nconst candidate_thema = getThema(candidate);\nconst candidate_typ = getTyp(candidate);\nconst candidate_log = getLog(candidate);\n\n// === Schritt 2: Belegte Tage ===\nconst busyDays = new Set();\nfor (const it of items) {\n  const datumRaw = getDatum(it);\n  if (isEmptyDatum(datumRaw)) continue;\n  const d = new Date(datumRaw);\n  if (isNaN(d.getTime())) continue;\n  if (d < monthStart || d >= nextMonthStart) continue;\n  const status = getStatus(it);\n  const typ = getTyp(it);\n  if (ACTIVE_STATUSES.includes(status) || BLOCKING_TYPES.includes(typ)) {\n    busyDays.add(d.toISOString().slice(0,10));\n  }\n}\n\n// === Schritt 3: freien Tag finden ===\nconst minDate = new Date(now.getTime() + MIN_LEAD_DAYS * 86400000);\nconst weekdayDE = ['So','Mo','Di','Mi','Do','Fr','Sa'];\n\nfunction findFreeDayOnWeekday(targetWeekday) {\n  for (let day = 1; day <= 31; day++) {\n    const probe = new Date(Date.UTC(year, month, day));\n    if (probe.getUTCMonth() !== month) break;\n    if (probe.getUTCDay() !== targetWeekday) continue;\n    if (probe < minDate) continue;\n    const iso = probe.toISOString().slice(0,10);\n    if (!busyDays.has(iso)) return probe;\n  }\n  return null;\n}\nfunction findFirstFreeWeekday() {\n  for (let day = 1; day <= 31; day++) {\n    const probe = new Date(Date.UTC(year, month, day));\n    if (probe.getUTCMonth() !== month) break;\n    const wd = probe.getUTCDay();\n    if (wd === 0 || wd === 6) continue;\n    if (probe < minDate) continue;\n    const iso = probe.toISOString().slice(0,10);\n    if (!busyDays.has(iso)) return probe;\n  }\n  return null;\n}\n\nlet chosen = findFreeDayOnWeekday(PREFERENCE_WEEKDAY);\nlet fallback_used = null;\nif (!chosen) { chosen = findFreeDayOnWeekday(ALTERNATE_WEEKDAY); if (chosen) fallback_used = 'ALTERNATE_WEEKDAY'; }\nif (!chosen) { chosen = findFirstFreeWeekday(); if (chosen) fallback_used = 'ANY_WEEKDAY'; }\n\nif (!chosen) {\n  return [{ json: {\n    decision: 'NO_FREE_DAY',\n    year, month: month + 1,\n    candidate_id, candidate_thema, candidate_typ,\n    reason: 'Kein freier Werktag im Monat gefunden (alle belegt).'\n  }}];\n}\n\nconst chosen_iso_date = chosen.toISOString().slice(0,10);\nconst chosen_iso_full = `${chosen_iso_date}T00:00:00Z`;\nconst [yy,mm,dd] = chosen_iso_date.split('-');\nconst chosen_de = `${dd}.${mm}.${yy}`;\nconst chosen_weekday = weekdayDE[chosen.getUTCDay()];\n\nconst ts = new Date().toISOString().slice(0,16).replace('T',' ');\nconst log_append = `\\n${ts} WF-04: [AUTO_RELEASE] auto-geplant auf ${chosen_de} (${chosen_weekday}). Freier Tag, keine Reels/Stories. fallback=${fallback_used ?? 'none'}.`;\nconst new_log = (candidate_log + log_append).trim();\n\nreturn [{ json: {\n  decision: 'OK',\n  year, month: month + 1,\n  candidate_id, candidate_thema, candidate_typ,\n  chosen_iso_date, chosen_iso_full, chosen_de, chosen_weekday,\n  posting_time: POSTING_TIME,\n  fallback_used, new_log\n}}];\n"
+      },
+      "id": "f2b78762-98ad-40e9-a0e3-d08cc84f158c",
+      "name": "Plan: Kandidat + freier Tag",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        2464,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "OK",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "60d4c21b-c4ac-46bd-be4f-956b4c32ed96"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "OK"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "NO_CANDIDATE",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "d52e0c44-8b23-4173-90f0-9a54025a0f6c"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "NO_CANDIDATE"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.decision }}",
+                    "rightValue": "NO_FREE_DAY",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "fc01bec5-087f-4269-a3e4-c84370cd8df0"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "NO_FREE_DAY"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "89e3d6dc-2a05-4c3e-b655-456702c3e326",
+      "name": "Switch: Entscheidung",
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        2704,
+        96
+      ]
+    },
+    {
+      "parameters": {
+        "content": "### Konfiguration\n\nDiese Werte werden im Code-Node `Plan: Kandidat + freier Tag` als Konstanten verwendet. Anpassen falls Judith einen anderen Standard-Wochentag will.\n\n```\nPREFERENCE_WEEKDAY  = 2   // 0=So 1=Mo 2=Di ... 6=Sa\nALTERNATE_WEEKDAY   = 4   // Donnerstag\nMIN_LEAD_DAYS       = 3\nPOSTING_TIME        = '09:00'\nREQUIRE_APPROVAL_FOR_STANDARD = false\n```\n\n**Pool-Post-Typen:**\n```\n['Standard','Tipp','FAQ','Praxis-News','Aktion',\n 'Mitarbeiter:in','Behind-the-Scenes','Team','Promo','Zitat']\n```\n\n**Blockierende Post-Typen für Belegt-Liste:**\n```\n['Reel','Story','Übung']\n(plus alle Items mit Status >= Bereit)\n```",
+        "height": 540,
+        "width": 380,
+        "color": 5
+      },
+      "id": "8220d4cd-4a02-4ef8-b4ce-e8ad79b9be2b",
+      "name": "Konfiguration1",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        2480,
+        -480
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $json.candidate_id }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-HTTP-Method",
+              "value": "MERGE"
+            },
+            {
+              "name": "IF-MATCH",
+              "value": "*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "Ver_x00f6_ffentlichungsdatum",
+              "value": "={{ $json.chosen_iso_full }}"
+            },
+            {
+              "name": "field_5",
+              "value": "={{ $json.posting_time }}"
+            },
+            {
+              "name": "field_6",
+              "value": "Bereit"
+            },
+            {
+              "name": "field_13",
+              "value": "={{ $json.new_log }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "bc93eb61-03c5-4286-b658-7a64be8a12e9",
+      "name": "SharePoint: Kandidat planen2",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        2976,
+        -48
+      ],
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Trigger: 1. d. Monats 06:00": {
+      "main": [
+        [
+          {
+            "node": "SharePoint: Alle Items lesen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SharePoint: Alle Items lesen": {
+      "main": [
+        [
+          {
+            "node": "Plan: Kandidat + freier Tag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Plan: Kandidat + freier Tag": {
+      "main": [
+        [
+          {
+            "node": "Switch: Entscheidung",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch: Entscheidung": {
+      "main": [
+        [
+          {
+            "node": "SharePoint: Kandidat planen2",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Teams: Kein Pool",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Teams: Kein freier Tag",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SharePoint: Kandidat planen2": {
+      "main": [
+        [
+          {
+            "node": "Teams: Erfolg melden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null
+}

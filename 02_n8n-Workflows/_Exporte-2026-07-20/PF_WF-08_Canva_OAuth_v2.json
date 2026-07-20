@@ -1,0 +1,448 @@
+{
+  "name": "PF – WF-08 Canva OAuth v2 (Webhook-Init)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## WF-08 – Canva OAuth (PKCE)\n\n**Drei Funktionen in einem Workflow:**\n\n1. **Init** (manueller Trigger) – generiert PKCE `code_verifier` und `code_challenge`, speichert Verifier in `staticData`, baut Authorize-URL und gibt sie aus. Du klickst die URL → Canva-Zustimmen → redirect zu Callback.\n\n2. **Callback** (Webhook `/canva-oauth-callback`) – empfängt `code`-Param, liest Verifier aus `staticData`, tauscht Code gegen Access+Refresh Token, speichert beide in `staticData`.\n\n3. **Refresh** (Schedule alle 3h) – nutzt Refresh Token, holt neues Access Token, speichert es zurück.\n\n**Voraussetzungen:**\n- Env-Variablen `CANVA_CLIENT_ID` und `CANVA_CLIENT_SECRET` in n8n gesetzt (NICHT in .env hier abgelegt, sondern in n8n Settings → Variables oder als Server-Env).\n- Canva-App mit Redirect-URL `https://n8n.srv1099163.hstgr.cloud/webhook/canva-oauth-callback`\n- Scopes: design:meta:read, design:content:read, design:content:write, asset:read\n\n**Token-Zugriff aus anderen Workflows:**\n```\n{{ $workflow.staticData.global.canva_access_token }}\n```\nNein, andere Workflows haben keinen Zugriff auf staticData dieses Workflows. Lösung: Token in eine SharePoint-Liste oder einen separaten Endpoint schreiben, oder Anthropic-Call direkt hier ausführen.\n\n**Pragmatischer Workaround:** dieser Workflow bietet einen zweiten Webhook `/canva-token-current` der den aktuellen Token zurückgibt. Andere Workflows callen diesen via HTTP.",
+        "height": 600,
+        "width": 460,
+        "color": 4
+      },
+      "id": "e44d4940-3c47-4e96-baa0-f85f5120cb2c",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "path": "canva-oauth-init",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "d2e3bbde-e76f-4184-8db3-a27e43e8af65",
+      "name": "Webhook: Init (Authorize-URL holen)",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        480,
+        304
+      ],
+      "webhookId": "canva-oauth-init"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Init: PKCE generieren, Authorize-URL bauen\nconst crypto = require('crypto');\n\nconst CLIENT_ID = $env.CANVA_CLIENT_ID;\nif (!CLIENT_ID) throw new Error('Env CANVA_CLIENT_ID fehlt');\n\nconst REDIRECT_URI = 'https://n8n.srv1099163.hstgr.cloud/webhook/canva-oauth-callback';\nconst SCOPE = 'design:meta:read design:content:read design:content:write asset:read';\n\n// PKCE: random verifier (43-128 chars, URL-safe)\nconst codeVerifier = crypto.randomBytes(48).toString('base64url');\nconst codeChallenge = crypto.createHash('sha256').update(codeVerifier).digest('base64url');\nconst state = crypto.randomBytes(16).toString('hex');\n\n// Verifier in workflow staticData speichern\nconst sd = $getWorkflowStaticData('global');\nsd.canva_code_verifier = codeVerifier;\nsd.canva_oauth_state = state;\nsd.canva_init_at = new Date().toISOString();\n\nconst authorizeUrl = 'https://www.canva.com/api/oauth/authorize?'\n  + 'client_id=' + encodeURIComponent(CLIENT_ID)\n  + '&redirect_uri=' + encodeURIComponent(REDIRECT_URI)\n  + '&response_type=code'\n  + '&scope=' + encodeURIComponent(SCOPE)\n  + '&state=' + state\n  + '&code_challenge=' + codeChallenge\n  + '&code_challenge_method=S256';\n\nreturn [{ json: {\n  authorize_url: authorizeUrl,\n  hinweis: 'Diese URL im Browser öffnen, bei Canva zustimmen. Canva redirected dann zum Callback-Webhook.',\n  pkce_verifier_saved: true,\n  state\n}}];\n"
+      },
+      "id": "3accbe5a-46c1-478d-aeec-dc9cbfe78348",
+      "name": "Init: PKCE + Authorize-URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "path": "canva-oauth-callback",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "0b2220dc-5575-41e6-83c3-1c1b14a24df6",
+      "name": "Webhook: OAuth-Callback",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        480,
+        528
+      ],
+      "webhookId": "canva-oauth-callback"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Callback: Code von Canva empfangen, gegen Token tauschen\nconst CLIENT_ID = $env.CANVA_CLIENT_ID;\nconst CLIENT_SECRET = $env.CANVA_CLIENT_SECRET;\nif (!CLIENT_ID || !CLIENT_SECRET) throw new Error('Env CANVA_CLIENT_ID/SECRET fehlt');\n\nconst REDIRECT_URI = 'https://n8n.srv1099163.hstgr.cloud/webhook/canva-oauth-callback';\n\nconst query = $input.item.json.query ?? {};\nconst code = query.code;\nconst state = query.state;\nconst error = query.error;\n\nif (error) throw new Error('Canva OAuth-Fehler: ' + error + ' - ' + (query.error_description ?? ''));\nif (!code) throw new Error('Kein code im Callback');\n\nconst sd = $getWorkflowStaticData('global');\nconst codeVerifier = sd.canva_code_verifier;\nif (!codeVerifier) throw new Error('Kein code_verifier in staticData. WF-08 Init zuerst ausführen.');\n\n// Optional state-check\nif (sd.canva_oauth_state && state !== sd.canva_oauth_state) {\n  throw new Error('State-Mismatch: erwartet ' + sd.canva_oauth_state + ', bekommen ' + state);\n}\n\nreturn [{ json: {\n  code,\n  code_verifier: codeVerifier,\n  client_id: CLIENT_ID,\n  client_secret: CLIENT_SECRET,\n  redirect_uri: REDIRECT_URI,\n  basic_auth: 'Basic ' + Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')\n}}];\n"
+      },
+      "id": "bea17a88-cc77-4a17-b184-0d07a515e825",
+      "name": "Callback: Code lesen + Verifier holen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.canva.com/rest/v1/oauth/token",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.basic_auth }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "authorization_code"
+            },
+            {
+              "name": "code",
+              "value": "={{ $json.code }}"
+            },
+            {
+              "name": "code_verifier",
+              "value": "={{ $json.code_verifier }}"
+            },
+            {
+              "name": "redirect_uri",
+              "value": "={{ $json.redirect_uri }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a1bbe116-9450-4445-bf9d-46e669fe4f66",
+      "name": "Canva: Token tauschen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Token speichern in staticData\nconst resp = $input.item.json;\nif (!resp.access_token) throw new Error('Kein access_token in Canva-Response: ' + JSON.stringify(resp));\n\nconst sd = $getWorkflowStaticData('global');\nsd.canva_access_token  = resp.access_token;\nsd.canva_refresh_token = resp.refresh_token;\nsd.canva_token_type    = resp.token_type ?? 'Bearer';\nsd.canva_expires_in    = resp.expires_in ?? 14400;\nsd.canva_obtained_at   = new Date().toISOString();\nsd.canva_expires_at    = new Date(Date.now() + (resp.expires_in ?? 14400) * 1000).toISOString();\n\n// Verifier ist verbraucht\nsd.canva_code_verifier = null;\n\nreturn [{ json: {\n  ok: true,\n  message: 'Canva Access Token erhalten und gespeichert',\n  expires_at: sd.canva_expires_at,\n  has_refresh_token: !!sd.canva_refresh_token,\n  access_token_preview: resp.access_token.slice(0, 20) + '…'\n}}];\n"
+      },
+      "id": "e0daea7d-c3a9-4837-9c6e-a2dd241b7ec5",
+      "name": "Token speichern",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "text",
+        "responseBody": "={{ '✅ Canva-Token gespeichert.\\n\\nAblauf: ' + $json.expires_at + '\\n\\nDieses Tab kann geschlossen werden.' }}",
+        "options": {}
+      },
+      "id": "8a370a0a-ad56-4ec6-8db6-9328576c8ef4",
+      "name": "Antwort an Browser",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        1440,
+        528
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "hours",
+              "hoursInterval": 3
+            }
+          ]
+        }
+      },
+      "id": "b3968f89-4ef9-4830-b22b-0742cf530cbc",
+      "name": "Trigger: Refresh alle 3h",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        480,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Refresh: Token erneuern\nconst CLIENT_ID = $env.CANVA_CLIENT_ID;\nconst CLIENT_SECRET = $env.CANVA_CLIENT_SECRET;\nif (!CLIENT_ID || !CLIENT_SECRET) throw new Error('Env fehlen');\n\nconst sd = $getWorkflowStaticData('global');\nconst refreshToken = sd.canva_refresh_token;\nif (!refreshToken) throw new Error('Kein Refresh-Token. WF-08 Init+Callback zuerst durchlaufen.');\n\nreturn [{ json: {\n  refresh_token: refreshToken,\n  basic_auth: 'Basic ' + Buffer.from(CLIENT_ID + ':' + CLIENT_SECRET).toString('base64')\n}}];\n"
+      },
+      "id": "ef3d132d-1215-4912-bf43-dc6e92bc26b7",
+      "name": "Refresh: Token vorbereiten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.canva.com/rest/v1/oauth/token",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Authorization",
+              "value": "={{ $json.basic_auth }}"
+            },
+            {
+              "name": "Content-Type",
+              "value": "application/x-www-form-urlencoded"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "form-urlencoded",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "grant_type",
+              "value": "refresh_token"
+            },
+            {
+              "name": "refresh_token",
+              "value": "={{ $json.refresh_token }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "0f33a750-96f3-4f14-b40b-6d9421d3dc82",
+      "name": "Canva: Refresh-Call",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        960,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "// Refreshten Token speichern\nconst resp = $input.item.json;\nif (!resp.access_token) throw new Error('Kein access_token im Refresh-Response: ' + JSON.stringify(resp));\n\nconst sd = $getWorkflowStaticData('global');\nsd.canva_access_token  = resp.access_token;\nif (resp.refresh_token) sd.canva_refresh_token = resp.refresh_token;\nsd.canva_expires_in    = resp.expires_in ?? 14400;\nsd.canva_obtained_at   = new Date().toISOString();\nsd.canva_expires_at    = new Date(Date.now() + (resp.expires_in ?? 14400) * 1000).toISOString();\n\nreturn [{ json: {\n  ok: true,\n  message: 'Canva Access Token refreshed',\n  expires_at: sd.canva_expires_at\n}}];\n"
+      },
+      "id": "cd8bb677-caa8-4a07-8704-9136c81d7259",
+      "name": "Refresh: speichern",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1200,
+        752
+      ]
+    },
+    {
+      "parameters": {
+        "path": "canva-token-current",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "3cfecd66-2535-4540-aecf-b38fded4c5c2",
+      "name": "Webhook: Token-Lookup",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        480,
+        960
+      ],
+      "webhookId": "canva-token-current"
+    },
+    {
+      "parameters": {
+        "jsCode": "// Aktuellen Token aus staticData lesen und zurückgeben\nconst sd = $getWorkflowStaticData('global');\nconst token = sd.canva_access_token;\n\nif (!token) {\n  return [{ json: {\n    ok: false,\n    error: 'Kein Token gespeichert. WF-08 Init+Callback durchlaufen.'\n  }}];\n}\n\nconst expiresAt = sd.canva_expires_at;\nconst isExpired = expiresAt && new Date(expiresAt) < new Date();\n\nreturn [{ json: {\n  ok: !isExpired,\n  access_token: token,\n  expires_at: expiresAt,\n  is_expired: isExpired,\n  needs_refresh: isExpired\n}}];\n"
+      },
+      "id": "5829a86c-d5f1-4bcd-bdf1-e9245811f776",
+      "name": "Token-Lookup: aus staticData",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        720,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "43d6becd-7c35-4651-a684-9e7a5ee9c7a9",
+      "name": "Token-Lookup Response",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        960
+      ]
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={{ JSON.stringify($json) }}",
+        "options": {}
+      },
+      "id": "98c9c3f8-3c1d-4217-bfec-3dc4ba34ba73",
+      "name": "Respond Init: Authorize-URL",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.1,
+      "position": [
+        960,
+        304
+      ]
+    }
+  ],
+  "connections": {
+    "Webhook: OAuth-Callback": {
+      "main": [
+        [
+          {
+            "node": "Callback: Code lesen + Verifier holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Callback: Code lesen + Verifier holen": {
+      "main": [
+        [
+          {
+            "node": "Canva: Token tauschen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canva: Token tauschen": {
+      "main": [
+        [
+          {
+            "node": "Token speichern",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token speichern": {
+      "main": [
+        [
+          {
+            "node": "Antwort an Browser",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Trigger: Refresh alle 3h": {
+      "main": [
+        [
+          {
+            "node": "Refresh: Token vorbereiten",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Refresh: Token vorbereiten": {
+      "main": [
+        [
+          {
+            "node": "Canva: Refresh-Call",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Canva: Refresh-Call": {
+      "main": [
+        [
+          {
+            "node": "Refresh: speichern",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Token-Lookup": {
+      "main": [
+        [
+          {
+            "node": "Token-Lookup: aus staticData",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Token-Lookup: aus staticData": {
+      "main": [
+        [
+          {
+            "node": "Token-Lookup Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook: Init (Authorize-URL holen)": {
+      "main": [
+        [
+          {
+            "node": "Init: PKCE + Authorize-URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Init: PKCE + Authorize-URL": {
+      "main": [
+        [
+          {
+            "node": "Respond Init: Authorize-URL",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": {
+    "node:Trigger: Refresh alle 3h": {
+      "recurrenceRules": [
+        18
+      ]
+    },
+    "global": {
+      "canva_code_verifier": null,
+      "canva_oauth_state": "c19e7b5df8105ca60aa6e47a0aa8da6e",
+      "canva_init_at": "2026-05-15T08:23:05.662Z",
+      "canva_access_token": "eyJraWQiOiI0NWUzMzYwYi0zODJhLTQxNDUtOGI4Ni1jYjI2ODg5ODM5NTgiLCJhbGciOiJSUzI1NiJ9.eyJqdGkiOiJaQkhnR0xnMWFEVGU1dk1MczhqUWRRIiwiY2xpZW50X2lkIjoiT0MtQVo0WEs2d3lHQ1dOIiwiYXVkIjoiaHR0cHM6Ly93d3cuY2FudmEuY29tIiwiaWF0IjoxNzc5MDMzNjMwLCJuYmYiOjE3NzkwMzM2MzAsImV4cCI6MTc3OTA0ODAzMCwic3ViIjoib1VZamRsMGt0VGNkMHlwQ3dnUlk2SSIsImJyYW5kIjoib0JZamRMZ1NnQ0FWcFg4M212ak1iayIsIm9yZ2FuaXphdGlvbiI6bnVsbCwic2NvcGVzIjpbImRlc2lnbjptZXRhOnJlYWQiLCJkZXNpZ246Y29udGVudDpyZWFkIiwiZGVzaWduOmNvbnRlbnQ6d3JpdGUiLCJhc3NldDpyZWFkIl0sImJ1bmRsZXMiOlsiQ1QwMiJdLCJjb2RlX2lkIjoiSHJlZlpUb0M1QUQ0a3hDX3FSc0ItQSIsImFjdF9hcyI6InUiLCJhY3giOiJDT1JNRjlHY1VtSUlvTENka2w0bFZwNkRuSmpBTkpTaF9za0ROSktONnNIa01RVnhndWI1REVPRnV5ejZMdkxhNG0zUTVCTXE5TVhkdndSRnF5cmM4MTZxV1RwR2FhSjEyZUF3Q0VDOGRCLXdRQXhKN3lZR2YyTjh5NEJhUHVWemhoeDdWOWxHVHdQaWM4SHZuaE45T0g1emZISXFtbi1YOUVUTlhadlNhQUdObmMtUHZ3WnZMLW1mVVl6YmJxcTVnRUF3aWcifQ.XgHVCPMpgof_mxdF9XbQYRZeqLYc0m0meMMHTL5TrCV513jqH4157ZqFZiaL8pRHv2Qsr4pE55S2YBnisHrcNwHQPjNTx3XbAaq3oic_TIKe25GFbtuSZt4_S1wMxqkvAU_vb-j0em8ZZWVO5yopdkGgCgnr9jOeRlvf8w9KodyJSc7EQhBGT08Axri-lKtTKTgnfVxIT9wCF0NSdz0R8a7W43dRFEpMtRcpJXwutmjeuDyYM81NJH6N9ekqVA2ZO-do-C6cMuAcaguruaPszDNAvOo0CCzw-pzNN0o0GSisIorSXgKA777CMQZaVtngsu_W0eSLJ_PSwN_kc83bpw",
+      "canva_refresh_token": "eyJhbGciOiJSU0EtT0FFUC0yNTYiLCJlbmMiOiJBMTI4Q0JDLUhTMjU2Iiwia2lkIjoiZmQ1YmU1MTMtZjAzNy00M2NkLTg3OGEtNjQ1OWJmMGEwNzA4IiwiY3R5IjoiSldUIiwianRpIjoiRzFfak5zUi1Dam1lOFRjT2ZXb3JkdyIsImNsaWVudF9pZCI6Ik9DLUFaNFhLNnd5R0NXTiIsImF0X2xlYXN0IjoxMjA5NjAwMDAwfQ.EsvJupdU_MAmcUyQeR79HvCh2CdjrgK34-bzvLiGBfme8XZ5esZ33lA_MIe69IM-AmYR3PPTAT4Rb5fxDSwBcdPf4kYCXHv8kPKVagvXwh1ru291izKt08PNv13G_Mo64hynMhPnh1rtM81mY-Zuu1EpvhhFxf_A8b6evzjySoat-HhBoVyjSP2UrXxMAXrguo5sB6n1pFXnjcam6HAhE6zLoQorA1l5zCRBhGD__V__3gohkSlc3VVe_OgOoq47ASMOPzR5c94QzwSA5vmzNJtY_XRH4pZisY8v1jhDiC6sgeszhroyMrB2fswfXAXRuj5KE9-rIJUuYKdH8sMF-A.BuJJ2JBdg18LjeUzxcAvkQ.Z8XEGcViCApFL9u98KGwFeO0Kb_LiAOPlUkaaHOc_hAEvTUQGKnMFoYPcDy799RcQbodA3q0PZgpvoMnjL0Atd6CcS7B_A-3aaInrR1IG96bvYrfaZVb3E4KItCfqLMuaHng9Dg3AyFjk5J_4HxnNdWWnxS2ooB_ophDTbvmOhUMWyfrdYd5nZXiVx8dYWiJAhe4t4BWEvTg-LSZxrx0eCDx2CVD0eS_4m3CS4r96CYZkgjYc-a3xps66pyMiN_psG_yEj9TFKqCuB2hPn2pAjP96MqGaXDXFFPSHDxxSZGvRais2NmLEg5LxPZJ1tLFLMDf_KWlP3TGGEw7SZBcRZ2ERxirqWfsBeROTh4Sm_9LlqGTW7wliPyTGdky7StNLTReS4QTP_thZY_FGMcqPWrv1vmhJcrBvuJfSgrTi3_tNUzfZfF_Sxyn9NcXrRdAw6UnQy50eSCOHNMgmQgCvYoa1PSRpK53gocn3UC08-hYBNo7HQeMBt15gP1cGJ2ybBYXnL_ziiocshOfNDKw0T2kncG4XQYpu--QuH7yrqMUM2-Mlf9Z5QrJVTguzAmivCm_sHLd5i2RPGb-H5WnAo930ElCkGl56Iv-5P--QFH7MErGn6JLNVvykTwMD6yrYezdc0xHE0Se5RSsc7ej8PMG_7SMpmPv0kgNbWmog_Xuqk3KKUjRGZg4mvbF3Wqg3X9YfbdY7yk-00GLXSEVt8YqQ8cT1i5SY2FBNY_1Z1QLpzekdys2DpbZC5G6jMDXBBL2g4AQVZ65jM6EKvkqHU8d_phoVCh_kvFzIFN1w6gCI2MgRhMiz4sJtRJEjq8ffyiUiR4hZWhgMaZgfEOpc19xGWDsLApYGdVizRFJm0Rc34GD_Ryx-MIh0JAWqD7hYl08Blw0l69WHlrmkYsqRxFKPzan8bj3jmA2Rz_s1ks8W5p8YiCJ5WQfIl9uYd-J38SXT2qI16g50nuzq0JX2zKRGOC74L_kg3Qkz9pz27uSFN4ZTzK-EBOADU5ZEgF5W5bOQeXYboBq5gmmy9cJcrTQVOYvjFMne-OTHPQVHWgmM7cJJUGLXEh_VYOBB9lmDO6WU80T5A4RswEpcuaqDzHjtrG0E294Noe2MdjtlDsjLkZrSbXbqJBPHJ81xZKV7XUtKGM021LRwVdSX9KryaDs2FE1LfUCKUu078vqwl5pKffwKD5dFacyrbdJpvyj.0nblekZbFceowC6llplCBA",
+      "canva_token_type": "Bearer",
+      "canva_expires_in": 14400,
+      "canva_obtained_at": "2026-05-17T16:00:30.369Z",
+      "canva_expires_at": "2026-05-17T20:00:30.369Z"
+    }
+  }
+}

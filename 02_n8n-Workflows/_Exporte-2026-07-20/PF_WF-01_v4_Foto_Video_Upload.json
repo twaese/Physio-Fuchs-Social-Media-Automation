@@ -3,18 +3,18 @@
   "nodes": [
     {
       "parameters": {
-        "content": "# WF-01 v4 Foto Video Upload\n\nWebhook: POST /sharepoint-content-v4-test\n\nZweck: Content einreichen v4 empfangen. Foto-Posts bleiben im Status Entwurf fuer WF-02/WF-03. Video/Reel/Story/Uebung-Uploads werden als Status Video eingegangen angelegt und separat weiterverarbeitet.\n\nWichtig vor Test: SharePoint-Choice Status muss Video eingegangen erlauben. Der sichtbare Formularbutton Video wird intern als Post_Typ Reel gespeichert, daher ist kein Choice-Wert Video noetig.\n\nNicht produktiv aktivieren, bevor Multipart-, Foto- und Video-Test erfolgreich sind.",
+        "content": "# WF-01 v4 Foto Video Upload \n\nWebhook: POST /sharepoint-content-v4-test\n\nZweck: Content einreichen v4 empfangen. Foto-Posts bleiben im Status Entwurf fuer WF-02/WF-03. Video/Reel/Story/Uebung-Uploads werden als Status Video eingegangen angelegt und separat weiterverarbeitet.\n\nWichtig vor Test: SharePoint-Choice Status muss Video eingegangen erlauben. Der sichtbare Formularbutton Video wird intern als Post_Typ Reel gespeichert, daher ist kein Choice-Wert Video noetig.\n\nNicht produktiv aktivieren, bevor Multipart-, Foto- und Video-Test erfolgreich sind.",
         "height": 180,
         "width": 920,
         "color": 5
       },
-      "id": "b87a588b-5e91-49cb-a120-e0b8cafa8273",
+      "id": "dd95b498-613f-4810-b122-ee554a669789",
       "name": "Sticky Note",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        0,
-        0
+        -48,
+        80
       ]
     },
     {
@@ -23,13 +23,13 @@
         "width": 320,
         "color": 3
       },
-      "id": "969f9836-fa1b-4feb-9685-1d59a4abca4a",
+      "id": "3e36b65e-d7ca-49eb-b0b7-45efdedfcf69",
       "name": "Feldmapping",
       "type": "n8n-nodes-base.stickyNote",
       "typeVersion": 1,
       "position": [
-        0,
-        208
+        -48,
+        288
       ]
     },
     {
@@ -39,27 +39,27 @@
         "responseMode": "responseNode",
         "options": {}
       },
-      "id": "c8d2fb6a-40a6-4ce3-be16-d541fb3b1e2e",
+      "id": "c8a2eeab-083f-4d3d-9c94-ead2a4394e04",
       "name": "Formular Webhook",
       "type": "n8n-nodes-base.webhook",
       "typeVersion": 2,
       "position": [
-        240,
-        448
+        192,
+        528
       ],
       "webhookId": "pf-wf01-content-einreichung-v4-test"
     },
     {
       "parameters": {
-        "jsCode": "const raw = $input.first().json.body || $input.first().json;\nconst binary = $input.first().binary || {};\n\nlet body = raw;\nif (typeof raw.payload === 'string') {\n  try {\n    body = JSON.parse(raw.payload);\n  } catch (error) {\n    throw new Error('Payload konnte nicht als JSON gelesen werden');\n  }\n}\n\nfunction formatDatum(iso) {\n  if (!iso) return '';\n  const d = new Date(iso);\n  if (isNaN(d)) return iso;\n  const dd = String(d.getDate()).padStart(2, '0');\n  const mm = String(d.getMonth() + 1).padStart(2, '0');\n  const yyyy = d.getFullYear();\n  return yyyy + '-' + mm + '-' + dd;\n}\n\nfunction clean(value) {\n  return String(value || '').trim();\n}\n\nconst thema = clean(body.Thema || body.Title || body.thema);\nif (!thema) throw new Error('Pflichtfeld Thema fehlt');\n\nconst personenSichtbar = clean(body.Personen_sichtbar || 'nein').toLowerCase();\nconst einverstaendnis = clean(body.Einverstaendnis_vorhanden || 'nein').toLowerCase();\nif (personenSichtbar === 'ja' && einverstaendnis !== 'ja') {\n  throw new Error('DSGVO-Sperre: Personen sichtbar, aber Einverstaendnis fehlt');\n}\n\nconst postTyp = clean(body.Post_Typ || body.postTyp || 'Standard');\nconst videoTypes = ['Reel', 'Story', 'Übung', 'Uebung'];\nconst fotoQuelle = clean(body.Foto_Quelle || 'none').toLowerCase();\nlet materialTyp = clean(body.Material_Typ || '').toLowerCase();\nif (!materialTyp) {\n  materialTyp = fotoQuelle === 'video' ? 'video' : fotoQuelle === 'upload' ? 'foto' : fotoQuelle === 'stock' ? 'stock' : 'kein_upload';\n}\n\nconst hasFotoBinary = Boolean(binary.foto || binary.Foto_Upload || (materialTyp !== 'video' && binary.data));\nconst hasVideoBinary = Boolean(binary.video || binary.Video_Upload || (materialTyp === 'video' && binary.data));\n\nif (materialTyp === 'foto' && !hasFotoBinary) {\n  throw new Error('Material_Typ=foto, aber kein Foto-Binary empfangen');\n}\nif (materialTyp === 'video' && !hasVideoBinary) {\n  throw new Error('Material_Typ=video, aber kein Video-Binary empfangen');\n}\nif (videoTypes.includes(postTyp) && materialTyp !== 'video') {\n  throw new Error('Post_Typ ist Video/Reel/Story/Uebung, aber Material_Typ ist nicht video');\n}\n\nconst brief     = clean(body.Content_Brief || body.textIdee);\nconst datum     = formatDatum(body.Veroeffentlichungsdatum || body.wunschDatum || '');\nconst uhrzeit   = clean(body.Uhrzeit || body.uhrzeit);\nconst hashtag   = clean(body.Hashtag_Thema || body.hashtag);\nconst bild      = clean(body.Bild_Dateiname || body.bildBeschreibung);\nconst freigabe  = clean(body.Freigabe_Person || 'Judith');\nconst kommentar = clean(body.Kommentare || body.notiz);\nconst videoHinweis = clean(body.Video_Hinweis);\nconst tonSprache = clean(body.Ton_enthaelt_Sprache || 'unbekannt').toLowerCase();\n\nconst status = materialTyp === 'video' ? 'Video eingegangen' : 'Entwurf';\nconst workflowZiel = materialTyp === 'video' ? 'video-reel-story' : 'foto-feed-post';\n\nconst materialMeta = [\n  'WF-01 v4 Material-Input:',\n  '- Workflow-Ziel: ' + workflowZiel,\n  '- Material-Typ: ' + materialTyp,\n  '- Foto-Quelle: ' + fotoQuelle,\n  body.Foto_Motiv ? '- Motiv: ' + clean(body.Foto_Motiv) : null,\n  videoHinweis ? '- Video-Hinweis: ' + videoHinweis : null,\n  materialTyp === 'video' ? '- Ton enthaelt Sprache: ' + tonSprache : null,\n  '- Personen sichtbar: ' + personenSichtbar,\n  '- Einverstaendnis vorhanden: ' + einverstaendnis,\n  body.Zuschnitt_Hinweis ? '- Zuschnitt: ' + clean(body.Zuschnitt_Hinweis) : null,\n].filter(Boolean).join('\\n');\n\nreturn [{\n  json: {\n    Title: thema,\n    field_1: thema,\n    field_2: postTyp,\n    field_3: brief,\n    field_5: uhrzeit,\n    field_6: status,\n    field_7: hashtag,\n    field_8: bild,\n    field_11: freigabe,\n    field_13: [kommentar, materialMeta].filter(Boolean).join('\\n\\n'),\n    Ver_x00f6_ffentlichungsdatum: datum,\n    _eingereichtVon: body._eingereichtVon || 'Judith',\n    _eingereichtAm: body._eingereichtAm || new Date().toISOString(),\n    _workflow_ziel: workflowZiel,\n    _postTyp: postTyp,\n    _datum: datum,\n    _material_typ: materialTyp,\n    _foto_quelle: fotoQuelle,\n    _foto_motiv: clean(body.Foto_Motiv),\n    _video_hinweis: videoHinweis,\n    _ton_enthaelt_sprache: tonSprache,\n    _personen_sichtbar: personenSichtbar,\n    _einverstaendnis_vorhanden: einverstaendnis,\n    _zuschnitt_hinweis: clean(body.Zuschnitt_Hinweis),\n    _has_foto_binary: hasFotoBinary,\n    _has_video_binary: hasVideoBinary,\n  },\n  binary,\n}];"
+        "jsCode": "const raw = $input.first().json.body || $input.first().json;\nconst binary = $input.first().binary || {};\n\nlet body = raw;\nif (typeof raw.payload === 'string') {\n  try {\n    body = JSON.parse(raw.payload);\n  } catch (error) {\n    throw new Error('Payload konnte nicht als JSON gelesen werden');\n  }\n}\n\nfunction formatDatum(iso) {\n  if (!iso) return '';\n  const d = new Date(iso);\n  if (isNaN(d)) return iso;\n  const dd = String(d.getDate()).padStart(2, '0');\n  const mm = String(d.getMonth() + 1).padStart(2, '0');\n  const yyyy = d.getFullYear();\n  return yyyy + '-' + mm + '-' + dd;\n}\n\nfunction clean(value) {\n  return String(value || '').trim();\n}\n\nconst thema = clean(body.Thema || body.Title || body.thema);\nif (!thema) throw new Error('Pflichtfeld Thema fehlt');\n\nconst personenSichtbar = clean(body.Personen_sichtbar || 'nein').toLowerCase();\nconst einverstaendnis = clean(body.Einverstaendnis_vorhanden || 'nein').toLowerCase();\nif (personenSichtbar === 'ja' && einverstaendnis !== 'ja') {\n  throw new Error('DSGVO-Sperre: Personen sichtbar, aber Einverstaendnis fehlt');\n}\n\nconst postTyp = clean(body.Post_Typ || body.postTyp || 'Standard');\nconst videoTypes = ['Reel', 'Story', 'Übung', 'Uebung'];\nconst fotoQuelle = clean(body.Foto_Quelle || 'none').toLowerCase();\nlet materialTyp = clean(body.Material_Typ || '').toLowerCase();\nif (!materialTyp) {\n  materialTyp = fotoQuelle === 'video' ? 'video' : fotoQuelle === 'upload' ? 'foto' : fotoQuelle === 'stock' ? 'stock' : 'kein_upload';\n}\n\nconst hasFotoBinary = Boolean(binary.foto || binary.Foto_Upload || (materialTyp !== 'video' && binary.data));\nconst hasVideoBinary = Boolean(binary.video || binary.Video_Upload || (materialTyp === 'video' && binary.data));\n\nif (materialTyp === 'foto' && !hasFotoBinary) {\n  throw new Error('Material_Typ=foto, aber kein Foto-Binary empfangen');\n}\nif (materialTyp === 'video' && !hasVideoBinary) {\n  throw new Error('Material_Typ=video, aber kein Video-Binary empfangen');\n}\nif (videoTypes.includes(postTyp) && materialTyp !== 'video') {\n  throw new Error('Post_Typ ist Video/Reel/Story/Uebung, aber Material_Typ ist nicht video');\n}\n\nconst brief     = clean(body.Content_Brief || body.textIdee);\nconst datum     = formatDatum(body.Veroeffentlichungsdatum || body.wunschDatum || '');\nconst uhrzeit   = clean(body.Uhrzeit || body.uhrzeit);\nconst hashtag   = clean(body.Hashtag_Thema || body.hashtag);\nconst bild      = clean(body.Bild_Dateiname || body.bildBeschreibung);\nconst freigabe  = clean(body.Freigabe_Person || 'Judith');\nconst kommentar = clean(body.Kommentare || body.notiz);\nconst videoHinweis = clean(body.Video_Hinweis);\nconst tonSprache = clean(body.Ton_enthaelt_Sprache || 'unbekannt').toLowerCase();\n\n// NEU: Sofort-Posten Flag aus Formular-Checkbox\nconst sofortPosten = body.Sofort_Posten === true || body.Sofort_Posten === 'true';\n\nconst status = materialTyp === 'video' ? 'Video eingegangen' : 'Entwurf';\nconst workflowZiel = materialTyp === 'video' ? 'video-reel-story' : 'foto-feed-post';\n\nconst materialMeta = [\n  'WF-01 v4 Material-Input:',\n  '- Workflow-Ziel: ' + workflowZiel,\n  '- Material-Typ: ' + materialTyp,\n  '- Foto-Quelle: ' + fotoQuelle,\n  body.Foto_Motiv ? '- Motiv: ' + clean(body.Foto_Motiv) : null,\n  videoHinweis ? '- Video-Hinweis: ' + videoHinweis : null,\n  materialTyp === 'video' ? '- Ton enthaelt Sprache: ' + tonSprache : null,\n  '- Personen sichtbar: ' + personenSichtbar,\n  '- Einverstaendnis vorhanden: ' + einverstaendnis,\n  body.Zuschnitt_Hinweis ? '- Zuschnitt: ' + clean(body.Zuschnitt_Hinweis) : null,\n  sofortPosten ? '- 🚀 SOFORT-POSTEN aktiviert (Karenz + Datum werden in WF-03 übersprungen)' : null,\n].filter(Boolean).join('\\n');\n\nreturn [{\n  json: {\n    Title: thema,\n    field_1: thema,\n    field_2: postTyp,\n    field_3: brief,\n    field_5: uhrzeit,\n    field_6: status,\n    field_7: hashtag,\n    field_8: bild,\n    field_11: freigabe,\n    field_13: [kommentar, materialMeta].filter(Boolean).join('\\n\\n'),\n    Ver_x00f6_ffentlichungsdatum: datum,\n    Sofort_Posten: sofortPosten,\n    _eingereichtVon: body._eingereichtVon || 'Judith',\n    _eingereichtAm: body._eingereichtAm || new Date().toISOString(),\n    _workflow_ziel: workflowZiel,\n    _postTyp: postTyp,\n    _datum: datum,\n    _material_typ: materialTyp,\n    _foto_quelle: fotoQuelle,\n    _foto_motiv: clean(body.Foto_Motiv),\n    _video_hinweis: videoHinweis,\n    _ton_enthaelt_sprache: tonSprache,\n    _personen_sichtbar: personenSichtbar,\n    _einverstaendnis_vorhanden: einverstaendnis,\n    _zuschnitt_hinweis: clean(body.Zuschnitt_Hinweis),\n    _sofort_posten: sofortPosten,\n    _has_foto_binary: hasFotoBinary,\n    _has_video_binary: hasVideoBinary,\n  },\n  binary,\n}];"
       },
-      "id": "0fd59f81-b865-479e-9ef4-06c5b64c0e1a",
+      "id": "3a70e2cc-2ab4-4457-8cb0-08fce0434fa6",
       "name": "Felder mappen",
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        500,
-        448
+        464,
+        528
       ]
     },
     {
@@ -91,7 +91,8 @@
             "field_8": "={{ $json.field_8 }}",
             "field_11": "={{ $json.field_11 }}",
             "field_6": "={{ $json.field_6}}",
-            "Ver_x00f6_ffentlichungsdatum": "={{ $json.Ver_x00f6_ffentlichungsdatum }}"
+            "Ver_x00f6_ffentlichungsdatum": "={{ $json.Ver_x00f6_ffentlichungsdatum }}",
+            "Sofort_Posten": "={{ $json.Sofort_Posten }}"
           },
           "matchingColumns": [],
           "schema": [
@@ -270,6 +271,26 @@
                 {
                   "name": "Veröffentlicht",
                   "value": "Veröffentlicht"
+                },
+                {
+                  "name": "Video eingegangen",
+                  "value": "Video eingegangen"
+                },
+                {
+                  "name": "KI-Texte fertig",
+                  "value": "KI-Texte fertig"
+                },
+                {
+                  "name": "Canva in Bearbeitung",
+                  "value": "Canva in Bearbeitung"
+                },
+                {
+                  "name": "Freigabe offen",
+                  "value": "Freigabe offen"
+                },
+                {
+                  "name": "Reel freigegeben",
+                  "value": "Reel freigegeben"
                 }
               ],
               "removed": false
@@ -368,6 +389,17 @@
               "required": false,
               "type": "string",
               "removed": false
+            },
+            {
+              "id": "Sofort_Posten",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Sofort_Posten",
+              "readOnly": false,
+              "required": false,
+              "type": "boolean",
+              "removed": false
             }
           ],
           "attemptToConvertTypes": false,
@@ -378,10 +410,10 @@
       "type": "n8n-nodes-base.microsoftSharePoint",
       "typeVersion": 1,
       "position": [
-        760,
-        448
+        720,
+        528
       ],
-      "id": "4ccded78-395e-455e-81ed-5cfa1469ccad",
+      "id": "b6ea6319-2a3e-40ac-a990-cdbb43a4f5df",
       "name": "SharePoint: Item erstellen",
       "credentials": {
         "microsoftSharePointOAuth2Api": {
@@ -398,40 +430,42 @@
           "responseCode": 200
         }
       },
-      "id": "a7b9218a-d3a8-410f-9883-0ec007960072",
+      "id": "018f00fa-3e79-4f19-8889-88e96ae30554",
       "name": "HTTP Response → Formular",
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1,
       "position": [
-        1720,
-        304
+        1648,
+        384
       ]
     },
     {
       "parameters": {
         "resource": "channelMessage",
-        "operation": "create",
         "teamId": {
           "__rl": true,
+          "value": "812e3aea-74e1-44e9-8577-abcb5350c8b5",
           "mode": "list",
-          "value": ""
+          "cachedResultName": "Physio Fuchs Administration"
         },
         "channelId": {
           "__rl": true,
+          "value": "19:30f23b8751554d14a514b2ee3e537dbb@thread.tacv2",
           "mode": "list",
-          "value": ""
+          "cachedResultName": "Socialmedia",
+          "cachedResultUrl": "https://teams.cloud.microsoft/l/channel/19%3A30f23b8751554d14a514b2ee3e537dbb%40thread.tacv2/Socialmedia?groupId=812e3aea-74e1-44e9-8577-abcb5350c8b5&tenantId=b349f8e5-511c-485a-be28-55e420a6a5e1&allowXTenantAccess=False"
         },
         "contentType": "html",
-        "message": "=<h2>Neue Content-Einreichung</h2><p><b>Item-ID:</b> {{ $('SharePoint: Item erstellen').first().json.id }}<br><b>Thema:</b> {{ $('Felder mappen').first().json.field_1 }}<br><b>Post-Typ:</b> {{ $('Felder mappen').first().json.field_2 }}<br><b>Status:</b> {{ $('Felder mappen').first().json.field_6 }}<br><b>Workflow:</b> {{ $('Felder mappen').first().json._workflow_ziel }}<br><b>Geplant:</b> {{ $('Felder mappen').first().json._datum }} {{ $('Felder mappen').first().json.field_5 || '10:00' }} Uhr</p><hr><h3>Material</h3><p><b>Typ:</b> {{ $('Felder mappen').first().json._material_typ }}<br><b>Foto:</b> <code>{{ $('Code: Material-Dateinamen bauen').first().json.photo_filename || 'kein Foto-Upload' }}</code><br><b>Video:</b> <code>{{ $('Code: Material-Dateinamen bauen').first().json.video_filename || 'kein Video-Upload' }}</code><br><b>Projekt:</b> <code>{{ $('Code: Material-Dateinamen bauen').first().json.video_project_folder || '-' }}</code></p><p>Foto-Posts laufen automatisch weiter ueber WF-02/WF-03.<br>Video-/Reel-Items bleiben zunaechst auf <b>Video eingegangen</b>; WF-05 erzeugt danach automatisch Caption, CTA und Hashtags.</p><hr><p style=\"color:#666;font-size:0.9em;\">WF-01 v4 Foto Video Upload</p>",
+        "message": "=<h2>✅ Neue Content-Einreichung</h2>\n\n<p>\n<b>Item-ID:</b> {{ $('SharePoint: Item erstellen').first().json.id }}<br>\n<b>Thema:</b> {{ $('Felder mappen').first().json.field_1 }}<br>\n<b>Post-Typ:</b> {{ $('Felder mappen').first().json.field_2 }}<br>\n<b>Status:</b> {{ $('Felder mappen').first().json.field_6 }}<br>\n<b>Workflow:</b> {{ $('Felder mappen').first().json._workflow_ziel }}<br>\n<b>Geplant:</b> {{ $('Felder mappen').first().json._datum }} {{ $('Felder mappen').first().json.field_5 || '10:00' }} Uhr\n</p>\n\n<hr>\n\n<h3>📎 Material</h3>\n<p>\n<b>Typ:</b> {{ $('Felder mappen').first().json._material_typ }}<br>\n<b>Foto:</b> <code>{{ $('Code: Material-Dateinamen bauen').first().json.photo_filename || 'kein Foto-Upload' }}</code><br>\n<b>Video:</b> <code>{{ $('Code: Material-Dateinamen bauen').first().json.video_filename || 'kein Video-Upload' }}</code><br>\n<b>Projekt:</b> <code>{{ $('Code: Material-Dateinamen bauen').first().json.video_project_folder || '-' }}</code>\n</p>\n\n<p>\nFoto-Posts laufen automatisch weiter über WF-02/WF-03.<br>\nVideo-/Reel-Items bleiben zunächst auf <b>Video eingegangen</b>; WF-05 erzeugt danach automatisch Caption, CTA und Hashtags.\n</p>\n\n<hr>\n\n<p style=\"color:#666;font-size:0.9em;\">\nWF-01 v4 Foto Video Upload\n</p>",
         "options": {}
       },
       "type": "n8n-nodes-base.microsoftTeams",
       "typeVersion": 2,
       "position": [
-        1720,
-        592
+        1808,
+        640
       ],
-      "id": "6f9a8a9c-4346-40f4-96e5-91bd371dcbb4",
+      "id": "2d3bd87b-3a2f-4406-9928-4112ad49ad0a",
       "name": "Teams: Eingang melden",
       "webhookId": "0d17356d-fe0c-4308-a4ed-8a09d39655ba",
       "credentials": {
@@ -439,8 +473,7 @@
           "id": "Gmvn1OD66IZoWsXh",
           "name": "PF Microsoft Teams account"
         }
-      },
-      "disabled": false
+      }
     },
     {
       "parameters": {
@@ -449,10 +482,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1020,
-        448
+        976,
+        528
       ],
-      "id": "wf01v3-code-foto-dateiname",
+      "id": "127b362e-d712-4651-b2fc-4f1fa495dece",
       "name": "Code: Material-Dateinamen bauen"
     },
     {
@@ -482,10 +515,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1240,
-        448
+        1200,
+        528
       ],
-      "id": "wf01v3-if-foto-upload",
+      "id": "38e47220-e996-4ed4-bc72-651fe8679485",
       "name": "IF: Foto hochladen?"
     },
     {
@@ -521,10 +554,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1460,
-        336
+        1424,
+        416
       ],
-      "id": "wf01v3-http-sp-foto-upload",
+      "id": "c1d8932e-afda-46b5-bae1-e484d1e90fa3",
       "name": "HTTP: SP Foto Upload",
       "credentials": {
         "microsoftSharePointOAuth2Api": {
@@ -540,10 +573,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1680,
-        336
+        1664,
+        128
       ],
-      "id": "wf01v3-code-sp-update-payload",
+      "id": "7747f7c9-f68a-477c-b91e-5c37be18d6b7",
       "name": "Code: SP Foto-Log Payload"
     },
     {
@@ -581,10 +614,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1900,
-        336
+        1920,
+        384
       ],
-      "id": "wf01v3-http-sp-item-foto-update",
+      "id": "a28cc77e-fb18-44b5-a4f9-abdce12f75a8",
       "name": "SP: Item Foto-Log aktualisieren",
       "credentials": {
         "microsoftSharePointOAuth2Api": {
@@ -620,10 +653,10 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2,
       "position": [
-        1240,
-        708
+        1200,
+        800
       ],
-      "id": "95403db2-cc85-4bc9-8b53-8da4e2adb7c2",
+      "id": "ef6f1883-3763-441d-8c4c-5c62e46ec115",
       "name": "IF: Video hochladen?"
     },
     {
@@ -659,10 +692,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1460,
-        596
+        1424,
+        688
       ],
-      "id": "2a4ff031-0561-4eb2-966c-3b438a40c6fb",
+      "id": "c437718e-ba44-4495-bd22-c6b88b0c9311",
       "name": "HTTP: SP Video Upload",
       "credentials": {
         "microsoftSharePointOAuth2Api": {
@@ -678,10 +711,10 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        1680,
-        596
+        1824,
+        896
       ],
-      "id": "2ede16a6-0940-4015-bfe8-f90ba943667e",
+      "id": "dbb5aec7-cd7e-4bfb-a6b4-78f9a23f8641",
       "name": "Code: SP Video-Log Payload"
     },
     {
@@ -719,10 +752,10 @@
       "type": "n8n-nodes-base.httpRequest",
       "typeVersion": 4.2,
       "position": [
-        1900,
-        596
+        2080,
+        608
       ],
-      "id": "2fd918f4-fff2-4c60-8b8c-a6fd39dd4da1",
+      "id": "80623592-e2a7-4fed-908b-1317bf9d073e",
       "name": "SP: Item Video-Log aktualisieren",
       "credentials": {
         "microsoftSharePointOAuth2Api": {
@@ -730,62 +763,35 @@
           "name": "PF Microsoft SharePoint account"
         }
       }
+    },
+    {
+      "parameters": {
+        "workflowId": {
+          "__rl": true,
+          "value": "OQIqADQvVPmFiUO6",
+          "mode": "id"
+        },
+        "workflowInputs": {
+          "mappingMode": "defineBelow",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": true
+        },
+        "mode": "each",
+        "options": {}
+      },
+      "id": "d28fc73b-5563-4aff-94b7-a68eacb8c6fa",
+      "name": "Execute Workflow: WF-02",
+      "type": "n8n-nodes-base.executeWorkflow",
+      "typeVersion": 1.2,
+      "position": [
+        2400,
+        400
+      ]
     }
   ],
-  "pinData": {
-    "Formular Webhook": [
-      {
-        "json": {
-          "headers": {
-            "host": "n8n.srv1099163.hstgr.cloud",
-            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
-            "content-length": "391",
-            "accept": "*/*",
-            "accept-encoding": "gzip, deflate, br, zstd",
-            "accept-language": "de,de-DE;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
-            "content-type": "application/json",
-            "origin": "https://gt-assistent.srv1099163.hstgr.cloud",
-            "priority": "u=1, i",
-            "referer": "https://gt-assistent.srv1099163.hstgr.cloud/",
-            "sec-ch-ua": "\"Chromium\";v=\"148\", \"Microsoft Edge\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
-            "sec-ch-ua-mobile": "?0",
-            "sec-ch-ua-platform": "\"macOS\"",
-            "sec-fetch-dest": "empty",
-            "sec-fetch-mode": "cors",
-            "sec-fetch-site": "same-site",
-            "x-forwarded-for": "172.18.0.1",
-            "x-forwarded-host": "n8n.srv1099163.hstgr.cloud",
-            "x-forwarded-port": "443",
-            "x-forwarded-proto": "https",
-            "x-forwarded-server": "345ffec08734",
-            "x-real-ip": "172.18.0.1"
-          },
-          "params": {},
-          "query": {},
-          "body": {
-            "Title": "test 4",
-            "Thema": "test 4",
-            "Post_Typ": "Story",
-            "Hashtag_Thema": "Physiotherapie",
-            "Content_Brief": "test 4",
-            "Veroeffentlichungsdatum": "2026-05-11",
-            "Uhrzeit": "12:00",
-            "Bild_Dateiname": "",
-            "Freigabe_Person": "Thomas",
-            "Kommentare": "test",
-            "Status": "Idee",
-            "Caption_Variante": "",
-            "Canva_Template_ID": "",
-            "Instagram_Post_ID": "",
-            "_eingereichtVon": "Judith",
-            "_eingereichtAm": "2026-05-11T08:55:42.446Z"
-          },
-          "webhookUrl": "https://n8n.srv1099163.hstgr.cloud/webhook/sharepoint-content",
-          "executionMode": "production"
-        }
-      }
-    ]
-  },
   "connections": {
     "Formular Webhook": {
       "main": [
@@ -947,16 +953,21 @@
           }
         ]
       ]
+    },
+    "Teams: Eingang melden": {
+      "main": [
+        [
+          {
+            "node": "Execute Workflow: WF-02",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
     }
   },
-  "active": false,
   "settings": {
     "executionOrder": "v1"
   },
-  "versionId": "wf01-v4-draft-2026-06-12",
-  "meta": {
-    "instanceId": "f40c6f6af7ce2011b04be6e4c65abbc6b998ddefd762d8f282912f30a607f9b9"
-  },
-  "id": "wf01-v4-foto-video-upload-draft",
-  "tags": []
+  "staticData": null
 }

@@ -132,11 +132,26 @@ Tipp: Vor der Veröffentlichung im SP-Ordner kurz checken welches Foto „erste"
 
 WF-02 läuft trotzdem durch, **es passiert nichts Schlimmes:**
 
-1. **Stufe 1:** Suche nach `PF_2026_{ItemID}_*.jpg/png` — kein Treffer
-2. **Stufe 2:** Suche im `Instafotos Stock/`-Ordner — wenn da was drin ist, wird ein zufälliges genommen
-3. **Stufe 3:** wenn auch kein Stock-Foto da: Standard-Foto aus dem Code
+1. **Stufe 1:** Suche nach `PF_2026_{ItemID}_*.jpg/png` im Jahresordner
+2. **Stufe 2:** kein Treffer → festes Standard-Foto
+   (`assets/judith-behandlung-01.png`, im Code als `FALLBACK_URL` hinterlegt)
 
-In jedem Fall bekommst du eine **Teams-Notiz** mit dem Hinweis welche Item-ID gerade ohne eigenes Foto gepostet wurde — dann kannst du beim nächsten Mal eins nachreichen.
+⚠️ **Stand 2026-07-20 — Stock-Pool ist NICHT implementiert.**
+Im Node „Code: Foto-Pfad bauen" (WF-02 v18.3) führt der Nicht-Treffer-Zweig
+direkt auf `FALLBACK_URL`; der Stock-Zweig ist im Doku-Node als
+„TODO v18.4" markiert. Der SharePoint-Ordner `Instafotos Stock/` mit
+aktuell 10 Fotos wird also **nie gelesen**.
+
+Praktische Folge: Alle Items ohne eigenes Foto bekommen dasselbe Bild.
+Das ist der Grund, warum 15 geplante Posts (Aug–Dez 2026) optisch identisch
+waren — siehe `05_Content-Planung/Foto-Bedarf-Judith_2026-07-20.md`.
+
+Solange der Stock-Pool fehlt, ist ein **item-spezifisches Foto der einzige
+Weg** zu einem passenden Bild.
+
+In jedem Fall bekommst du eine **Teams-Notiz** mit dem Hinweis welche Item-ID
+gerade ohne eigenes Foto gepostet wurde — dann kannst du beim nächsten Mal
+eins nachreichen.
 
 ---
 
@@ -180,3 +195,4 @@ Im Ordner `Content_Socialmedia/Fotos/Instafotos Stock/` können generische Praxi
 | Datum       | Was                                                       | Wer    |
 | ----------- | --------------------------------------------------------- | ------ |
 | 2026-06-08  | Initial-Version mit Naming-Convention                     | Claude / Thomas |
+| 2026-07-20  | **Korrektur:** Die beschriebene Stock-Pool-Stufe existiert im Code nicht (WF-02 v18.3 fällt direkt auf `FALLBACK_URL`). Doku beschrieb eine nie gebaute Funktion. Judith-taugliche Kurzfassung liegt jetzt als Word unter `Content_Socialmedia/00_Fuer_Judith/`. | Claude / Thomas |

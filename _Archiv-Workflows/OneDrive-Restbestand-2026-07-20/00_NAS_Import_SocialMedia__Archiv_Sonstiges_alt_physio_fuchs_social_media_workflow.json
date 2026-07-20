@@ -1,0 +1,389 @@
+{
+  "name": "Physio Fuchs – Social Media Auto-Post",
+  "nodes": [
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "cronExpression",
+              "expression": "0 9 * * 1,3,5"
+            }
+          ]
+        }
+      },
+      "id": "trigger-schedule",
+      "name": "Trigger: Mo/Mi/Fr 9:00 Uhr",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.1,
+      "position": [240, 300]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "listItem",
+        "operation": "getAll",
+        "siteId": "={{ $env.SHAREPOINT_SITE_ID }}",
+        "listId": "Content-Queue",
+        "returnAll": false,
+        "limit": 1,
+        "filters": {
+          "fields": [
+            {
+              "field": "Status",
+              "operator": "eq",
+              "value": "Freigegeben"
+            }
+          ]
+        },
+        "options": {
+          "fields": [
+            "Title",
+            "Caption",
+            "Hashtags",
+            "ImageUrl",
+            "Plattform",
+            "Status",
+            "Datum"
+          ]
+        }
+      },
+      "id": "sharepoint-get-item",
+      "name": "SharePoint: Freigegebenen Post holen",
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [460, 300]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": false
+          },
+          "conditions": [
+            {
+              "leftValue": "={{ $json.fields.Status }}",
+              "rightValue": "Freigegeben",
+              "operator": {
+                "type": "string",
+                "operation": "equals"
+              }
+            }
+          ]
+        }
+      },
+      "id": "check-status",
+      "name": "Prüfe: Status = Freigegeben?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [680, 300]
+    },
+    {
+      "parameters": {
+        "caption": "={{ $json.fields.Caption }}\n\n{{ $json.fields.Hashtags }}",
+        "additionalFields": {
+          "image_url": "={{ $json.fields.ImageUrl }}"
+        }
+      },
+      "id": "prepare-content",
+      "name": "Content vorbereiten",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.3,
+      "position": [900, 200],
+      "parameters": {
+        "mode": "manual",
+        "fields": {
+          "values": [
+            {
+              "name": "caption",
+              "stringValue": "={{ $json.fields.Caption }}\n\n{{ $json.fields.Hashtags }}"
+            },
+            {
+              "name": "image_url",
+              "stringValue": "={{ $json.fields.ImageUrl }}"
+            },
+            {
+              "name": "item_id",
+              "stringValue": "={{ $json.id }}"
+            },
+            {
+              "name": "plattform",
+              "stringValue": "={{ $json.fields.Plattform }}"
+            }
+          ]
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/{{ $env.INSTAGRAM_ACCOUNT_ID }}/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "image_url",
+              "value": "={{ $json.image_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $json.caption }}"
+            }
+          ]
+        }
+      },
+      "id": "instagram-create-container",
+      "name": "Instagram: Media Container erstellen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1120, 160]
+    },
+    {
+      "parameters": {
+        "unit": "seconds",
+        "value": 15
+      },
+      "id": "wait-instagram",
+      "name": "Warten 15s (Instagram Processing)",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1.1,
+      "position": [1340, 160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/{{ $env.INSTAGRAM_ACCOUNT_ID }}/media_publish",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('Instagram: Media Container erstellen').item.json.id }}"
+            }
+          ]
+        }
+      },
+      "id": "instagram-publish",
+      "name": "Instagram: Post veröffentlichen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 160]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/{{ $env.FACEBOOK_PAGE_ID }}/photos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "url",
+              "value": "={{ $('Content vorbereiten').item.json.image_url }}"
+            },
+            {
+              "name": "message",
+              "value": "={{ $('Content vorbereiten').item.json.caption }}"
+            }
+          ]
+        }
+      },
+      "id": "facebook-post",
+      "name": "Facebook: Beitrag veröffentlichen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [1560, 360]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "listItem",
+        "operation": "update",
+        "siteId": "={{ $env.SHAREPOINT_SITE_ID }}",
+        "listId": "Content-Queue",
+        "listItemId": "={{ $('Content vorbereiten').item.json.item_id }}",
+        "fields": {
+          "values": [
+            {
+              "field": "Status",
+              "value": "Veröffentlicht"
+            },
+            {
+              "field": "VeröffentlichtAm",
+              "value": "={{ new Date().toISOString() }}"
+            },
+            {
+              "field": "InstagramPostId",
+              "value": "={{ $('Instagram: Post veröffentlichen').item.json.id }}"
+            },
+            {
+              "field": "FacebookPostId",
+              "value": "={{ $('Facebook: Beitrag veröffentlichen').item.json.id }}"
+            }
+          ]
+        }
+      },
+      "id": "sharepoint-update-status",
+      "name": "SharePoint: Status auf Veröffentlicht setzen",
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [1780, 260]
+    },
+    {
+      "parameters": {
+        "authentication": "oAuth2",
+        "resource": "message",
+        "operation": "post",
+        "teamId": "={{ $env.TEAMS_TEAM_ID }}",
+        "channelId": "={{ $env.TEAMS_CHANNEL_ID }}",
+        "content": "=✅ **Neuer Post veröffentlicht!**\n\n📸 **Titel:** {{ $('Content vorbereiten').item.json.caption.substring(0,80) }}...\n\n🕐 **Zeitpunkt:** {{ new Date().toLocaleString('de-DE') }}\n\n📊 Instagram Post ID: {{ $('Instagram: Post veröffentlichen').item.json.id }}\n📘 Facebook Post ID: {{ $('Facebook: Beitrag veröffentlichen').item.json.id }}"
+      },
+      "id": "teams-notification",
+      "name": "Teams: Erfolgsbenachrichtigung",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 1,
+      "position": [2000, 260]
+    },
+    {
+      "parameters": {
+        "content": "=⛔ Kein freigegebener Post gefunden.\nNächster Check: Mo/Mi/Fr 9:00 Uhr",
+        "options": {}
+      },
+      "id": "no-content",
+      "name": "Kein Content – Ende",
+      "type": "n8n-nodes-base.noOp",
+      "typeVersion": 1,
+      "position": [900, 440]
+    }
+  ],
+  "connections": {
+    "Trigger: Mo/Mi/Fr 9:00 Uhr": {
+      "main": [
+        [
+          {
+            "node": "SharePoint: Freigegebenen Post holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SharePoint: Freigegebenen Post holen": {
+      "main": [
+        [
+          {
+            "node": "Prüfe: Status = Freigegeben?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Prüfe: Status = Freigegeben?": {
+      "main": [
+        [
+          {
+            "node": "Content vorbereiten",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Kein Content – Ende",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Content vorbereiten": {
+      "main": [
+        [
+          {
+            "node": "Instagram: Media Container erstellen",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Facebook: Beitrag veröffentlichen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram: Media Container erstellen": {
+      "main": [
+        [
+          {
+            "node": "Warten 15s (Instagram Processing)",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Warten 15s (Instagram Processing)": {
+      "main": [
+        [
+          {
+            "node": "Instagram: Post veröffentlichen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Instagram: Post veröffentlichen": {
+      "main": [
+        [
+          {
+            "node": "SharePoint: Status auf Veröffentlicht setzen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Facebook: Beitrag veröffentlichen": {
+      "main": [
+        [
+          {
+            "node": "SharePoint: Status auf Veröffentlicht setzen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SharePoint: Status auf Veröffentlicht setzen": {
+      "main": [
+        [
+          {
+            "node": "Teams: Erfolgsbenachrichtigung",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1",
+    "saveManualExecutions": true,
+    "callerPolicy": "workflowsFromSameOwner",
+    "errorWorkflow": "Physio Fuchs – Error Handler"
+  },
+  "staticData": null,
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": "physio-fuchs-social-media"
+  },
+  "pinData": {}
+}

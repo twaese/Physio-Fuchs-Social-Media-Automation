@@ -58,6 +58,38 @@ und gefixt** (Post ging 5h zu früh raus).
 
 ---
 
+## Nachtrag 2026-07-20 — Datenschutz-Vorfall abgeschlossen
+
+**Vorfall:** Ein Screenshot einer privaten Kontoübersicht lag als
+`PF_2026_059_fghfghfghfjfgj.png` seit 12.06. im öffentlichen Repo —
+plus zwei daraus gerenderte Post-Bilder (59_ig / 59_fb), die den
+Screenshot als Hintergrund zeigten. Insgesamt 5,5 Wochen öffentlich.
+
+**Bereinigt:**
+- Backup als Bundle gesichert (`~/PF-Repo-Backup-vor-DSGVO-Rewrite-2026-07-20.bundle`)
+- Historie mit `git filter-repo` bereinigt, `main` force-gepusht
+  → neuer HEAD `00e6a7395c9904a58b179870add6fe74623f4272`
+- Verifiziert: 3 Dateien entfernt, 271 verbliebene Dateien inhaltlich
+  unverändert (Blob-Hash-Vergleich), 195 → 192 Commits
+- NAS nachgezogen, skip-worktree wiederhergestellt
+- GitHub-Ticket #4586849 („Clear Cached Views") → **am 20.07. gelöst**,
+  Cache-Clearance + Garbage Collection durchgeführt
+- **Endkontrolle 20.07.:** alle drei SHA-URLs HTTP 404, Commits über
+  API 422, `main` weiterhin 200 ✓
+
+**Lehren:**
+- Der Virtual-Agent im Support-Formular **kürzt lange Texte ab** — von
+  drei genannten Commits kam nur einer an. GC lief zum Glück
+  repository-weit. Bei künftigen Tickets: kurz fassen, Details ins Ticket
+  nachreichen.
+- Force-Push allein genügt nicht: Objekte bleiben über direkte SHA-URLs
+  abrufbar, bis GitHub die GC ausführt.
+
+**Noch offen (außerhalb der Technik):** Klärung mit der Bank — die Daten
+waren 5,5 Wochen öffentlich abrufbar.
+
+---
+
 ## Offene Punkte
 
 ### Muss beobachtet werden

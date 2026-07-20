@@ -1,0 +1,288 @@
+{
+  "name": "PF – WF-03 Canva Grafik Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## PF – WF-03 Canva Grafik Generator\n\n**Ablauf:**\nSharePoint (Status=Freigegeben)\n       ↓\nBild_Dateiname leer?\n  ↓ JA              ↓ NEIN\nCanva generieren   Bild verwenden\n  ↓                    ↓\nURL speichern   direkt → WF-04\n\n**Vorlage:** DAG_tS-3P0k (Seite 3)\n**Platzhalter:** THEMA → field_1\n\n**Bild_Dateiname (field_8):**\n- Leer → Canva generiert automatisch\n- Befüllt → wird direkt verwendet",
+        "height": 240,
+        "width": 900,
+        "color": 5
+      },
+      "id": "wf03-sticky-main",
+      "name": "Sticky Note WF-03",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "content": "**Feldmapping SharePoint:**\n\nLesen:\nfield_1  = Thema\nfield_6  = Status\nfield_8  = Bild_Dateiname\nAUSWEIS  = Item-ID\n\nSchreiben (nur wenn Canva):\nfield_8  = Canva Export-URL\n\n⚠️ field_8 muss Textspalte sein!\nListeneinstellungen → Bild_Dateiname\n→ Typ: Einzelne Zeile Text",
+        "width": 270,
+        "color": 4
+      },
+      "id": "wf03-sticky-fields",
+      "name": "Feldmapping",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [240, 260]
+    },
+    {
+      "parameters": {
+        "content": "**v2 – 2026-05-10**\n\nNeu: Zwei-Pfad-Logik\n- Pfad A: Bild leer → Canva\n- Pfad B: Bild vorhanden → direkt\n\nBeide Pfade liefern:\n- final_bild_url\n- thema\n- sharepoint_item_id\n→ bereit für WF-04\n\nv1: nur Canva-Pfad",
+        "width": 260,
+        "color": 6
+      },
+      "id": "wf03-changelog",
+      "name": "Changelog v2",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [2400, 260]
+    },
+    {
+      "parameters": {
+        "content": "**PFAD A – Canva generiert**\n\nWenn field_8 leer:\n1. Claude + Canva MCP\n2. THEMA ersetzen auf Seite 3\n3. PNG exportieren\n4. URL in SharePoint speichern",
+        "width": 220,
+        "color": 3
+      },
+      "id": "wf03-sticky-pfad-a",
+      "name": "Pfad A Hinweis",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1120, 260]
+    },
+    {
+      "parameters": {
+        "content": "**PFAD B – Bild vorhanden**\n\nWenn field_8 befüllt:\n→ URL direkt verwenden\n→ kein Canva-Aufruf\n→ bereit für WF-04",
+        "width": 220,
+        "color": 3
+      },
+      "id": "wf03-sticky-pfad-b",
+      "name": "Pfad B Hinweis",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1120, 560]
+    },
+    {
+      "parameters": {},
+      "id": "wf03-manual-trigger",
+      "name": "Manueller Test-Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [272, 464]
+    },
+    {
+      "parameters": {
+        "resource": "item",
+        "site": {
+          "__rl": true,
+          "value": "physiofuchs889.sharepoint.com,c74040a2-0d6b-4385-b514-fbd9830a56ac,7a7842d6-ea6c-440d-aeed-580bdd2a091c",
+          "mode": "list",
+          "cachedResultName": "Physio Fuchs Administration"
+        },
+        "list": {
+          "__rl": true,
+          "value": "d17a6a6f-e6ef-457d-a2a9-4c30ea56120f",
+          "mode": "list",
+          "cachedResultName": "PF-Content-Kalender-2026"
+        },
+        "filter": "=",
+        "options": { "fields": ["fields"] },
+        "simplify": false,
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [512, 464],
+      "id": "wf03-sp-get",
+      "name": "Get many items",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "filter-freigegeben",
+              "leftValue": "={{ $json.fields.field_6 }}",
+              "rightValue": "Freigegeben",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [800, 464],
+      "id": "wf03-filter-status",
+      "name": "Filter: Status = Freigegeben"
+    },
+    {
+      "parameters": {
+        "jsCode": "const json = $input.item.json;\nconst f = json.fields || json.Felder || {};\n\n// Felder extrahieren\nconst thema   = f.field_1 || f.Field_1 || '(kein Thema)';\nconst bildUrl = f.field_8 || f.Field_8 || '';\nconst itemId  = parseInt(String(json.AUSWEIS || json.id || 0).trim(), 10);\n\n// Ist Bild vorhanden? (nicht leer, nicht '0', nicht 0)\nconst hatBild = bildUrl && bildUrl !== '0' && bildUrl !== 0 && String(bildUrl).trim() !== '';\n\nreturn {\n  json: {\n    ...json,\n    thema:               thema,\n    bild_url:            hatBild ? String(bildUrl).trim() : '',\n    hat_bild:            hatBild,\n    sharepoint_item_id:  itemId,\n  }\n};"
+      },
+      "id": "wf03-felder",
+      "name": "Felder aufbereiten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1056, 464]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "check-bild",
+              "leftValue": "={{ $json.hat_bild }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1312, 464],
+      "id": "wf03-check-bild",
+      "name": "Bild vorhanden?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// PFAD B: Bild bereits vorhanden – direkt verwenden\nconst json = $input.item.json;\n\nreturn {\n  json: {\n    final_bild_url:      json.bild_url,\n    thema:               json.thema,\n    sharepoint_item_id:  json.sharepoint_item_id,\n    bild_quelle:         'manuell',\n    generated_at:        new Date().toISOString()\n  }\n};"
+      },
+      "id": "wf03-bild-vorhanden",
+      "name": "Bild direkt verwenden",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1568, 624]
+    },
+    {
+      "parameters": {
+        "jsCode": "// PFAD A: Canva Grafik generieren\nconst json = $input.item.json;\n\nconst systemPrompt = `Du bist ein Automatisierungsassistent für Physio Fuchs Social Media Grafiken.\n\nFühre diese Schritte VOLLSTÄNDIG und NACHEINANDER aus:\n1. Starte eine Editing-Session für Canva Design ID: DAG_tS-3P0k\n2. Ersetze auf Seite 3 den Text \"THEMA\" durch den Thema-Text (element_id: PB3DLldpqyKKJNBj-LBRqHYLk6GzfMW2G)\n3. Committe die Änderung\n4. Exportiere das Design (Seite 3) als PNG\n5. Warte bis der Export-Link verfügbar ist\n6. Antworte AUSSCHLIESSLICH mit diesem JSON (kein Markdown):\n{\"export_url\":\"URL\",\"thema\":\"TEXT\",\"status\":\"success\"}`;\n\nreturn {\n  json: {\n    model: 'claude-sonnet-4-20250514',\n    max_tokens: 4000,\n    system: systemPrompt,\n    messages: [{\n      role: 'user',\n      content: `Thema: ${json.thema}\\nBitte ersetze THEMA mit \"${json.thema}\" und exportiere Seite 3 als PNG.`\n    }],\n    mcp_servers: [{\n      type: 'url',\n      url: 'https://mcp.canva.com/mcp',\n      name: 'canva'\n    }],\n    _meta: {\n      sharepoint_item_id: json.sharepoint_item_id,\n      thema: json.thema\n    }\n  }\n};"
+      },
+      "id": "wf03-build-payload",
+      "name": "Build Canva Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1568, 304]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "x-api-key",        "value": "={{ $env.ANTHROPIC_API_KEY }}" },
+            { "name": "anthropic-version", "value": "2023-06-01" }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json) }}",
+        "options": { "timeout": 120000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1824, 304],
+      "id": "wf03-claude-canva",
+      "name": "Claude API + Canva MCP"
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.item.json;\nconst prev = $('Build Canva Payload').item.json._meta;\n\nconst content = response.content || [];\nlet exportUrl = '';\nlet thema = prev?.thema || '';\n\nfor (const block of content) {\n  if (block.type === 'text' && block.text) {\n    const text = block.text.trim();\n    try {\n      const cleaned = text.replace(/```json\\n?/gi,'').replace(/```\\n?/g,'').trim();\n      const parsed = JSON.parse(cleaned);\n      exportUrl = parsed.export_url || '';\n      thema = parsed.thema || thema;\n      break;\n    } catch(e) {\n      const urlMatch = text.match(/https?:\\/\\/[^\\s\"']+/g);\n      if (urlMatch) {\n        const canvaUrl = urlMatch.find(u => u.includes('canva') || u.includes('export'));\n        exportUrl = canvaUrl || urlMatch[0];\n      }\n    }\n  }\n}\n\nif (!exportUrl) {\n  throw new Error('Kein Export-URL in Claude Antwort. Response: ' + JSON.stringify(response).substring(0, 400));\n}\n\nreturn {\n  json: {\n    final_bild_url:      exportUrl,\n    thema:               thema,\n    sharepoint_item_id:  prev?.sharepoint_item_id || 0,\n    bild_quelle:         'canva',\n    generated_at:        new Date().toISOString()\n  }\n};"
+      },
+      "id": "wf03-parse-response",
+      "name": "Parse Canva Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2080, 304]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [2320, 464],
+      "id": "wf03-merge-pfade",
+      "name": "Pfade zusammenführen"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $json.sharepoint_item_id }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type",  "value": "application/json" },
+            { "name": "Accept",        "value": "application/json" },
+            { "name": "X-HTTP-Method", "value": "MERGE" },
+            { "name": "IF-MATCH",      "value": "*" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "field_8", "value": "={{ $json.final_bild_url }}" },
+            { "name": "field_6", "value": "Geplant" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [2560, 464],
+      "id": "wf03-sp-update",
+      "name": "SharePoint: Bild-URL + Status Geplant",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manueller Test-Trigger":       { "main": [[{"node": "Get many items",                   "type": "main", "index": 0}]] },
+    "Get many items":               { "main": [[{"node": "Filter: Status = Freigegeben",      "type": "main", "index": 0}]] },
+    "Filter: Status = Freigegeben": { "main": [[{"node": "Felder aufbereiten",                "type": "main", "index": 0}]] },
+    "Felder aufbereiten":           { "main": [[{"node": "Bild vorhanden?",                   "type": "main", "index": 0}]] },
+    "Bild vorhanden?": {
+      "main": [
+        [{"node": "Bild direkt verwenden", "type": "main", "index": 0}],
+        [{"node": "Build Canva Payload",   "type": "main", "index": 0}]
+      ]
+    },
+    "Build Canva Payload":          { "main": [[{"node": "Claude API + Canva MCP",            "type": "main", "index": 0}]] },
+    "Claude API + Canva MCP":       { "main": [[{"node": "Parse Canva Response",              "type": "main", "index": 0}]] },
+    "Parse Canva Response":         { "main": [[{"node": "Pfade zusammenführen",              "type": "main", "index": 0}]] },
+    "Bild direkt verwenden":        { "main": [[{"node": "Pfade zusammenführen",              "type": "main", "index": 1}]] },
+    "Pfade zusammenführen":         { "main": [[{"node": "SharePoint: Bild-URL + Status Geplant", "type": "main", "index": 0}]] },
+    "SharePoint: Bild-URL + Status Geplant": { "main": [[]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "wf03-v2-2026-05-10",
+  "meta": {
+    "instanceId": "f40c6f6af7ce2011b04be6e4c65abbc6b998ddefd762d8f282912f30a607f9b9"
+  },
+  "id": "PF-WF03-Canva-v2",
+  "tags": []
+}

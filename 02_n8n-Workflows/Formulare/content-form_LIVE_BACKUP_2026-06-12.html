@@ -1,0 +1,664 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Physio Fuchs · Content Einreichung</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,300;0,400;0,500;0,600;1,300;1,400&family=Lato:wght@300;400;700&display=swap');
+
+:root {
+  --brown-dark:  #3d2b1f;
+  --brown-mid:   #6b4c3b;
+  --brown-light: #a07856;
+  --brown-pale:  #d4b89a;
+  --cream:       #faf7f3;
+  --cream-dark:  #f0ebe3;
+  --green:       #6a8c4f;
+  --green-light: #8aad68;
+  --white:       #ffffff;
+  --error:       #c0392b;
+  --success:     #27ae60;
+  --auto-bg:     #f0f5ec;
+  --auto-border: #b8d4a0;
+}
+
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html, body { height: 100%; background: var(--cream); font-family: 'Lato', sans-serif; color: var(--brown-dark); -webkit-font-smoothing: antialiased; }
+body { display: flex; flex-direction: column; min-height: 100vh; }
+
+/* HEADER */
+.site-header {
+  background: var(--brown-dark);
+  padding: 0 32px;
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-shrink: 0;
+}
+.header-logo { display: flex; align-items: center; gap: 14px; }
+.header-ginkgo { width: 30px; height: 30px; }
+.header-brand { font-family: 'Cormorant Garamond', serif; font-size: 15px; letter-spacing: 4px; color: var(--cream); font-weight: 500; }
+.header-sub { font-size: 8px; letter-spacing: 2px; color: var(--brown-pale); opacity: 0.55; margin-top: 1px; }
+.greek-bar { height: 4px; background: repeating-linear-gradient(90deg, var(--brown-mid) 0, var(--brown-mid) 5px, transparent 5px, transparent 9px); opacity: 0.45; }
+
+/* MAIN */
+main { flex: 1; padding: 32px 24px 52px; max-width: 700px; margin: 0 auto; width: 100%; }
+
+.form-intro { margin-bottom: 28px; }
+.form-intro h1 { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 500; color: var(--brown-dark); line-height: 1.2; margin-bottom: 6px; }
+.form-intro p { font-size: 12.5px; color: var(--brown-light); line-height: 1.6; }
+
+/* SECTION LABEL */
+.section-label {
+  font-size: 9px; letter-spacing: 3px; text-transform: uppercase;
+  color: var(--green); font-weight: 700; margin: 26px 0 14px;
+  display: flex; align-items: center; gap: 8px;
+}
+.section-label::after { content: ''; flex: 1; height: 1px; background: var(--cream-dark); }
+
+/* FIELD BADGE (SharePoint-Spaltenname) */
+.sp-badge {
+  font-size: 8.5px; font-family: 'Courier New', monospace;
+  color: var(--brown-pale); background: rgba(0,0,0,0.04);
+  border: 1px solid var(--cream-dark); border-radius: 3px;
+  padding: 1px 6px; margin-left: 6px; letter-spacing: 0.3px;
+  font-weight: 400; text-transform: none;
+}
+
+/* AUTO BADGE */
+.auto-badge {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-size: 8px; letter-spacing: 1.5px; text-transform: uppercase;
+  color: var(--green); background: var(--auto-bg);
+  border: 1px solid var(--auto-border); border-radius: 100px;
+  padding: 2px 8px; margin-left: 6px; font-weight: 700;
+}
+
+/* FORM GROUPS */
+.form-group { margin-bottom: 18px; }
+.form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+
+label {
+  display: block; font-size: 11px; letter-spacing: 1.5px;
+  text-transform: uppercase; color: var(--brown-mid);
+  font-weight: 700; margin-bottom: 7px;
+}
+label .req { color: var(--green); margin-left: 2px; }
+label .hint { font-size: 9px; letter-spacing: 0.3px; text-transform: none; color: var(--brown-pale); font-weight: 400; margin-left: 4px; }
+
+input[type="text"], input[type="date"], input[type="time"],
+textarea, select {
+  width: 100%; background: var(--white);
+  border: 1.5px solid var(--cream-dark); border-radius: 4px;
+  padding: 10px 14px; font-family: 'Lato', sans-serif;
+  font-size: 13px; color: var(--brown-dark);
+  transition: border-color 0.2s, box-shadow 0.2s;
+  outline: none; appearance: none; -webkit-appearance: none;
+}
+input[type="text"]:focus, input[type="date"]:focus, input[type="time"]:focus,
+textarea:focus, select:focus {
+  border-color: var(--brown-mid);
+  box-shadow: 0 0 0 3px rgba(107,76,59,0.08);
+}
+input::placeholder, textarea::placeholder { color: var(--brown-pale); opacity: 0.65; }
+textarea { resize: vertical; min-height: 86px; line-height: 1.6; }
+select {
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%236b4c3b' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 14px center;
+  padding-right: 36px;
+}
+
+/* CHAR COUNTER */
+.field-wrap { position: relative; }
+.char-count { position: absolute; bottom: 10px; right: 12px; font-size: 9.5px; color: var(--brown-pale); pointer-events: none; }
+.char-count.warn { color: var(--error); }
+
+/* POST-TYP CARDS */
+.type-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
+.type-card input[type="radio"] { display: none; }
+.type-card label {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 6px; padding: 13px 6px; background: var(--white);
+  border: 1.5px solid var(--cream-dark); border-radius: 6px;
+  cursor: pointer; transition: all 0.2s; text-align: center;
+  text-transform: none; letter-spacing: 0;
+}
+.type-card label .ti { font-size: 22px; line-height: 1; }
+.type-card label .tn { font-size: 10px; font-weight: 700; letter-spacing: 1px; text-transform: uppercase; color: var(--brown-mid); }
+.type-card label .td { font-size: 9px; color: var(--brown-pale); line-height: 1.3; }
+.type-card input[type="radio"]:checked + label {
+  border-color: var(--brown-mid); background: var(--cream-dark);
+  box-shadow: 0 2px 8px rgba(61,43,31,0.1);
+}
+.type-card input[type="radio"]:checked + label .tn { color: var(--brown-dark); }
+
+/* CHIPS */
+.chip-group { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip input { display: none; }
+.chip label {
+  display: inline-flex; align-items: center; gap: 4px;
+  padding: 7px 13px; background: var(--white);
+  border: 1.5px solid var(--cream-dark); border-radius: 100px;
+  cursor: pointer; transition: all 0.18s;
+  font-size: 11.5px; color: var(--brown-mid);
+  text-transform: none; letter-spacing: 0; font-weight: 400;
+}
+.chip input:checked + label { background: var(--brown-dark); border-color: var(--brown-dark); color: var(--cream); }
+
+/* AUTO FIELDS */
+.auto-field-group {
+  background: var(--auto-bg);
+  border: 1px solid var(--auto-border);
+  border-radius: 6px;
+  padding: 16px 18px;
+  margin-bottom: 18px;
+}
+.auto-field-group .auto-intro {
+  display: flex; align-items: center; gap: 8px;
+  font-size: 10px; color: var(--green);
+  letter-spacing: 1px; text-transform: uppercase;
+  font-weight: 700; margin-bottom: 12px;
+}
+.auto-field-group .auto-intro svg { flex-shrink: 0; }
+.auto-items { display: flex; flex-wrap: wrap; gap: 8px; }
+.auto-item {
+  background: white; border: 1px solid var(--auto-border);
+  border-radius: 4px; padding: 7px 12px;
+  font-size: 11px; color: var(--brown-light);
+  display: flex; align-items: center; gap: 6px;
+}
+.auto-item code { font-size: 9.5px; color: var(--green); font-family: 'Courier New', monospace; }
+
+/* FREIGABE */
+.freigabe-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.freigabe-card input { display: none; }
+.freigabe-card label {
+  display: flex; align-items: center; justify-content: center;
+  gap: 6px; padding: 10px 8px;
+  background: var(--white); border: 1.5px solid var(--cream-dark);
+  border-radius: 4px; cursor: pointer; transition: all 0.18s;
+  font-size: 11px; font-weight: 700; letter-spacing: 0.5px;
+  color: var(--brown-light); text-align: center;
+}
+.freigabe-card input:checked + label {
+  background: var(--cream-dark); border-color: var(--brown-mid); color: var(--brown-dark);
+}
+
+/* SUBMIT */
+.submit-area {
+  margin-top: 32px; padding-top: 22px;
+  border-top: 1px solid var(--cream-dark);
+  display: flex; align-items: center; gap: 14px; flex-wrap: wrap;
+}
+.btn-submit {
+  background: var(--brown-dark); color: var(--cream); border: none;
+  border-radius: 4px; padding: 13px 28px;
+  font-family: 'Lato', sans-serif; font-size: 11px;
+  font-weight: 700; letter-spacing: 2.5px; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s;
+  display: flex; align-items: center; gap: 10px;
+}
+.btn-submit:hover { background: var(--brown-mid); }
+.btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+.btn-reset {
+  background: transparent; color: var(--brown-pale);
+  border: 1.5px solid var(--cream-dark); border-radius: 4px;
+  padding: 13px 18px; font-family: 'Lato', sans-serif;
+  font-size: 10px; letter-spacing: 2px; text-transform: uppercase;
+  cursor: pointer; transition: all 0.2s;
+}
+.btn-reset:hover { border-color: var(--brown-pale); color: var(--brown-mid); }
+.submit-note { font-size: 11px; color: var(--brown-pale); line-height: 1.6; }
+.submit-note strong { color: var(--green); }
+
+/* SPINNER */
+.spinner {
+  width: 15px; height: 15px;
+  border: 2px solid rgba(255,255,255,0.3);
+  border-top-color: white; border-radius: 50%;
+  animation: spin 0.7s linear infinite; display: none;
+}
+.btn-submit.loading .spinner { display: block; }
+.btn-submit.loading .btn-lbl { display: none; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* TOAST */
+.toast {
+  position: fixed; bottom: 24px; left: 50%;
+  transform: translateX(-50%) translateY(80px);
+  background: var(--brown-dark); color: var(--cream);
+  padding: 13px 22px; border-radius: 6px; font-size: 13px;
+  display: flex; align-items: center; gap: 10px;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.25);
+  transition: transform 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  z-index: 100; white-space: nowrap;
+}
+.toast.show { transform: translateX(-50%) translateY(0); }
+.toast.success { background: var(--success); }
+.toast.error { background: var(--error); }
+
+/* FOOTER */
+.site-footer { background: var(--brown-dark); padding: 12px 32px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
+.site-footer span { font-size: 8px; letter-spacing: 2.5px; color: var(--brown-pale); text-transform: uppercase; opacity: 0.35; }
+
+/* RESPONSIVE */
+@media (max-width: 540px) {
+  .form-row { grid-template-columns: 1fr; }
+  .type-grid { grid-template-columns: repeat(2, 1fr); }
+  .freigabe-grid { grid-template-columns: 1fr; }
+  main { padding: 22px 14px 40px; }
+}
+</style>
+</head>
+<body>
+
+<header class="site-header">
+  <div class="header-logo">
+    <svg class="header-ginkgo" viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+      <path d="M100 185 Q78 145 58 122 Q28 95 38 58 Q48 28 80 34 Q95 37 100 52 Q105 37 120 34 Q152 28 162 58 Q172 95 142 122 Q122 145 100 185Z" fill="#8aad68"/>
+      <line x1="100" y1="185" x2="100" y2="70" stroke="#6a8c4f" stroke-width="4" stroke-linecap="round"/>
+    </svg>
+    <div>
+      <div class="header-brand">Physio Fuchs</div>
+      <div class="header-sub">Social Media · Content Einreichung</div>
+    </div>
+  </div>
+  <div style="font-size:9px;letter-spacing:2px;color:var(--brown-pale);opacity:0.4;text-transform:uppercase;">SharePoint Sync</div>
+</header>
+<div class="greek-bar"></div>
+
+<main>
+  <div class="form-intro">
+    <h1>Neuen Beitrag einreichen</h1>
+    <p>Die Daten werden direkt in die SharePoint-Liste <strong>„Content Plan"</strong> übertragen. Felder mit <span style="color:var(--green);font-weight:700;">✦</span> werden automatisch von n8n oder Claude befüllt.</p>
+  </div>
+
+  <form id="contentForm" novalidate>
+
+    <!-- ══ 1. POST-FORMAT ══ -->
+    <div class="section-label">Post-Format
+      <span class="sp-badge">Post_Typ</span>
+    </div>
+
+    <div class="form-group">
+      <div class="type-grid">
+        <div class="type-card">
+          <input type="radio" name="Post_Typ" id="typ-standard" value="Standard" required>
+          <label for="typ-standard">
+            <span class="ti">🖼️</span>
+            <span class="tn">Standard</span>
+            <span class="td">Bild + Text</span>
+          </label>
+        </div>
+        <div class="type-card">
+          <input type="radio" name="Post_Typ" id="typ-tipp" value="Tipp">
+          <label for="typ-tipp">
+            <span class="ti">💡</span>
+            <span class="tn">Tipp</span>
+            <span class="td">Ratgeber</span>
+          </label>
+        </div>
+        <div class="type-card">
+          <input type="radio" name="Post_Typ" id="typ-zitat" value="Zitat">
+          <label for="typ-zitat">
+            <span class="ti">💬</span>
+            <span class="tn">Zitat</span>
+            <span class="td">Motivation</span>
+          </label>
+        </div>
+        <div class="type-card">
+          <input type="radio" name="Post_Typ" id="typ-story" value="Story">
+          <label for="typ-story">
+            <span class="ti">📱</span>
+            <span class="tn">Story</span>
+            <span class="td">IG Story</span>
+          </label>
+        </div>
+        <div class="type-card">
+          <input type="radio" name="Post_Typ" id="typ-team" value="Team">
+          <label for="typ-team">
+            <span class="ti">👥</span>
+            <span class="tn">Team</span>
+            <span class="td">Team-Post</span>
+          </label>
+        </div>
+        <div class="type-card">
+          <input type="radio" name="Post_Typ" id="typ-uebung" value="Übung">
+          <label for="typ-uebung">
+            <span class="ti">🏋️</span>
+            <span class="tn">Übung</span>
+            <span class="td">Exercise</span>
+          </label>
+        </div>
+        <div class="type-card">
+          <input type="radio" name="Post_Typ" id="typ-promo" value="Promo">
+          <label for="typ-promo">
+            <span class="ti">🎁</span>
+            <span class="tn">Promo</span>
+            <span class="td">Angebot</span>
+          </label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 2. INHALT ══ -->
+    <div class="section-label">Inhalt</div>
+
+    <!-- Title + Thema -->
+    <div class="form-group">
+      <label for="Thema">
+        Thema <span class="req">*</span>
+        <span class="sp-badge">Thema</span>
+        <span class="sp-badge">Title</span>
+        <span class="hint">wird auch als List-Titel verwendet</span>
+      </label>
+      <input type="text" id="Thema" name="Thema"
+        placeholder="Worum geht es? z. B. Rückenschmerzen vorbeugen" required maxlength="100">
+    </div>
+
+    <!-- Hashtag_Thema -->
+    <div class="form-group">
+      <label for="Hashtag_Thema">
+        Hashtag-Thema <span class="req">*</span>
+        <span class="sp-badge">Hashtag_Thema</span>
+        <span class="hint">Stichwort → Claude generiert Hashtags</span>
+      </label>
+      <div class="chip-group" id="hashtag-chips">
+        <div class="chip">
+          <input type="radio" name="Hashtag_Thema" id="ht-therapie" value="Physiotherapie">
+          <label for="ht-therapie">🩺 Physiotherapie</label>
+        </div>
+        <div class="chip">
+          <input type="radio" name="Hashtag_Thema" id="ht-training" value="PersonalTraining">
+          <label for="ht-training">🏋️ Personal Training</label>
+        </div>
+        <div class="chip">
+          <input type="radio" name="Hashtag_Thema" id="ht-wellness" value="Wellness">
+          <label for="ht-wellness">🌿 Wellness</label>
+        </div>
+        <div class="chip">
+          <input type="radio" name="Hashtag_Thema" id="ht-praxis" value="Praxis">
+          <label for="ht-praxis">🏠 Praxis-Einblick</label>
+        </div>
+        <div class="chip">
+          <input type="radio" name="Hashtag_Thema" id="ht-team" value="Team">
+          <label for="ht-team">👥 Team</label>
+        </div>
+        <div class="chip">
+          <input type="radio" name="Hashtag_Thema" id="ht-aktion" value="Aktion">
+          <label for="ht-aktion">🎁 Aktion</label>
+        </div>
+        <div class="chip">
+          <input type="radio" name="Hashtag_Thema" id="ht-ernaehr" value="Ernaehrung">
+          <label for="ht-ernaehr">🥗 Ernährung</label>
+        </div>
+        <div class="chip">
+          <input type="radio" name="Hashtag_Thema" id="ht-schmerz" value="Schmerzfrei">
+          <label for="ht-schmerz">💪 Schmerzfrei</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content_Brief -->
+    <div class="form-group">
+      <label for="Content_Brief">
+        Content Brief <span class="req">*</span>
+        <span class="sp-badge">Content_Brief</span>
+        <span class="hint">Stichpunkte genügen · Claude generiert die Caption</span>
+      </label>
+      <div class="field-wrap">
+        <textarea id="Content_Brief" name="Content_Brief" required
+          placeholder="Was soll der Post vermitteln? Kernbotschaft, besondere Infos, Tonalität, Zielgruppe …"
+          maxlength="800"></textarea>
+        <span class="char-count" id="brief-count">0/800</span>
+      </div>
+    </div>
+
+    <!-- ══ 3. VERÖFFENTLICHUNG ══ -->
+    <div class="section-label">Veröffentlichung</div>
+
+    <div class="form-row">
+      <div class="form-group">
+        <label for="Veroeffentlichungsdatum">
+          Datum <span class="req">*</span>
+          <span class="sp-badge">Veroeffentlichungsdatum</span>
+        </label>
+        <input type="date" id="Veroeffentlichungsdatum" name="Veroeffentlichungsdatum" required>
+      </div>
+      <div class="form-group">
+        <label for="Uhrzeit">
+          Uhrzeit
+          <span class="sp-badge">Uhrzeit</span>
+        </label>
+        <select id="Uhrzeit" name="Uhrzeit">
+          <option value="">— Uhrzeit wählen —</option>
+          <option value="07:00">07:00 Uhr (Morgen)</option>
+          <option value="09:00">09:00 Uhr (Morgen)</option>
+          <option value="11:00">11:00 Uhr (Vormittag)</option>
+          <option value="12:00">12:00 Uhr (Mittag)</option>
+          <option value="17:00">17:00 Uhr (Nachmittag)</option>
+          <option value="18:00">18:00 Uhr (Abend) ★ Best</option>
+          <option value="19:00">19:00 Uhr (Abend) ★ Best</option>
+          <option value="20:00">20:00 Uhr (Abend)</option>
+        </select>
+      </div>
+    </div>
+
+    <!-- ══ 4. BILD ══ -->
+    <div class="section-label">Bildmaterial
+      <span class="sp-badge">Bild_Dateiname</span>
+    </div>
+
+    <div class="form-group">
+      <label for="Bild_Dateiname">
+        Bild-Dateiname / Beschreibung
+        <span class="hint">leer lassen = kein Bild vorhanden</span>
+      </label>
+      <input type="text" id="Bild_Dateiname" name="Bild_Dateiname"
+        placeholder="z. B. judith_behandlung_01.jpg  —  oder: Motiv-Idee beschreiben">
+    </div>
+
+    <!-- ══ 5. FREIGABE ══ -->
+    <div class="section-label">Freigabe
+      <span class="sp-badge">Freigabe_Person</span>
+    </div>
+
+    <div class="form-group">
+      <label>Freigabe durch <span class="req">*</span></label>
+      <div class="freigabe-grid">
+        <div class="freigabe-card">
+          <input type="radio" name="Freigabe_Person" id="fp-judith" value="Judith" required>
+          <label for="fp-judith">👩 Judith</label>
+        </div>
+        <div class="freigabe-card">
+          <input type="radio" name="Freigabe_Person" id="fp-thomas" value="Thomas">
+          <label for="fp-thomas">👨‍💻 Thomas</label>
+        </div>
+        <div class="freigabe-card">
+          <input type="radio" name="Freigabe_Person" id="fp-beide" value="Beide">
+          <label for="fp-beide">👥 Beide</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══ 7. KOMMENTARE ══ -->
+    <div class="form-group">
+      <label for="Kommentare">
+        Kommentare / Hinweise
+        <span class="sp-badge">Kommentare</span>
+        <span class="hint">optional</span>
+      </label>
+      <textarea id="Kommentare" name="Kommentare" style="min-height:70px"
+        placeholder="Besondere Wünsche, Deadlines, externe Termine, interne Hinweise …"></textarea>
+    </div>
+
+    <!-- ══ 7. AUTO-FELDER (Info) ══ -->
+    <div class="section-label">Automatisch befüllt</div>
+
+    <div class="auto-field-group">
+      <div class="auto-intro">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2l3.09 6.26L22 9.27l-5 4.87 1.18 6.88L12 17.77l-6.18 3.25L7 14.14 2 9.27l6.91-1.01L12 2z"/>
+        </svg>
+        Diese Felder werden von n8n / Claude automatisch gesetzt
+      </div>
+      <div class="auto-items">
+        <div class="auto-item">
+          <code>Status</code> → <strong>Entwurf</strong>
+        </div>
+        <div class="auto-item">
+          <code>Caption_Variante</code> → Claude generiert
+        </div>
+        <div class="auto-item">
+          <code>Canva_Template_ID</code> → n8n wählt
+        </div>
+        <div class="auto-item">
+          <code>Instagram_Post_ID</code> → nach Posting
+        </div>
+      </div>
+    </div>
+
+    <!-- SUBMIT -->
+    <div class="submit-area">
+      <button type="submit" class="btn-submit" id="submitBtn">
+        <span class="btn-lbl">📨 &nbsp;In SharePoint speichern</span>
+        <div class="spinner"></div>
+      </button>
+      <button type="button" class="btn-reset" onclick="resetForm()">Zurücksetzen</button>
+      <div class="submit-note">
+        Status wird automatisch auf <strong>Entwurf</strong> oder <strong>Bereit</strong> gesetzt<br>
+        Thomas erhält eine Teams-Benachrichtigung
+      </div>
+    </div>
+
+  </form>
+</main>
+
+<div class="greek-bar"></div>
+<footer class="site-footer">
+  <span>Physio Fuchs · Therapie · Personal-Training · Wellness · SharePoint Content Plan</span>
+</footer>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <span id="t-icon">✓</span>
+  <span id="t-msg">Beitrag wurde übermittelt!</span>
+</div>
+
+<script>
+// ══════════════════════════════════════════
+// ⚠️  n8n Webhook-URL hier eintragen:
+const N8N_WEBHOOK_URL = 'https://n8n.srv1099163.hstgr.cloud/webhook/sharepoint-content';
+// ══════════════════════════════════════════
+
+// Char Counter
+const briefInput = document.getElementById('Content_Brief');
+const briefCount = document.getElementById('brief-count');
+briefInput.addEventListener('input', () => {
+  const l = briefInput.value.length;
+  briefCount.textContent = `${l}/800`;
+  briefCount.classList.toggle('warn', l > 720);
+});
+
+// Datum: ab heute
+document.getElementById('Veroeffentlichungsdatum').min = new Date().toISOString().split('T')[0];
+
+// Reset
+function resetForm() {
+  document.getElementById('contentForm').reset();
+  briefCount.textContent = '0/800';
+}
+
+// Toast
+function toast(msg, type = 'success') {
+  const el = document.getElementById('toast');
+  document.getElementById('t-msg').textContent = msg;
+  document.getElementById('t-icon').textContent = type === 'success' ? '✓' : '✕';
+  el.className = `toast ${type} show`;
+  setTimeout(() => el.classList.remove('show'), 4500);
+}
+
+// Validierung
+function validate() {
+  const checks = [
+    [() => !document.getElementById('Thema').value.trim(),           'Bitte ein Thema eingeben.',            'Thema'],
+    [() => !document.querySelector('input[name="Post_Typ"]:checked'),  'Bitte ein Post-Format wählen.',        null],
+    [() => !document.querySelector('input[name="Hashtag_Thema"]:checked'), 'Bitte ein Hashtag-Thema wählen.',  null],
+    [() => !document.getElementById('Content_Brief').value.trim(),   'Bitte einen Content Brief eingeben.',   'Content_Brief'],
+    [() => !document.getElementById('Veroeffentlichungsdatum').value, 'Bitte ein Datum wählen.',              'Veroeffentlichungsdatum'],
+    [() => !document.querySelector('input[name="Freigabe_Person"]:checked'), 'Bitte Freigabe-Person wählen.',  null],
+  ];
+  for (const [check, msg, focusId] of checks) {
+    if (check()) {
+      toast(msg, 'error');
+      if (focusId) document.getElementById(focusId).focus();
+      return false;
+    }
+  }
+  return true;
+}
+
+// Payload zusammenstellen – Feldnamen = SharePoint-Spaltennamen
+function buildPayload() {
+  const v = id => document.getElementById(id)?.value?.trim() || '';
+  const r = name => document.querySelector(`input[name="${name}"]:checked`)?.value || '';
+  return {
+    // Von Judith befüllt:
+    Title:                   v('Thema'),           // SharePoint-Pflichtfeld = Thema
+    Thema:                   v('Thema'),
+    Post_Typ:                r('Post_Typ'),
+    Hashtag_Thema:           r('Hashtag_Thema'),
+    Content_Brief:           v('Content_Brief'),
+    Veroeffentlichungsdatum: v('Veroeffentlichungsdatum'),
+    Uhrzeit:                 v('Uhrzeit'),
+    Bild_Dateiname:          v('Bild_Dateiname'),
+    Freigabe_Person:         r('Freigabe_Person'),
+    Kommentare:              v('Kommentare'),
+    // Von n8n automatisch gesetzt:
+    Status:                  'Entwurf',
+    Caption_Variante:        '',   // → Claude-Node befüllt
+    Canva_Template_ID:       '',   // → n8n wählt nach Post_Typ
+    Instagram_Post_ID:       '',   // → Buffer/Meta nach Posting
+    // Meta:
+    _eingereichtVon:         'Judith',
+    _eingereichtAm:          new Date().toISOString(),
+  };
+}
+
+// Submit
+document.getElementById('contentForm').addEventListener('submit', async (e) => {
+  e.preventDefault();
+  if (!validate()) return;
+
+  const btn = document.getElementById('submitBtn');
+  btn.classList.add('loading');
+  btn.disabled = true;
+
+  try {
+    const resp = await fetch(N8N_WEBHOOK_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(buildPayload())
+    });
+
+    if (resp.ok) {
+      toast('✨ Beitrag in SharePoint gespeichert!', 'success');
+      setTimeout(resetForm, 1000);
+    } else {
+      throw new Error(`HTTP ${resp.status}`);
+    }
+  } catch (err) {
+    console.error('Webhook Error:', err);
+    toast('Fehler – bitte Thomas informieren.', 'error');
+  } finally {
+    btn.classList.remove('loading');
+    btn.disabled = false;
+  }
+});
+</script>
+</body>
+</html>

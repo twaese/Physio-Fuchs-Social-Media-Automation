@@ -1,0 +1,265 @@
+{
+  "name": "PF – WF-03 Grafik Generator (HTML→PNG)",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "## PF – WF-03 Grafik Generator\n\n**Kein Canva nötig – HTML wird zu PNG konvertiert**\n\nService: hcti.io (100 Bilder/Monat kostenlos)\n\n**Einmalig einrichten:**\n1. hcti.io/dashboard → neuen API Key erstellen\n2. n8n → Credentials → HTTP Basic Auth anlegen:\n   - Name: HCTI Basic Auth\n   - User: deine User-ID\n   - Password: dein API Key\n3. Im Node 'hcti.io: HTML → PNG' die Credential zuweisen\n\n**Ablauf:**\nSharePoint (Status=Freigegeben)\n→ Bild vorhanden? JA → direkt nutzen\n→ Bild vorhanden? NEIN → HTML generieren → PNG → SharePoint",
+        "height": 260,
+        "width": 980,
+        "color": 5
+      },
+      "id": "wf03v3-sticky-main",
+      "name": "Sticky Note WF-03",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [0, 0]
+    },
+    {
+      "parameters": {
+        "content": "**v4 – 2026-05-10**\n\nFix: HTTP Basic Auth Credential\nstatt manueller Auth-Header.\n\nNach Import:\n→ Node 'hcti.io: HTML → PNG'\n→ Credential: 'HCTI Basic Auth'\n   auswählen\n\nPfad A: Bild leer → HTML → PNG\nPfad B: Bild vorhanden → direkt\n\nOutput für WF-04:\nfinal_bild_url / thema\nsharepoint_item_id / bild_quelle",
+        "width": 270,
+        "color": 6
+      },
+      "id": "wf03v4-changelog",
+      "name": "Changelog v4",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [2400, 260]
+    },
+    {
+      "parameters": {
+        "content": "⚠️ Nach Import:\nDiesen Node öffnen →\nBei 'Credential' die\n'HCTI Basic Auth'\nauswählen!",
+        "width": 200,
+        "color": 4
+      },
+      "id": "wf03v4-sticky-hcti",
+      "name": "HCTI Hinweis",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1824, 160]
+    },
+    {
+      "parameters": {},
+      "id": "wf03v3-trigger",
+      "name": "Manueller Test-Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [272, 480]
+    },
+    {
+      "parameters": {
+        "resource": "item",
+        "site": {
+          "__rl": true,
+          "value": "physiofuchs889.sharepoint.com,c74040a2-0d6b-4385-b514-fbd9830a56ac,7a7842d6-ea6c-440d-aeed-580bdd2a091c",
+          "mode": "list",
+          "cachedResultName": "Physio Fuchs Administration"
+        },
+        "list": {
+          "__rl": true,
+          "value": "d17a6a6f-e6ef-457d-a2a9-4c30ea56120f",
+          "mode": "list",
+          "cachedResultName": "PF-Content-Kalender-2026"
+        },
+        "filter": "=",
+        "options": { "fields": ["fields"] },
+        "simplify": false,
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [512, 480],
+      "id": "wf03v3-sp-get",
+      "name": "Get many items",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": true, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "filter-freigegeben",
+              "leftValue": "={{ $json.fields.field_6 }}",
+              "rightValue": "Freigegeben",
+              "operator": { "type": "string", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [800, 480],
+      "id": "wf03v3-filter-status",
+      "name": "Filter: Freigegeben"
+    },
+    {
+      "parameters": {
+        "jsCode": "const json = $input.item.json;\nconst f = json.fields || json.Felder || {};\n\nconst thema   = f.field_1  || f.Field_1  || '(kein Thema)';\nconst caption = f.field_10 || f.Field_10 || '';\nconst bildUrl = String(f.field_8 || f.Field_8 || '').trim();\nconst itemId  = parseInt(String(json.AUSWEIS || json.id || 0).trim(), 10);\n\n// Bild vorhanden wenn: nicht leer, nicht '0', nicht numerisch 0\nconst hatBild = bildUrl && bildUrl !== '0' && !/^0+$/.test(bildUrl) && bildUrl.startsWith('http');\n\nreturn {\n  json: {\n    ...json,\n    thema:              thema,\n    caption:            caption,\n    bild_url:           hatBild ? bildUrl : '',\n    hat_bild:           hatBild,\n    sharepoint_item_id: itemId,\n  }\n};"
+      },
+      "id": "wf03v3-felder",
+      "name": "Felder aufbereiten",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1056, 480]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": { "caseSensitive": false, "leftValue": "", "typeValidation": "strict", "version": 2 },
+          "conditions": [
+            {
+              "id": "check-bild",
+              "leftValue": "={{ $json.hat_bild }}",
+              "rightValue": true,
+              "operator": { "type": "boolean", "operation": "equals" }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [1312, 480],
+      "id": "wf03v3-check-bild",
+      "name": "Bild vorhanden?"
+    },
+    {
+      "parameters": {
+        "jsCode": "// PFAD B: Manuelles Bild direkt verwenden\nconst json = $input.item.json;\nreturn {\n  json: {\n    final_bild_url:      json.bild_url,\n    thema:               json.thema,\n    sharepoint_item_id:  json.sharepoint_item_id,\n    bild_quelle:         'manuell',\n    generated_at:        new Date().toISOString()\n  }\n};"
+      },
+      "id": "wf03v3-bild-direkt",
+      "name": "Bild direkt verwenden",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1568, 688]
+    },
+    {
+      "parameters": {
+        "jsCode": "// PFAD A: HTML-Template für Physio Fuchs generieren\nconst json = $input.item.json;\nconst thema = json.thema || 'Physiotherapie';\n\nconst gruen     = '#5a7a4a';\nconst hellgruen = '#6e9b5e';\nconst creme     = '#f2ede4';\nconst weiss     = '#ffffff';\n\nconst html = `\n<div style=\"\n  width:1080px;\n  height:1920px;\n  background:${creme};\n  font-family:'Georgia',serif;\n  position:relative;\n  overflow:hidden;\n  display:flex;\n  flex-direction:column;\n  align-items:center;\n  justify-content:center;\n\">\n  <div style=\"position:absolute;top:0;left:0;right:0;height:90px;background:${gruen};\"></div>\n  <div style=\"position:absolute;top:30px;right:60px;width:280px;height:220px;opacity:0.25;background:${hellgruen};border-radius:50% 0 50% 0;transform:rotate(20deg);\"></div>\n  <div style=\"position:absolute;top:60px;right:200px;width:180px;height:140px;opacity:0.15;background:${hellgruen};border-radius:50% 0 50% 0;transform:rotate(20deg);\"></div>\n  <div style=\"background:${gruen};padding:55px 70px;text-align:center;width:920px;margin-bottom:220px;position:relative;z-index:2;\">\n    <div style=\"position:absolute;top:-20px;right:20px;width:120px;height:100px;opacity:0.3;background:${hellgruen};border-radius:50% 0 50% 0;transform:rotate(15deg);\"></div>\n    <div style=\"color:${weiss};font-size:${thema.length > 20 ? '68px' : '82px'};font-weight:bold;line-height:1.2;letter-spacing:1px;position:relative;z-index:3;\">${thema}</div>\n  </div>\n  <div style=\"position:absolute;bottom:200px;left:40px;width:200px;height:160px;opacity:0.2;background:${gruen};border-radius:50% 0 50% 0;transform:rotate(200deg);\"></div>\n  <div style=\"position:absolute;bottom:140px;left:50%;transform:translateX(-50%);background:${weiss};padding:28px 70px;border-radius:4px;text-align:center;box-shadow:0 4px 20px rgba(0,0,0,0.12);white-space:nowrap;\">\n    <div style=\"font-size:38px;letter-spacing:10px;color:${gruen};font-weight:bold;font-family:'Georgia',serif;\">PHYSIO FUCHS</div>\n  </div>\n  <div style=\"position:absolute;bottom:0;left:0;right:0;height:90px;background:${gruen};\"></div>\n  <div style=\"position:absolute;bottom:50px;right:80px;width:160px;height:120px;opacity:0.25;background:${hellgruen};border-radius:50% 0 50% 0;transform:rotate(20deg);\"></div>\n</div>\n`;\n\nreturn {\n  json: {\n    html: html,\n    viewport_width: 1080,\n    viewport_height: 1920,\n    _meta: {\n      thema: thema,\n      sharepoint_item_id: json.sharepoint_item_id\n    }\n  }\n};"
+      },
+      "id": "wf03v3-build-html",
+      "name": "HTML Template generieren",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1568, 272]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://hcti.io/v1/image",
+        "authentication": "genericCredentialType",
+        "genericAuthType": "httpBasicAuth",
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify({ html: $json.html, viewport_width: $json.viewport_width, viewport_height: $json.viewport_height }) }}",
+        "options": { "timeout": 30000 }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [1824, 272],
+      "id": "wf03v3-hcti",
+      "name": "hcti.io: HTML → PNG",
+      "credentials": {
+        "httpBasicAuth": {
+          "id": "",
+          "name": "HCTI Basic Auth"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const response = $input.item.json;\nconst prev = $('HTML Template generieren').item.json._meta;\n\nconst imageUrl = response.url || response.image_url || '';\n\nif (!imageUrl) {\n  throw new Error('Kein Bild-URL von hcti.io. Response: ' + JSON.stringify(response).substring(0, 300));\n}\n\nreturn {\n  json: {\n    final_bild_url:     imageUrl,\n    thema:              prev?.thema || '',\n    sharepoint_item_id: prev?.sharepoint_item_id || 0,\n    bild_quelle:        'html',\n    generated_at:       new Date().toISOString()\n  }\n};"
+      },
+      "id": "wf03v3-parse-bild",
+      "name": "Parse Bild-URL",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [2080, 272]
+    },
+    {
+      "parameters": {
+        "mode": "combine",
+        "combinationMode": "mergeByPosition",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.merge",
+      "typeVersion": 3,
+      "position": [2320, 480],
+      "id": "wf03v3-merge",
+      "name": "Pfade zusammenführen"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $json.sharepoint_item_id }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            { "name": "Content-Type",  "value": "application/json" },
+            { "name": "Accept",        "value": "application/json" },
+            { "name": "X-HTTP-Method", "value": "MERGE" },
+            { "name": "IF-MATCH",      "value": "*" }
+          ]
+        },
+        "sendBody": true,
+        "bodyParameters": {
+          "parameters": [
+            { "name": "field_8", "value": "={{ $json.final_bild_url }}" },
+            { "name": "field_6", "value": "Geplant" }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.3,
+      "position": [2560, 480],
+      "id": "wf03v3-sp-update",
+      "name": "SharePoint: Bild-URL + Status Geplant",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Manueller Test-Trigger":    { "main": [[{"node": "Get many items",           "type": "main", "index": 0}]] },
+    "Get many items":            { "main": [[{"node": "Filter: Freigegeben",       "type": "main", "index": 0}]] },
+    "Filter: Freigegeben":       { "main": [[{"node": "Felder aufbereiten",        "type": "main", "index": 0}]] },
+    "Felder aufbereiten":        { "main": [[{"node": "Bild vorhanden?",           "type": "main", "index": 0}]] },
+    "Bild vorhanden?": {
+      "main": [
+        [{"node": "Bild direkt verwenden",    "type": "main", "index": 0}],
+        [{"node": "HTML Template generieren", "type": "main", "index": 0}]
+      ]
+    },
+    "HTML Template generieren":  { "main": [[{"node": "hcti.io: HTML → PNG",      "type": "main", "index": 0}]] },
+    "hcti.io: HTML → PNG":       { "main": [[{"node": "Parse Bild-URL",           "type": "main", "index": 0}]] },
+    "Parse Bild-URL":            { "main": [[{"node": "Pfade zusammenführen",     "type": "main", "index": 0}]] },
+    "Bild direkt verwenden":     { "main": [[{"node": "Pfade zusammenführen",     "type": "main", "index": 1}]] },
+    "Pfade zusammenführen":      { "main": [[{"node": "SharePoint: Bild-URL + Status Geplant", "type": "main", "index": 0}]] },
+    "SharePoint: Bild-URL + Status Geplant": { "main": [[]] }
+  },
+  "active": false,
+  "settings": { "executionOrder": "v1" },
+  "versionId": "wf03-v4-2026-05-10",
+  "meta": {
+    "instanceId": "f40c6f6af7ce2011b04be6e4c65abbc6b998ddefd762d8f282912f30a607f9b9"
+  },
+  "id": "PF-WF03-HTML-PNG-v4",
+  "tags": []
+}

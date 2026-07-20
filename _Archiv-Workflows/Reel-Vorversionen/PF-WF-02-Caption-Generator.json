@@ -1,0 +1,238 @@
+{
+  "name": "PF – WF-02 Caption Generator",
+  "nodes": [
+    {
+      "id": "sticky-001",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [240, 180],
+      "parameters": {
+        "content": "## PF – WF-02 Caption Generator\n\n**Setup (einmalig vor erstem Test):**\n1. Node **Claude API** öffnen → Credential auf 'Anthropic account' setzen\n2. Im Node **Test-Eingabe**: `hashtag_pool_lokal` auf eure Stadt anpassen\n3. Manuellen Trigger klicken → Output im letzten Node prüfen\n\n**Kosten pro Ausführung:** ca. 0,01–0,02 EUR (Claude Sonnet)\n\n**Später ersetzen:**\n- Node **Test-Eingabe** → Microsoft SharePoint: Get List Items (Filter Status = Bereit)\n- Letzter Node → weiterleiten an WF-03 (Canva) und WF-04 (Freigabe)",
+        "height": 200,
+        "width": 960,
+        "color": 5
+      }
+    },
+    {
+      "id": "trigger-001",
+      "name": "Manueller Test-Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [240, 440],
+      "parameters": {}
+    },
+    {
+      "id": "set-001",
+      "name": "Test-Eingabe",
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.4,
+      "position": [480, 440],
+      "parameters": {
+        "mode": "manual",
+        "duplicateItem": false,
+        "assignments": {
+          "assignments": [
+            {
+              "id": "f01",
+              "name": "post_id",
+              "value": "PF-TEST-001",
+              "type": "string"
+            },
+            {
+              "id": "f02",
+              "name": "thema",
+              "value": "Rücken",
+              "type": "string"
+            },
+            {
+              "id": "f03",
+              "name": "post_typ",
+              "value": "Tipp",
+              "type": "string"
+            },
+            {
+              "id": "f04",
+              "name": "content_brief",
+              "value": "3 einfache Dehnübungen gegen Nackenschmerzen für Menschen, die viel am Schreibtisch sitzen. Übungen sollen ohne Equipment zuhause machbar sein.",
+              "type": "string"
+            },
+            {
+              "id": "f05",
+              "name": "wochentag",
+              "value": "Mittwoch",
+              "type": "string"
+            },
+            {
+              "id": "f06",
+              "name": "jahreszeit",
+              "value": "Frühling",
+              "type": "string"
+            },
+            {
+              "id": "f07",
+              "name": "hashtag_pool_kern",
+              "value": "#physiofuchs #physiotherapie #physio #gesundheit #wohlbefinden",
+              "type": "string"
+            },
+            {
+              "id": "f08",
+              "name": "hashtag_pool_thema",
+              "value": "#nackenschmerzen #nackendehnen #büroübungen #homeoffice #haltung #wirbelsäule #schultern #rückengesundheit #dehnübungen #stretching",
+              "type": "string"
+            },
+            {
+              "id": "f09",
+              "name": "hashtag_pool_reichweite",
+              "value": "#gesundheitstipp #fitnessmotivation #bewegung #schmerzfrei #physiotherapeut #rückentraining #körperhaltung #ergonomie #schmerzlinderung #gesundleben",
+              "type": "string"
+            },
+            {
+              "id": "f10",
+              "name": "hashtag_pool_lokal",
+              "value": "#physiotherapieStadt #StadtGesundheit #StadtFitness #PhysioRegion #GesundheitRegion",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      }
+    },
+    {
+      "id": "code-001",
+      "name": "Build Claude Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [720, 440],
+      "parameters": {
+        "jsCode": "const d = $input.item.json;\n\nconst systemPrompt = `Du bist der Social-Media-Texter der Physiotherapiepraxis Physio Fuchs.\nDu schreibst Instagram-Captions auf Deutsch fuer eine moderne, empathische Physiotherapiepraxis.\n\nTONALITAET:\n- Warm, professionell, motivierend - nie arrogant oder klinisch\n- Duzen der Community ist erwuenscht\n- Emojis: maximal 3-5 pro Caption, nur unterstuetzend\n- Keine Clickbait-Formulierungen\n- Keine medizinischen Versprechen (kein 'heilt', 'kuriert')\n- Erlaubt: 'kann helfen', 'unterstuetzt', 'lindert haeufig'\n\nCAPTION-AUFBAU:\n1. Hook (erste Zeile, max. 12 Woerter) - stopp-wuerdig, direkte Ansprache\n2. Hauptinhalt (3-5 Saetze) - Mehrwert, Tipps oder konkreter Einblick\n3. Handlungsaufruf (1 Satz) - Termin buchen, Kommentieren oder Beitrag speichern\n\nWICHTIG: Keine Hashtags in der Caption selbst.\n\nAUSGABE: Nur reines JSON ohne Markdown-Backticks oder erklaerenden Text davor/danach.\nExaktes Format:\n{\"variante_1\":{\"caption\":\"...\",\"hook_preview\":\"...(erste 15 Zeichen)\",\"ton\":\"informativ\"},\"variante_2\":{\"caption\":\"...\",\"hook_preview\":\"...\",\"ton\":\"persoenlich\"},\"variante_3\":{\"caption\":\"...\",\"hook_preview\":\"...\",\"ton\":\"motivierend\"},\"hashtag_set_1\":[\"#tag1\",\"#tag2\"],\"hashtag_set_2\":[\"#tag1\",\"#tag2\"]}`;\n\nconst userMessage = `BRIEF VON JUDITH:\nThema: ${d.thema}\nPost-Typ: ${d.post_typ}\nAnweisung: ${d.content_brief}\n\nKONTEXT:\n- Wochentag der Veroeffentlichung: ${d.wochentag}\n- Jahreszeit: ${d.jahreszeit}\n\nVERFUEGBARER HASHTAG-POOL (waehle die 25-30 passendsten aus):\nKern-Tags: ${d.hashtag_pool_kern}\nThemen-Tags (${d.thema}): ${d.hashtag_pool_thema}\nReichweiten-Tags: ${d.hashtag_pool_reichweite}\nLokale Tags: ${d.hashtag_pool_lokal}\n\nErstelle alle 3 Varianten im vorgegebenen JSON-Format. Nur reines JSON ausgeben, keine Erklaerungen.`;\n\nreturn {\n  json: {\n    model: 'claude-haiku-4-5-20251001',\n    max_tokens: 2048,\n    system: systemPrompt,\n    messages: [{ role: 'user', content: userMessage }]\n  }\n};"
+      }
+    },
+    {
+      "id": "http-001",
+      "name": "Claude API",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [960, 440],
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "authentication": "none",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "sk-ant-api03-w9q887zbwNdnk0I1ZnMwxwGkxpZIyUfYsI02n5sKCETX8bJLYnx5ohBo-KNJvgWJKhC8LMBhAGNNM2xqeHPWIQ-VDAPQAA"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "raw",
+        "rawContentType": "application/json",
+        "body": "={{ JSON.stringify($json) }}",
+        "options": {
+          "timeout": 60000
+        }
+      }
+    },
+    {
+      "id": "code-002",
+      "name": "Parse Claude Response",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [1200, 440],
+      "parameters": {
+        "jsCode": "const response = $input.item.json;\n\n// Fehlercheck\nif (!response.content || !response.content[0]) {\n  throw new Error('Keine Antwort von Claude. Response: ' + JSON.stringify(response).substring(0, 300));\n}\n\nconst rawText = response.content[0].text;\n\n// JSON extrahieren (falls Claude Backticks mitliefert)\nlet parsed;\ntry {\n  const cleaned = rawText\n    .replace(/```json\\n?/gi, '')\n    .replace(/```\\n?/g, '')\n    .trim();\n  parsed = JSON.parse(cleaned);\n} catch(e) {\n  // Fallback: JSON aus dem Text herausschneiden\n  const match = rawText.match(/\\{[\\s\\S]*\\}/);\n  if (match) {\n    try {\n      parsed = JSON.parse(match[0]);\n    } catch(e2) {\n      throw new Error('Claude-Output ist kein valides JSON:\\n' + rawText.substring(0, 400));\n    }\n  } else {\n    throw new Error('Kein JSON in Claude-Output gefunden:\\n' + rawText.substring(0, 400));\n  }\n}\n\n// Kosten berechnen (Claude Sonnet Preise Stand 2025)\nconst inputTokens = response.usage?.input_tokens || 0;\nconst outputTokens = response.usage?.output_tokens || 0;\nconst costEur = Math.round((inputTokens * 0.000003 + outputTokens * 0.000015) * 100) / 100;\n\nreturn {\n  json: {\n    // Captions\n    v1_caption: parsed.variante_1?.caption || '',\n    v1_hook: parsed.variante_1?.hook_preview || '',\n    v1_ton: parsed.variante_1?.ton || 'informativ',\n\n    v2_caption: parsed.variante_2?.caption || '',\n    v2_hook: parsed.variante_2?.hook_preview || '',\n    v2_ton: parsed.variante_2?.ton || 'persoenlich',\n\n    v3_caption: parsed.variante_3?.caption || '',\n    v3_hook: parsed.variante_3?.hook_preview || '',\n    v3_ton: parsed.variante_3?.ton || 'motivierend',\n\n    // Hashtags als String (fertig fuer Instagram)\n    hashtags_set_1: Array.isArray(parsed.hashtag_set_1) ? parsed.hashtag_set_1.join(' ') : '',\n    hashtags_set_2: Array.isArray(parsed.hashtag_set_2) ? parsed.hashtag_set_2.join(' ') : '',\n\n    // Hashtags als Array (fuer spaetere Verarbeitung)\n    hashtags_array_1: parsed.hashtag_set_1 || [],\n    hashtags_array_2: parsed.hashtag_set_2 || [],\n\n    // Metadaten\n    input_tokens: inputTokens,\n    output_tokens: outputTokens,\n    cost_eur: costEur,\n    generated_at: new Date().toISOString(),\n    model: 'claude-sonnet-4-20250514'\n  }\n};"
+      }
+    },
+    {
+      "id": "sticky-002",
+      "name": "Output-Felder",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [1200, 260],
+      "parameters": {
+        "content": "**Output-Felder (für WF-04):**\n\n`v1_caption` / `v2_caption` / `v3_caption`\n`v1_hook` / `v2_hook` / `v3_hook`\n`v1_ton` / `v2_ton` / `v3_ton`\n`hashtags_set_1` / `hashtags_set_2`\n`cost_eur` / `generated_at`",
+        "height": 160,
+        "width": 290,
+        "color": 3
+      }
+    },
+    {
+      "id": "sticky-003",
+      "name": "Häufige Fehler",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [960, 260],
+      "parameters": {
+        "content": "**Häufige Fehler:**\n\n`401` → ANTHROPIC_API_KEY falsch oder fehlt\n`429` → Rate Limit, kurz warten\n`JSON Parse Error` → Claude hat Text um JSON geliefert → Code Node fängt das ab\n`Timeout` → Timeout auf 60s erhöht",
+        "height": 160,
+        "width": 220,
+        "color": 4
+      }
+    }
+  ],
+  "connections": {
+    "Manueller Test-Trigger": {
+      "main": [
+        [
+          {
+            "node": "Test-Eingabe",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Test-Eingabe": {
+      "main": [
+        [
+          {
+            "node": "Build Claude Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Build Claude Payload": {
+      "main": [
+        [
+          {
+            "node": "Claude API",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Claude API": {
+      "main": [
+        [
+          {
+            "node": "Parse Claude Response",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "meta": {
+    "templateCredsSetupCompleted": false,
+    "instanceId": ""
+  }
+}

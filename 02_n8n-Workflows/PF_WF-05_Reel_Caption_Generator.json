@@ -1,0 +1,486 @@
+{
+  "name": "PF WF-05 Reel Caption Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# PF WF-05 Reel Caption Generator\n\nZweck: Video-Items mit Status \"Video eingegangen\" lesen, Caption/CTA/Hashtags per KI erzeugen, HWG pruefen und SharePoint aktualisieren.\n\nKein Posting. Kein Canva-Export. Kein Status Bereit fuer WF-03.\n\nErgebnisstatus: KI-Texte fertig, falls SharePoint Choice vorhanden. Sonst Status bleibt Video eingegangen und Log/Caption werden geschrieben.",
+        "height": 260,
+        "width": 520,
+        "color": 4
+      },
+      "id": "1602f412-ac2a-4587-929a-994236505a8a",
+      "name": "Doku: WF-05 Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1800,
+        -260
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "43d1f423-8958-4350-8049-5ba780a39d57",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1800,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "item",
+        "site": {
+          "__rl": true,
+          "value": "physiofuchs889.sharepoint.com,c74040a2-0d6b-4385-b514-fbd9830a56ac,7a7842d6-ea6c-440d-aeed-580bdd2a091c",
+          "mode": "list",
+          "cachedResultName": "Physio Fuchs Administration"
+        },
+        "list": {
+          "__rl": true,
+          "value": "d17a6a6f-e6ef-457d-a2a9-4c30ea56120f",
+          "mode": "list",
+          "cachedResultName": "PF-Content-Kalender-2026"
+        },
+        "options": {
+          "fields": [
+            "fields"
+          ]
+        },
+        "simplify": false,
+        "requestOptions": {}
+      },
+      "id": "50b8e882-2241-4c96-aef6-8cbbd1d01cea",
+      "name": "SP: Video-Items holen",
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [
+        -1580,
+        120
+      ],
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const results = [];\n\nfor (const item of items) {\n  const f = item.json.fields || {};\n  const status = f.field_6 || f.Status || '';\n  const postTyp = f.field_2 || f.Post_Typ || '';\n  const itemId = item.json.id || item.json.Ausweis || f.id || f.ID;\n  const comments = f.field_13 || '';\n  const videoFile = f.field_8 || '';\n\n  if (status !== 'Video eingegangen') continue;\n\n  results.push({\n    json: {\n      _sp_item_id: itemId,\n      _post_typ: postTyp || 'Reel',\n      _status: status,\n      _video_file: videoFile,\n      _comments: comments,\n      sp_fields: f,\n      title: f.Title || f.field_1 || '',\n      thema: f.field_1 || f.Title || '',\n      content_brief: f.field_3 || '',\n      hashtag_thema: f.field_7 || '',\n      planned_date: f.Ver_x00f6_ffentlichungsdatum || '',\n      planned_time: f.field_5 || ''\n    }\n  });\n}\n\nreturn results.slice(0, 1);"
+      },
+      "id": "693713e2-2254-4f08-8673-6f4c2b1183ba",
+      "name": "Code: Video-Items filtern",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1360,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const f = $json.sp_fields || {};\nconst comments = $json._comments || '';\n\nfunction extract(label) {\n  const re = new RegExp('- ' + label + ':\\\\s*([^\\\\n]+)', 'i');\n  const m = comments.match(re);\n  return m ? m[1].trim() : '';\n}\n\nconst videoHinweis = extract('Video-Hinweis');\nconst tonSprache = extract('Ton enthaelt Sprache');\nconst personen = extract('Personen sichtbar');\nconst einverstaendnis = extract('Einverstaendnis vorhanden') || extract('Einverständnis vorhanden');\n\nconst PROMPT = `Du bist Social-Media-Texter fuer die Physiotherapiepraxis Physio Fuchs.\nErzeuge fuer ein Instagram Reel/Story-Video ein postingfertiges Textpaket.\n\nKontext:\n- Thema: ${$json.thema}\n- Post-Typ: ${$json._post_typ}\n- Content-Brief: ${$json.content_brief}\n- Hashtag-Thema: ${$json.hashtag_thema}\n- Video-Datei: ${$json._video_file}\n- Video-Hinweis: ${videoHinweis}\n- Ton enthaelt Sprache: ${tonSprache}\n- Personen sichtbar: ${personen}\n- Einverstaendnis vorhanden: ${einverstaendnis}\n- Geplant: ${$json.planned_date} ${$json.planned_time}\n\nRegeln:\n- Deutsch.\n- Instagram Reel: nahbar, professionell, ruhig, vertrauensbildend.\n- Keine Heilversprechen, keine Diagnosen, keine Erfolgsgarantien.\n- Keine Patientendaten erfinden.\n- Keine Formulierungen wie heilt, garantiert, kuriert, schmerzfrei in X Tagen.\n- CTA klar, aber nicht aggressiv.\n- Hashtags 10-16 Stueck, passend fuer Physio Fuchs, Physiotherapie, Bewegung, Praxisalltag.\n- Falls medizinische Empfehlung: vorsichtig formulieren.\n\nAntworte ausschliesslich als valides JSON:\n{\n  \"hook\": \"max 80 Zeichen\",\n  \"caption\": \"2-4 kurze Absaetze, ohne Hashtags\",\n  \"cta\": \"ein klarer CTA\",\n  \"hashtags\": [\"#tag1\", \"#tag2\"],\n  \"story_teaser\": \"kurzer Story-Teaser\",\n  \"alt_text\": \"ein Satz fuer Barrierefreiheit\",\n  \"overlay_suggestions\": [\"max 5 kurze On-Screen-Texte\"],\n  \"quality_check\": {\n    \"heilversprechen\": \"nein\",\n    \"diagnose\": \"nein\",\n    \"patientendaten\": \"nein\",\n    \"cta_vorhanden\": \"ja\"\n  }\n}`;\n\nreturn [{\n  json: {\n    _passthrough: $json,\n    model: 'claude-sonnet-4-6',\n    max_tokens: 2200,\n    messages: [{ role: 'user', content: PROMPT }]\n  }\n}];"
+      },
+      "id": "47382786-0ff8-4af6-a9d2-fe01fe8c6fa1",
+      "name": "Code: Reel Prompt bauen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1140,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://api.anthropic.com/v1/messages",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "x-api-key",
+              "value": "={{ $env.ANTHROPIC_API_KEY }}"
+            },
+            {
+              "name": "anthropic-version",
+              "value": "2023-06-01"
+            },
+            {
+              "name": "content-type",
+              "value": "application/json"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={\n  \"model\": \"{{ $json.model }}\",\n  \"max_tokens\": {{ $json.max_tokens }},\n  \"messages\": {{ JSON.stringify($json.messages) }}\n}",
+        "options": {}
+      },
+      "id": "13459671-7604-40bd-b4b9-1ddf80ab8ac0",
+      "name": "HTTP: Claude Reel Caption",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -920,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const resp = $json;\nconst raw = resp.content?.[0]?.text || resp.completion || '';\nlet parsed;\ntry {\n  const match = raw.match(/\\{[\\s\\S]*\\}/);\n  parsed = JSON.parse(match ? match[0] : raw);\n} catch (e) {\n  throw new Error('Claude-Response nicht JSON-parsebar: ' + raw.slice(0, 300));\n}\nconst pt = $('Code: Reel Prompt bauen').first().json._passthrough;\nreturn [{\n  json: {\n    ...pt,\n    hook: parsed.hook || '',\n    caption: parsed.caption || '',\n    cta: parsed.cta || '',\n    hashtags: Array.isArray(parsed.hashtags) ? parsed.hashtags : [],\n    story_teaser: parsed.story_teaser || '',\n    alt_text: parsed.alt_text || '',\n    overlay_suggestions: Array.isArray(parsed.overlay_suggestions) ? parsed.overlay_suggestions : [],\n    quality_check: parsed.quality_check || {},\n  }\n}];"
+      },
+      "id": "859af483-0eff-4370-b316-66a1e8918c26",
+      "name": "Code: Claude JSON parsen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -700,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const HWG_PATTERNS = [\n  /\\bheilt\\b/i,\n  /\\bheilung\\b/i,\n  /\\bkuriert\\b/i,\n  /\\bgarantiert\\b/i,\n  /\\bgewährleistet?\\b/i,\n  /\\bverspricht\\b/i,\n  /\\bversprechen wir\\b/i,\n  /\\b(schmerzfrei|beschwerdefrei) in (\\d+|wenigen|kürzester) (tag|tage|tagen|woche|wochen)\\b/i,\n  /\\bwirkt (100 ?%|sicher|garantiert)\\b/i,\n  /\\bbeseitigt (schmerz|beschwerd|leiden)\\b/i,\n  /\\b(stellt|stellen wir) (ihre )?diagnose\\b/i,\n  /\\bbehandelt erfolgreich\\b/i,\n  /\\b(nebenwirkungsfrei|ohne nebenwirkungen)\\b/i,\n  /\\bbesser als (ärzt|operation|medikament)\\b/i,\n  /\\b(ersetzt|statt) (arzt|ärzt|operation|medikament)\\b/i,\n];\nconst fullText = [$json.hook, $json.caption, $json.cta, ($json.hashtags || []).join(' '), $json.story_teaser].filter(Boolean).join(' ');\nconst matches = HWG_PATTERNS.map(re => ({ re, hit: fullText.match(re) })).filter(x => x.hit);\nreturn [{ json: { ...$json, _hwg_matches: matches.map(m => m.hit[0]), _hwg_clean: matches.length === 0 } }];"
+      },
+      "id": "0aba7927-1f0a-4739-8136-972c5f117f03",
+      "name": "Code: HWG Filter",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -480,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "24fa09de-9468-4918-9ff8-b8a404b3bf69",
+              "leftValue": "={{ $json._hwg_clean }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "104ae2cc-75a0-4581-b58b-c778e2904301",
+      "name": "IF: HWG sauber?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -260,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date().toISOString().slice(0, 16).replace('T', ' ');\nconst hashtags = ($json.hashtags || []).join(' ');\nconst overlay = ($json.overlay_suggestions || []).map(x => '- ' + x).join('\\n');\nconst qc = JSON.stringify($json.quality_check || {});\nconst log = [\n  $json._comments || '',\n  `${now} WF-05: Reel-Caption/CTA/Hashtags per KI erzeugt, HWG sauber.`,\n  '',\n  'WF-05 Textpaket:',\n  'HOOK: ' + ($json.hook || ''),\n  'CTA: ' + ($json.cta || ''),\n  'STORY_TEASER: ' + ($json.story_teaser || ''),\n  'ALT_TEXT: ' + ($json.alt_text || ''),\n  overlay ? 'OVERLAYS:\\n' + overlay : '',\n  'QC: ' + qc\n].filter(Boolean).join('\\n');\n\nreturn [{\n  json: {\n    _sp_item_id: $json._sp_item_id,\n    payload: {\n      field_10: [$json.hook, $json.caption, $json.cta].filter(Boolean).join('\\n\\n'),\n      field_7: hashtags,\n      field_6: 'KI-Texte fertig',\n      field_13: log\n    }\n  }\n}];"
+      },
+      "id": "3e285bda-2673-44fb-a71d-4f6686debb0d",
+      "name": "Code: SP Update Payload OK",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        40
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const now = new Date().toISOString().slice(0, 16).replace('T', ' ');\nconst log = [\n  $json._comments || '',\n  `${now} WF-05: HWG-FILTER-MATCH -> ${($json._hwg_matches || []).join(', ')}. Texte wurden erzeugt, aber Status Geblockt gesetzt.`\n].filter(Boolean).join('\\n');\nreturn [{\n  json: {\n    _sp_item_id: $json._sp_item_id,\n    payload: {\n      field_10: [$json.hook, $json.caption, $json.cta].filter(Boolean).join('\\n\\n'),\n      field_7: ($json.hashtags || []).join(' '),\n      field_6: 'Geblockt',\n      field_13: log\n    }\n  }\n}];"
+      },
+      "id": "9bb75360-4bd9-4a77-8d3f-cb01f92c7d70",
+      "name": "Code: SP Update Payload Geblockt",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        0,
+        240
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $json._sp_item_id }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-HTTP-Method",
+              "value": "MERGE"
+            },
+            {
+              "name": "IF-MATCH",
+              "value": "*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {}
+      },
+      "id": "63a5430e-6623-4605-ba9e-1cd74643474b",
+      "name": "SP: Video-Item aktualisieren",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        40
+      ],
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $json._sp_item_id }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-HTTP-Method",
+              "value": "MERGE"
+            },
+            {
+              "name": "IF-MATCH",
+              "value": "*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {}
+      },
+      "id": "d804f9e6-5ba9-4a7e-b677-76ad5ab7d98e",
+      "name": "SP: Video-Item geblockt",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        240,
+        240
+      ],
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "operation": "create",
+        "teamId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Physio Fuchs Administration"
+        },
+        "channelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Socialmedia"
+        },
+        "contentType": "html",
+        "message": "=<h2>Reel-Texte sind fertig</h2><p><b>SharePoint Item:</b> {{ $('Code: SP Update Payload OK').first().json._sp_item_id }}<br><b>Status:</b> KI-Texte fertig</p><p>Caption, CTA und Hashtags wurden erzeugt und in SharePoint eingetragen.</p><hr><h3>Naechster Schritt</h3><p>Canva-Bearbeitung kann starten.</p><p>Judith kann das Reel optional selbst in Canva bearbeiten und die fertige MP4 hier ablegen:</p><p><code>Content_Socialmedia/Reels_Stories/00_Canva_Exports_von_Judith/</code></p><p>Thomas/Codex uebernimmt danach Hostinger-Upload, Video_Public_URL und WF-06 Preflight.</p><p><b>Wichtig:</b> Erst nach finaler Pruefung Status auf <b>Reel freigegeben</b> setzen.</p><hr><p style=\"color:#666;font-size:0.9em;\">WF-05 Reel Caption Generator</p>",
+        "options": {}
+      },
+      "id": "09aaf9c7-e6a8-4cb1-bef2-8e959cca5e2f",
+      "name": "Teams: Reel-Texte fertig melden",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 2,
+      "position": [
+        400,
+        80
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "Gmvn1OD66IZoWsXh",
+          "name": "PF Microsoft Teams account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "SP: Video-Items holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SP: Video-Items holen": {
+      "main": [
+        [
+          {
+            "node": "Code: Video-Items filtern",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Video-Items filtern": {
+      "main": [
+        [
+          {
+            "node": "Code: Reel Prompt bauen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Reel Prompt bauen": {
+      "main": [
+        [
+          {
+            "node": "HTTP: Claude Reel Caption",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: Claude Reel Caption": {
+      "main": [
+        [
+          {
+            "node": "Code: Claude JSON parsen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Claude JSON parsen": {
+      "main": [
+        [
+          {
+            "node": "Code: HWG Filter",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: HWG Filter": {
+      "main": [
+        [
+          {
+            "node": "IF: HWG sauber?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: HWG sauber?": {
+      "main": [
+        [
+          {
+            "node": "Code: SP Update Payload OK",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Code: SP Update Payload Geblockt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: SP Update Payload OK": {
+      "main": [
+        [
+          {
+            "node": "SP: Video-Item aktualisieren",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: SP Update Payload Geblockt": {
+      "main": [
+        [
+          {
+            "node": "SP: Video-Item geblockt",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SP: Video-Item aktualisieren": {
+      "main": [
+        [
+          {
+            "node": "Teams: Reel-Texte fertig melden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "wf05-reel-caption-draft-2026-06-12",
+  "id": "wf05-reel-caption-manager-draft",
+  "meta": {
+    "instanceId": "f40c6f6af7ce2011b04be6e4c65abbc6b998ddefd762d8f282912f30a607f9b9"
+  },
+  "tags": []
+}

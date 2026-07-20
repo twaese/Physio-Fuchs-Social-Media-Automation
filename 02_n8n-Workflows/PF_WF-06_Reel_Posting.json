@@ -1,0 +1,477 @@
+{
+  "name": "PF WF-06 Reel Posting",
+  "active": false,
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# PF WF-06 Reel Posting\n\nPostet nur SharePoint-Items mit Status \"Reel freigegeben\".\n\nPflicht vor Posting:\n- Freigabe_Person = Judith\n- Caption vorhanden\n- Video_Public_URL vorhanden, oeffentlich abrufbar, mp4/mov\n- Datenschutz/Einverstaendnis im Kommentar dokumentiert\n\nOutput: Status Veroeffentlicht, IG-Post-ID in field_12, Log in field_13.\n\nErste Version: Instagram Reel + Facebook Page Video. Kein Posting ohne Judith-Freigabe."
+      },
+      "id": "f3561d79-b08c-4b83-bc8d-4a21006b6d87",
+      "name": "Doku: WF-06 Overview",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -1840,
+        -220
+      ]
+    },
+    {
+      "parameters": {},
+      "id": "0d979b56-3100-48bd-b99f-eb6c66b62378",
+      "name": "Manual Trigger",
+      "type": "n8n-nodes-base.manualTrigger",
+      "typeVersion": 1,
+      "position": [
+        -1760,
+        120
+      ]
+    },
+    {
+      "parameters": {
+        "rule": {
+          "interval": [
+            {
+              "field": "minutes",
+              "minutesInterval": 60
+            }
+          ]
+        }
+      },
+      "id": "8a902a12-fdd9-4c26-bce2-ffb7ec3ca178",
+      "name": "Schedule: alle 60 Minuten",
+      "type": "n8n-nodes-base.scheduleTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -1760,
+        300
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "item",
+        "site": {
+          "__rl": true,
+          "value": "physiofuchs889.sharepoint.com,c74040a2-0d6b-4385-b514-fbd9830a56ac,7a7842d6-ea6c-440d-aeed-580bdd2a091c",
+          "mode": "list",
+          "cachedResultName": "Physio Fuchs Administration"
+        },
+        "list": {
+          "__rl": true,
+          "value": "d17a6a6f-e6ef-457d-a2a9-4c30ea56120f",
+          "mode": "list",
+          "cachedResultName": "PF-Content-Kalender-2026"
+        },
+        "options": {
+          "fields": [
+            "fields"
+          ]
+        },
+        "simplify": false,
+        "requestOptions": {}
+      },
+      "id": "219f9b9a-865a-48f2-906c-fc64f75b6bcc",
+      "name": "SP: Reel-Freigaben holen",
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [
+        -1500,
+        200
+      ],
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const items = $input.all();\nconst now = new Date();\nconst results = [];\nconst skipped = [];\n\nfunction clean(v) { return String(v || '').trim(); }\nfunction findVideoUrl(f, comments) {\n  const candidates = [\n    clean(f.Video_Public_URL),\n    clean(f.video_public_url),\n    clean(f.field_9),\n    clean(f.LinkTitel),\n  ].filter(Boolean);\n  const m = comments.match(/(?:Video_Public_URL|Public Video URL|Video URL)\\s*:\\s*(https?:\\/\\/\\S+)/i);\n  if (m) candidates.unshift(m[1]);\n  return candidates.find(url => /^https?:\\/\\//i.test(url) && /\\.(mp4|mov)(\\?|#|$)/i.test(url)) || '';\n}\nfunction extract(label, comments) {\n  const re = new RegExp('- ' + label + ':\\\\s*([^\\\\n]+)', 'i');\n  const m = comments.match(re);\n  return m ? m[1].trim().toLowerCase() : '';\n}\n\nfor (const item of items) {\n  const f = item.json.fields || {};\n  const status = clean(f.field_6 || f.Status);\n  const itemId = item.json.id || item.json.Ausweis || f.id || f.ID;\n  const title = clean(f.Title || f.field_1);\n  const freigabe = clean(f.field_11 || f.Freigabe_Person);\n  const caption = clean(f.field_10 || f.Caption_Variante);\n  const hashtags = clean(f.field_7 || f.Hashtag_Thema);\n  const comments = clean(f.field_13 || f.Kommentare);\n  const videoUrl = findVideoUrl(f, comments);\n  const datumRaw = f.Ver_x00f6_ffentlichungsdatum || '';\n  const uhrzeit = clean(f.field_5 || '09:00');\n  const reasons = [];\n\n  if (status !== 'Reel freigegeben') reasons.push('status=' + (status || 'leer'));\n  if (freigabe.toLowerCase() !== 'judith') reasons.push('freigabe=' + (freigabe || 'leer'));\n  if (!caption) reasons.push('caption_fehlt');\n  if (!videoUrl) reasons.push('video_public_url_fehlt');\n\n  const personen = extract('Personen sichtbar', comments);\n  const einverstaendnis = extract('Einverstaendnis vorhanden', comments) || extract('Einverständnis vorhanden', comments);\n  if (personen === 'ja' && einverstaendnis !== 'ja') reasons.push('einverstaendnis_fehlt');\n\n  if (datumRaw) {\n    const dateOnly = String(datumRaw).split('T')[0];\n    const scheduledTime = new Date(dateOnly + 'T' + uhrzeit + ':00');\n    if (!isNaN(scheduledTime) && scheduledTime > now) reasons.push('scheduled_future=' + dateOnly + ' ' + uhrzeit);\n  }\n\n  const debugRow = {\n    item_id: itemId,\n    title,\n    status,\n    freigabe,\n    has_caption: Boolean(caption),\n    has_video_public_url: Boolean(videoUrl),\n    video_url_preview: videoUrl || '',\n    scheduled: datumRaw ? String(datumRaw).split('T')[0] + ' ' + uhrzeit : '',\n    reasons,\n  };\n\n  if (reasons.length) {\n    skipped.push(debugRow);\n    continue;\n  }\n\n  results.push({ json: {\n    _wf06_ready: true,\n    item_id: itemId,\n    title,\n    video_url: videoUrl,\n    caption,\n    hashtags,\n    caption_with_hashtags: caption + (hashtags ? '\\n\\n' + hashtags : ''),\n    fb_description: caption,\n    sp_fields: f,\n    existing_log: comments,\n  }});\n}\n\nif (results.length > 0) return results.slice(0, 1);\n\nreturn [{ json: {\n  _wf06_ready: false,\n  debug: 'Kein Item hat den WF-06 Preflight bestanden. Diese Debug-Ausgabe wird nicht gepostet.',\n  checked_items: items.length,\n  skipped: skipped.slice(0, 20),\n}}];"
+      },
+      "id": "cb0e73ee-96d7-49f0-8820-36b0b2877883",
+      "name": "Filter: Reel freigegeben + Preflight",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -1320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v25.0/17841461169626096/media",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "specifyBody": "fieldsBelow",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "media_type",
+              "value": "REELS"
+            },
+            {
+              "name": "video_url",
+              "value": "={{ $json.video_url }}"
+            },
+            {
+              "name": "caption",
+              "value": "={{ $json.caption_with_hashtags }}"
+            },
+            {
+              "name": "share_to_feed",
+              "value": "true"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "a3666d80-bf19-4c0d-9a6d-58dc18477525",
+      "name": "IG: Reel Container erstellen",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -880,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "amount": 90,
+        "unit": "seconds"
+      },
+      "id": "e66c2030-98cc-4fcb-a1c3-9da29efcb1a7",
+      "name": "Wait 90s IG Processing",
+      "type": "n8n-nodes-base.wait",
+      "typeVersion": 1,
+      "position": [
+        -760,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "https://graph.facebook.com/v25.0/17841461169626096/media_publish",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "specifyBody": "fieldsBelow",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "creation_id",
+              "value": "={{ $('IG: Reel Container erstellen').item.json.id }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "6b00ca80-ee92-4edb-b9e4-e5fc12f87250",
+      "name": "IG: Reel Publish",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -540,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://graph.facebook.com/v25.0/{{ $env.FB_PAGE_ID }}/videos",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "facebookGraphApi",
+        "sendBody": true,
+        "bodyContentType": "json",
+        "specifyBody": "fieldsBelow",
+        "bodyParameters": {
+          "parameters": [
+            {
+              "name": "file_url",
+              "value": "={{ $('Filter: Reel freigegeben + Preflight').item.json.video_url }}"
+            },
+            {
+              "name": "description",
+              "value": "={{ $('Filter: Reel freigegeben + Preflight').item.json.fb_description }}"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "id": "8b454ceb-4100-4b1f-8ce4-7e15ccea9b04",
+      "name": "FB: Page Video",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        -320,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "jsCode": "const item = $('Filter: Reel freigegeben + Preflight').item.json;\nconst igResp = $('IG: Reel Publish').item.json || {};\nconst fbResp = $('FB: Page Video').item.json || {};\nconst igPostId = igResp.id || '';\nconst fbPostId = fbResp.id || fbResp.video_id || '';\nconst now = new Date().toISOString().slice(0, 16).replace('T', ' ');\nconst log = [\n  item.existing_log || '',\n  `${now} WF-06: Reel/Video veroeffentlicht - IG ${igPostId || 'unbekannt'} / FB ${fbPostId || 'unbekannt'}`,\n  `Video_Public_URL: ${item.video_url}`,\n].filter(Boolean).join('\\n');\nreturn [{ json: {\n  _sp_item_id: item.item_id,\n  payload: {\n    field_6: 'Veröffentlicht',\n    field_12: igPostId,\n    field_13: log,\n  }\n}}];"
+      },
+      "id": "2c900679-256e-40cf-a457-37723c3c0d01",
+      "name": "Code: SP Update Payload",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        -80,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $json._sp_item_id }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-HTTP-Method",
+              "value": "MERGE"
+            },
+            {
+              "name": "IF-MATCH",
+              "value": "*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {}
+      },
+      "id": "4452283f-3416-4312-9c31-129d956c9fbb",
+      "name": "SP: Status Veröffentlicht",
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        160,
+        200
+      ],
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "c2b567c3-4b03-40b7-b58d-ffa8485938bb",
+              "leftValue": "={{ $json._wf06_ready }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "id": "e56e37fd-9775-486f-873d-11048244a903",
+      "name": "IF: Posting ready?",
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        -1120,
+        200
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "operation": "create",
+        "teamId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Physio Fuchs Administration"
+        },
+        "channelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "",
+          "cachedResultName": "Socialmedia"
+        },
+        "contentType": "html",
+        "message": "=<h2>Reel wurde veroeffentlicht</h2><p><b>SharePoint Item:</b> {{ $('Code: SP Update Payload').first().json._sp_item_id }}<br><b>Instagram Post ID:</b> {{ $('IG: Reel Publish').first().json.id || 'unbekannt' }}<br><b>Facebook Video ID:</b> {{ $('FB: Page Video').first().json.id || $('FB: Page Video').first().json.video_id || 'unbekannt' }}</p><p>SharePoint wurde auf <b>Veroeffentlicht</b> aktualisiert.</p><hr><p style=\"color:#666;font-size:0.9em;\">WF-06 Reel Posting</p>",
+        "options": {}
+      },
+      "id": "a2cc038c-dab4-44ed-af8b-0e1249f18cf7",
+      "name": "Teams: Reel veroeffentlicht melden",
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 2,
+      "position": [
+        420,
+        200
+      ],
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "Gmvn1OD66IZoWsXh",
+          "name": "PF Microsoft Teams account"
+        }
+      }
+    }
+  ],
+  "connections": {
+    "Manual Trigger": {
+      "main": [
+        [
+          {
+            "node": "SP: Reel-Freigaben holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Schedule: alle 60 Minuten": {
+      "main": [
+        [
+          {
+            "node": "SP: Reel-Freigaben holen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SP: Reel-Freigaben holen": {
+      "main": [
+        [
+          {
+            "node": "Filter: Reel freigegeben + Preflight",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Filter: Reel freigegeben + Preflight": {
+      "main": [
+        [
+          {
+            "node": "IF: Posting ready?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG: Reel Container erstellen": {
+      "main": [
+        [
+          {
+            "node": "Wait 90s IG Processing",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Wait 90s IG Processing": {
+      "main": [
+        [
+          {
+            "node": "IG: Reel Publish",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IG: Reel Publish": {
+      "main": [
+        [
+          {
+            "node": "FB: Page Video",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "FB: Page Video": {
+      "main": [
+        [
+          {
+            "node": "Code: SP Update Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: SP Update Payload": {
+      "main": [
+        [
+          {
+            "node": "SP: Status Veröffentlicht",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Posting ready?": {
+      "main": [
+        [
+          {
+            "node": "IG: Reel Container erstellen",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        []
+      ]
+    },
+    "SP: Status Veröffentlicht": {
+      "main": [
+        [
+          {
+            "node": "Teams: Reel veroeffentlicht melden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "staticData": null,
+  "meta": null,
+  "pinData": {},
+  "versionId": "9013c52a-0e5c-4392-88ad-c5a30d0303eb",
+  "triggerCount": 0,
+  "tags": []
+}

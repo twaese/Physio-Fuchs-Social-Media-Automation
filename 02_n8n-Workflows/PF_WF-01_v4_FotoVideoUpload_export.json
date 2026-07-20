@@ -1,0 +1,962 @@
+{
+  "name": "PF WF-01 v4 Foto Video Upload",
+  "nodes": [
+    {
+      "parameters": {
+        "content": "# WF-01 v4 Foto Video Upload\n\nWebhook: POST /sharepoint-content-v4-test\n\nZweck: Content einreichen v4 empfangen. Foto-Posts bleiben im Status Entwurf fuer WF-02/WF-03. Video/Reel/Story/Uebung-Uploads werden als Status Video eingegangen angelegt und separat weiterverarbeitet.\n\nWichtig vor Test: SharePoint-Choice Status muss Video eingegangen erlauben. Der sichtbare Formularbutton Video wird intern als Post_Typ Reel gespeichert, daher ist kein Choice-Wert Video noetig.\n\nNicht produktiv aktivieren, bevor Multipart-, Foto- und Video-Test erfolgreich sind.",
+        "height": 180,
+        "width": 920,
+        "color": 5
+      },
+      "id": "b87a588b-5e91-49cb-a120-e0b8cafa8273",
+      "name": "Sticky Note",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        0
+      ]
+    },
+    {
+      "parameters": {
+        "content": "# Mapping v4\n\nFormular sendet multipart/form-data:\n- payload = JSON\n- foto = optional\n- video = optional\n\nNeue Felder: Material_Typ, Video_Hinweis, Ton_enthaelt_Sprache, _workflowZiel.\n\nSicherheit: Personen sichtbar + kein Einverstaendnis => Fehler.",
+        "width": 320,
+        "color": 3
+      },
+      "id": "969f9836-fa1b-4feb-9685-1d59a4abca4a",
+      "name": "Feldmapping",
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        0,
+        208
+      ]
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "sharepoint-content-v4-test",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "id": "c8d2fb6a-40a6-4ce3-be16-d541fb3b1e2e",
+      "name": "Formular Webhook",
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2,
+      "position": [
+        240,
+        448
+      ],
+      "webhookId": "pf-wf01-content-einreichung-v4-test"
+    },
+    {
+      "parameters": {
+        "jsCode": "const raw = $input.first().json.body || $input.first().json;\nconst binary = $input.first().binary || {};\n\nlet body = raw;\nif (typeof raw.payload === 'string') {\n  try {\n    body = JSON.parse(raw.payload);\n  } catch (error) {\n    throw new Error('Payload konnte nicht als JSON gelesen werden');\n  }\n}\n\nfunction formatDatum(iso) {\n  if (!iso) return '';\n  const d = new Date(iso);\n  if (isNaN(d)) return iso;\n  const dd = String(d.getDate()).padStart(2, '0');\n  const mm = String(d.getMonth() + 1).padStart(2, '0');\n  const yyyy = d.getFullYear();\n  return yyyy + '-' + mm + '-' + dd;\n}\n\nfunction clean(value) {\n  return String(value || '').trim();\n}\n\nconst thema = clean(body.Thema || body.Title || body.thema);\nif (!thema) throw new Error('Pflichtfeld Thema fehlt');\n\nconst personenSichtbar = clean(body.Personen_sichtbar || 'nein').toLowerCase();\nconst einverstaendnis = clean(body.Einverstaendnis_vorhanden || 'nein').toLowerCase();\nif (personenSichtbar === 'ja' && einverstaendnis !== 'ja') {\n  throw new Error('DSGVO-Sperre: Personen sichtbar, aber Einverstaendnis fehlt');\n}\n\nconst postTyp = clean(body.Post_Typ || body.postTyp || 'Standard');\nconst videoTypes = ['Reel', 'Story', 'Übung', 'Uebung'];\nconst fotoQuelle = clean(body.Foto_Quelle || 'none').toLowerCase();\nlet materialTyp = clean(body.Material_Typ || '').toLowerCase();\nif (!materialTyp) {\n  materialTyp = fotoQuelle === 'video' ? 'video' : fotoQuelle === 'upload' ? 'foto' : fotoQuelle === 'stock' ? 'stock' : 'kein_upload';\n}\n\nconst hasFotoBinary = Boolean(binary.foto || binary.Foto_Upload || (materialTyp !== 'video' && binary.data));\nconst hasVideoBinary = Boolean(binary.video || binary.Video_Upload || (materialTyp === 'video' && binary.data));\n\nif (materialTyp === 'foto' && !hasFotoBinary) {\n  throw new Error('Material_Typ=foto, aber kein Foto-Binary empfangen');\n}\nif (materialTyp === 'video' && !hasVideoBinary) {\n  throw new Error('Material_Typ=video, aber kein Video-Binary empfangen');\n}\nif (videoTypes.includes(postTyp) && materialTyp !== 'video') {\n  throw new Error('Post_Typ ist Video/Reel/Story/Uebung, aber Material_Typ ist nicht video');\n}\n\nconst brief     = clean(body.Content_Brief || body.textIdee);\nconst datum     = formatDatum(body.Veroeffentlichungsdatum || body.wunschDatum || '');\nconst uhrzeit   = clean(body.Uhrzeit || body.uhrzeit);\nconst hashtag   = clean(body.Hashtag_Thema || body.hashtag);\nconst bild      = clean(body.Bild_Dateiname || body.bildBeschreibung);\nconst freigabe  = clean(body.Freigabe_Person || 'Judith');\nconst kommentar = clean(body.Kommentare || body.notiz);\nconst videoHinweis = clean(body.Video_Hinweis);\nconst tonSprache = clean(body.Ton_enthaelt_Sprache || 'unbekannt').toLowerCase();\n\nconst status = materialTyp === 'video' ? 'Video eingegangen' : 'Entwurf';\nconst workflowZiel = materialTyp === 'video' ? 'video-reel-story' : 'foto-feed-post';\n\nconst materialMeta = [\n  'WF-01 v4 Material-Input:',\n  '- Workflow-Ziel: ' + workflowZiel,\n  '- Material-Typ: ' + materialTyp,\n  '- Foto-Quelle: ' + fotoQuelle,\n  body.Foto_Motiv ? '- Motiv: ' + clean(body.Foto_Motiv) : null,\n  videoHinweis ? '- Video-Hinweis: ' + videoHinweis : null,\n  materialTyp === 'video' ? '- Ton enthaelt Sprache: ' + tonSprache : null,\n  '- Personen sichtbar: ' + personenSichtbar,\n  '- Einverstaendnis vorhanden: ' + einverstaendnis,\n  body.Zuschnitt_Hinweis ? '- Zuschnitt: ' + clean(body.Zuschnitt_Hinweis) : null,\n].filter(Boolean).join('\\n');\n\nreturn [{\n  json: {\n    Title: thema,\n    field_1: thema,\n    field_2: postTyp,\n    field_3: brief,\n    field_5: uhrzeit,\n    field_6: status,\n    field_7: hashtag,\n    field_8: bild,\n    field_11: freigabe,\n    field_13: [kommentar, materialMeta].filter(Boolean).join('\\n\\n'),\n    Ver_x00f6_ffentlichungsdatum: datum,\n    _eingereichtVon: body._eingereichtVon || 'Judith',\n    _eingereichtAm: body._eingereichtAm || new Date().toISOString(),\n    _workflow_ziel: workflowZiel,\n    _postTyp: postTyp,\n    _datum: datum,\n    _material_typ: materialTyp,\n    _foto_quelle: fotoQuelle,\n    _foto_motiv: clean(body.Foto_Motiv),\n    _video_hinweis: videoHinweis,\n    _ton_enthaelt_sprache: tonSprache,\n    _personen_sichtbar: personenSichtbar,\n    _einverstaendnis_vorhanden: einverstaendnis,\n    _zuschnitt_hinweis: clean(body.Zuschnitt_Hinweis),\n    _has_foto_binary: hasFotoBinary,\n    _has_video_binary: hasVideoBinary,\n  },\n  binary,\n}];"
+      },
+      "id": "0fd59f81-b865-479e-9ef4-06c5b64c0e1a",
+      "name": "Felder mappen",
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        500,
+        448
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "item",
+        "operation": "create",
+        "site": {
+          "__rl": true,
+          "value": "physiofuchs889.sharepoint.com,c74040a2-0d6b-4385-b514-fbd9830a56ac,7a7842d6-ea6c-440d-aeed-580bdd2a091c",
+          "mode": "list",
+          "cachedResultName": "Physio Fuchs Administration"
+        },
+        "list": {
+          "__rl": true,
+          "value": "d17a6a6f-e6ef-457d-a2a9-4c30ea56120f",
+          "mode": "list",
+          "cachedResultName": "PF-Content-Kalender-2026"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "field_13": "={{ $json.field_13 }}",
+            "Title": "={{ $json.field_1 }}",
+            "field_1": "={{ $json.field_1 }}",
+            "field_2": "={{ $json.field_2 }}",
+            "field_3": "={{ $json.field_3 }}",
+            "field_5": "={{ $json.field_5 }}",
+            "field_7": "={{ $json.field_7 }}",
+            "field_8": "={{ $json.field_8 }}",
+            "field_11": "={{ $json.field_11 }}",
+            "field_6": "={{ $json.field_6}}",
+            "Ver_x00f6_ffentlichungsdatum": "={{ $json.Ver_x00f6_ffentlichungsdatum }}"
+          },
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "Title",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Title",
+              "readOnly": false,
+              "required": false,
+              "type": "string"
+            },
+            {
+              "id": "field_1",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Thema",
+              "readOnly": false,
+              "required": false,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Praxis & Team",
+                  "value": "Praxis & Team"
+                },
+                {
+                  "name": "Knie & Hüfte",
+                  "value": "Knie & Hüfte"
+                },
+                {
+                  "name": "Sport & Prävention",
+                  "value": "Sport & Prävention"
+                },
+                {
+                  "name": "Entspannung",
+                  "value": "Entspannung"
+                },
+                {
+                  "name": "Haltung",
+                  "value": "Haltung"
+                },
+                {
+                  "name": "Schulter",
+                  "value": "Schulter"
+                },
+                {
+                  "name": "Füße & Sprunggelenk",
+                  "value": "Füße & Sprunggelenk"
+                },
+                {
+                  "name": "Wirbelsäule",
+                  "value": "Wirbelsäule"
+                },
+                {
+                  "name": "Rücken",
+                  "value": "Rücken"
+                },
+                {
+                  "name": "Herbst-Gesundheit",
+                  "value": "Herbst-Gesundheit"
+                }
+              ]
+            },
+            {
+              "id": "field_2",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Post_Typ",
+              "readOnly": false,
+              "required": false,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Tipp",
+                  "value": "Tipp"
+                },
+                {
+                  "name": "Team",
+                  "value": "Team"
+                },
+                {
+                  "name": "Übung",
+                  "value": "Übung"
+                },
+                {
+                  "name": "Promo",
+                  "value": "Promo"
+                },
+                {
+                  "name": "Standard",
+                  "value": "Standard"
+                },
+                {
+                  "name": "Zitat",
+                  "value": "Zitat"
+                },
+                {
+                  "name": "Story",
+                  "value": "Story"
+                },
+                {
+                  "name": "FAQ",
+                  "value": "FAQ"
+                },
+                {
+                  "name": "Aktion",
+                  "value": "Aktion"
+                },
+                {
+                  "name": "Behind-the-Scenes",
+                  "value": "Behind-the-Scenes"
+                },
+                {
+                  "name": "Mitarbeiter:in",
+                  "value": "Mitarbeiter:in"
+                },
+                {
+                  "name": "Praxis-News",
+                  "value": "Praxis-News"
+                },
+                {
+                  "name": "Reel",
+                  "value": "Reel"
+                }
+              ]
+            },
+            {
+              "id": "field_3",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Content_Brief",
+              "readOnly": false,
+              "required": false,
+              "type": "string"
+            },
+            {
+              "id": "field_5",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Uhrzeit",
+              "readOnly": false,
+              "required": false,
+              "type": "string"
+            },
+            {
+              "id": "field_6",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Status",
+              "readOnly": false,
+              "required": false,
+              "type": "options",
+              "options": [
+                {
+                  "name": "Entwurf",
+                  "value": "Entwurf"
+                },
+                {
+                  "name": "Bereit",
+                  "value": "Bereit"
+                },
+                {
+                  "name": "Freigegeben",
+                  "value": "Freigegeben"
+                },
+                {
+                  "name": "Geplant",
+                  "value": "Geplant"
+                },
+                {
+                  "name": "Veröffentlicht",
+                  "value": "Veröffentlicht"
+                }
+              ],
+              "removed": false
+            },
+            {
+              "id": "field_7",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Hashtag_Thema",
+              "readOnly": false,
+              "required": false,
+              "type": "string"
+            },
+            {
+              "id": "field_8",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Bild_Dateiname",
+              "readOnly": false,
+              "required": false,
+              "type": "string"
+            },
+            {
+              "id": "field_9",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Canva_Template_ID",
+              "readOnly": false,
+              "required": false,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "field_10",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Caption_Variante",
+              "readOnly": false,
+              "required": false,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "field_11",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Freigabe_Person",
+              "readOnly": false,
+              "required": false,
+              "type": "string"
+            },
+            {
+              "id": "field_12",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Instagram_Post_ID",
+              "readOnly": false,
+              "required": false,
+              "type": "string",
+              "removed": true
+            },
+            {
+              "id": "field_13",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Kommentare",
+              "readOnly": false,
+              "required": false,
+              "type": "string"
+            },
+            {
+              "id": "Ver_x00f6_ffentlichungsdatum",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Veröffentlichungsdatum",
+              "readOnly": false,
+              "required": false,
+              "type": "dateTime",
+              "removed": false
+            },
+            {
+              "id": "Bild_FB_Dateiname",
+              "canBeUsedToMatch": false,
+              "defaultMatch": false,
+              "display": true,
+              "displayName": "Bild_FB_Dateiname",
+              "readOnly": false,
+              "required": false,
+              "type": "string",
+              "removed": false
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "requestOptions": {}
+      },
+      "type": "n8n-nodes-base.microsoftSharePoint",
+      "typeVersion": 1,
+      "position": [
+        760,
+        448
+      ],
+      "id": "4ccded78-395e-455e-81ed-5cfa1469ccad",
+      "name": "SharePoint: Item erstellen",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={ \"ok\": true, \"message\": \"Einreichung gespeichert\", \"status\": \"{{ $('Felder mappen').first().json.field_6 }}\", \"workflow_ziel\": \"{{ $('Felder mappen').first().json._workflow_ziel }}\", \"item_id\": {{ $('SharePoint: Item erstellen').first().json.id || $('SharePoint: Item erstellen').first().json.fields?.id || 0 }}, \"thema\": \"{{ $('Felder mappen').first().json.field_1 }}\", \"foto\": \"{{ $('Code: Material-Dateinamen bauen').first().json.photo_filename || '' }}\", \"video\": \"{{ $('Code: Material-Dateinamen bauen').first().json.video_filename || '' }}\", \"projekt\": \"{{ $('Code: Material-Dateinamen bauen').first().json.video_project_folder || '' }}\" }",
+        "options": {
+          "responseCode": 200
+        }
+      },
+      "id": "a7b9218a-d3a8-410f-9883-0ec007960072",
+      "name": "HTTP Response → Formular",
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1,
+      "position": [
+        1720,
+        304
+      ]
+    },
+    {
+      "parameters": {
+        "resource": "channelMessage",
+        "operation": "create",
+        "teamId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "channelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": ""
+        },
+        "contentType": "html",
+        "message": "=<h2>Neue Content-Einreichung</h2><p><b>Item-ID:</b> {{ $('SharePoint: Item erstellen').first().json.id }}<br><b>Thema:</b> {{ $('Felder mappen').first().json.field_1 }}<br><b>Post-Typ:</b> {{ $('Felder mappen').first().json.field_2 }}<br><b>Status:</b> {{ $('Felder mappen').first().json.field_6 }}<br><b>Workflow:</b> {{ $('Felder mappen').first().json._workflow_ziel }}<br><b>Geplant:</b> {{ $('Felder mappen').first().json._datum }} {{ $('Felder mappen').first().json.field_5 || '10:00' }} Uhr</p><hr><h3>Material</h3><p><b>Typ:</b> {{ $('Felder mappen').first().json._material_typ }}<br><b>Foto:</b> <code>{{ $('Code: Material-Dateinamen bauen').first().json.photo_filename || 'kein Foto-Upload' }}</code><br><b>Video:</b> <code>{{ $('Code: Material-Dateinamen bauen').first().json.video_filename || 'kein Video-Upload' }}</code><br><b>Projekt:</b> <code>{{ $('Code: Material-Dateinamen bauen').first().json.video_project_folder || '-' }}</code></p><p>Foto-Posts laufen automatisch weiter ueber WF-02/WF-03.<br>Video-/Reel-Items bleiben zunaechst auf <b>Video eingegangen</b>; WF-05 erzeugt danach automatisch Caption, CTA und Hashtags.</p><hr><p style=\"color:#666;font-size:0.9em;\">WF-01 v4 Foto Video Upload</p>",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.microsoftTeams",
+      "typeVersion": 2,
+      "position": [
+        1720,
+        592
+      ],
+      "id": "6f9a8a9c-4346-40f4-96e5-91bd371dcbb4",
+      "name": "Teams: Eingang melden",
+      "webhookId": "0d17356d-fe0c-4308-a4ed-8a09d39655ba",
+      "credentials": {
+        "microsoftTeamsOAuth2Api": {
+          "id": "Gmvn1OD66IZoWsXh",
+          "name": "PF Microsoft Teams account"
+        }
+      },
+      "disabled": false
+    },
+    {
+      "parameters": {
+        "jsCode": "const created = $('SharePoint: Item erstellen').first().json;\nconst mapped = $('Felder mappen').first();\nconst data = mapped.json;\nconst binary = mapped.binary || {};\n\nconst itemIdRaw = created.id || created.fields?.id || created.Ausweis || created.ID;\nconst itemId = String(itemIdRaw || '').padStart(3, '0');\nconst datumRaw = data.Ver_x00f6_ffentlichungsdatum || data._datum;\nconst year = datumRaw ? new Date(datumRaw).getFullYear() : new Date().getFullYear();\n\nfunction slugify(value) {\n  return String(value || 'post')\n    .toLowerCase()\n    .replace(/ä/g, 'ae').replace(/ö/g, 'oe').replace(/ü/g, 'ue').replace(/ß/g, 'ss')\n    .replace(/[^a-z0-9]+/g, '_')\n    .replace(/^_+|_+$/g, '')\n    .replace(/_+/g, '_')\n    .slice(0, 40) || 'post';\n}\n\nconst fotoBinary = binary.foto || binary.Foto_Upload || (data._material_typ !== 'video' ? binary.data : undefined);\nconst videoBinary = binary.video || binary.Video_Upload || (data._material_typ === 'video' ? binary.data : undefined);\nconst slug = slugify(data._foto_motiv || data.field_1);\n\nconst fotoOriginalName = fotoBinary?.fileName || 'foto.jpg';\nconst fotoExtMatch = fotoOriginalName.toLowerCase().match(/\\.(jpe?g|png|webp)$/);\nconst fotoExt = fotoExtMatch ? fotoExtMatch[1].replace('jpeg', 'jpg') : 'jpg';\nconst photoFilename = data._material_typ === 'foto' ? `PF_${year}_${itemId}_${slug}.${fotoExt}` : '';\n\nconst videoOriginalName = videoBinary?.fileName || 'video.mp4';\nconst videoExtMatch = videoOriginalName.toLowerCase().match(/\\.(mp4|mov)$/);\nconst videoExt = videoExtMatch ? videoExtMatch[1] : 'mp4';\nconst videoFilename = data._material_typ === 'video' ? `PF_${year}_${itemId}_${slug}_raw.${videoExt}` : '';\nconst projectFolder = data._material_typ === 'video'\n  ? `${year}-${String(new Date(datumRaw || Date.now()).getMonth() + 1).padStart(2, '0')}-${String(new Date(datumRaw || Date.now()).getDate()).padStart(2, '0')}_PF-${year}-${itemId}_${slug}`\n  : '';\n\nconst SP_SITE = 'https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW';\nconst fotoFolderRel = `/sites/PhysioFuchsTW/Freigegebene Dokumente/Socialmedia/Content_Socialmedia/Fotos/${year}`;\nconst videoFolderRel = projectFolder\n  ? `/sites/PhysioFuchsTW/Freigegebene Dokumente/Socialmedia/Content_Socialmedia/Reels_Stories/${projectFolder}/01_Rohmaterial`\n  : '';\n\nfunction uploadUrl(folderRel, filename) {\n  if (!folderRel || !filename) return '';\n  const safeFolder = folderRel.replace(/'/g, \"''\");\n  const safeFilename = filename.replace(/'/g, \"''\");\n  return `${SP_SITE}/_api/web/GetFolderByServerRelativeUrl('${safeFolder}')/Files/add(url='${safeFilename}',overwrite=false)`;\n}\n\nreturn [{\n  json: {\n    ...data,\n    _sp_item_id: itemIdRaw,\n    photo_should_upload: data._material_typ === 'foto' && Boolean(fotoBinary),\n    video_should_upload: data._material_typ === 'video' && Boolean(videoBinary),\n    photo_filename: photoFilename,\n    video_filename: videoFilename,\n    video_project_folder: projectFolder,\n    photo_year: year,\n    photo_folder_rel: fotoFolderRel,\n    video_folder_rel: videoFolderRel,\n    photo_upload_url: uploadUrl(fotoFolderRel, photoFilename),\n    video_upload_url: uploadUrl(videoFolderRel, videoFilename),\n  },\n  binary: {\n    ...(fotoBinary ? { foto: fotoBinary } : {}),\n    ...(videoBinary ? { video: videoBinary } : {}),\n  },\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1020,
+        448
+      ],
+      "id": "wf01v3-code-foto-dateiname",
+      "name": "Code: Material-Dateinamen bauen"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "foto-upload-enabled",
+              "leftValue": "={{ $json.photo_should_upload }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        448
+      ],
+      "id": "wf01v3-if-foto-upload",
+      "name": "IF: Foto hochladen?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.photo_upload_url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json;odata=verbose"
+            },
+            {
+              "name": "Content-Type",
+              "value": "={{ $binary.foto.mimeType || \"image/jpeg\" }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "foto",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1460,
+        336
+      ],
+      "id": "wf01v3-http-sp-foto-upload",
+      "name": "HTTP: SP Foto Upload",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const foto = $('Code: Material-Dateinamen bauen').first().json;\nconst mapped = $('Felder mappen').first().json;\nconst upload = $input.first().json || {};\nconst now = new Date().toISOString().slice(0, 16).replace('T', ' ');\nconst statusCode = upload.statusCode || upload.status || 200;\nconst uploadOk = statusCode < 400 && !upload.error;\nconst logLine = uploadOk\n  ? `${now} WF-01 v4: Foto-Upload gespeichert als ${foto.photo_filename}`\n  : `${now} WF-01 v4: Foto-Upload pruefen - Response ${statusCode}`;\n\nreturn [{\n  json: {\n    _sp_item_id: foto._sp_item_id,\n    photo_filename: foto.photo_filename,\n    payload: {\n      field_8: foto.photo_filename,\n      field_13: [mapped.field_13 || '', logLine].filter(Boolean).join('\\n')\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        336
+      ],
+      "id": "wf01v3-code-sp-update-payload",
+      "name": "Code: SP Foto-Log Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $json._sp_item_id }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-HTTP-Method",
+              "value": "MERGE"
+            },
+            {
+              "name": "IF-MATCH",
+              "value": "*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1900,
+        336
+      ],
+      "id": "wf01v3-http-sp-item-foto-update",
+      "name": "SP: Item Foto-Log aktualisieren",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict"
+          },
+          "conditions": [
+            {
+              "id": "foto-upload-enabled",
+              "leftValue": "={{ $json.video_should_upload }}",
+              "rightValue": true,
+              "operator": {
+                "type": "boolean",
+                "operation": "true",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2,
+      "position": [
+        1240,
+        708
+      ],
+      "id": "95403db2-cc85-4bc9-8b53-8da4e2adb7c2",
+      "name": "IF: Video hochladen?"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "={{ $json.video_upload_url }}",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Accept",
+              "value": "application/json;odata=verbose"
+            },
+            {
+              "name": "Content-Type",
+              "value": "={{ $binary.video.mimeType || \"video/mp4\" }}"
+            }
+          ]
+        },
+        "sendBody": true,
+        "contentType": "binaryData",
+        "inputDataFieldName": "video",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1460,
+        596
+      ],
+      "id": "2a4ff031-0561-4eb2-966c-3b438a40c6fb",
+      "name": "HTTP: SP Video Upload",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "jsCode": "const material = $('Code: Material-Dateinamen bauen').first().json;\nconst mapped = $('Felder mappen').first().json;\nconst upload = $input.first().json || {};\nconst now = new Date().toISOString().slice(0, 16).replace('T', ' ');\nconst statusCode = upload.statusCode || upload.status || 200;\nconst uploadOk = statusCode < 400 && !upload.error;\nconst logLine = uploadOk\n  ? `${now} WF-01 v4: Video-Upload gespeichert als ${material.video_filename} im Projekt ${material.video_project_folder}`\n  : `${now} WF-01 v4: Video-Upload pruefen - Response ${statusCode}`;\n\nreturn [{\n  json: {\n    _sp_item_id: material._sp_item_id,\n    video_filename: material.video_filename,\n    video_project_folder: material.video_project_folder,\n    payload: {\n      field_6: 'Video eingegangen',\n      field_8: material.video_filename,\n      field_13: [mapped.field_13 || '', logLine].filter(Boolean).join('\\n')\n    }\n  }\n}];"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        1680,
+        596
+      ],
+      "id": "2ede16a6-0940-4015-bfe8-f90ba943667e",
+      "name": "Code: SP Video-Log Payload"
+    },
+    {
+      "parameters": {
+        "method": "POST",
+        "url": "=https://physiofuchs889.sharepoint.com/sites/PhysioFuchsTW/_api/web/lists(guid'd17a6a6f-e6ef-457d-a2a9-4c30ea56120f')/items({{ $json._sp_item_id }})",
+        "authentication": "predefinedCredentialType",
+        "nodeCredentialType": "microsoftSharePointOAuth2Api",
+        "sendHeaders": true,
+        "headerParameters": {
+          "parameters": [
+            {
+              "name": "Content-Type",
+              "value": "application/json"
+            },
+            {
+              "name": "Accept",
+              "value": "application/json"
+            },
+            {
+              "name": "X-HTTP-Method",
+              "value": "MERGE"
+            },
+            {
+              "name": "IF-MATCH",
+              "value": "*"
+            }
+          ]
+        },
+        "sendBody": true,
+        "specifyBody": "json",
+        "jsonBody": "={{ JSON.stringify($json.payload) }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.2,
+      "position": [
+        1900,
+        596
+      ],
+      "id": "2fd918f4-fff2-4c60-8b8c-a6fd39dd4da1",
+      "name": "SP: Item Video-Log aktualisieren",
+      "credentials": {
+        "microsoftSharePointOAuth2Api": {
+          "id": "jLaDM9Iq5mCQJkMU",
+          "name": "PF Microsoft SharePoint account"
+        }
+      }
+    }
+  ],
+  "pinData": {
+    "Formular Webhook": [
+      {
+        "json": {
+          "headers": {
+            "host": "n8n.srv1099163.hstgr.cloud",
+            "user-agent": "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/148.0.0.0 Safari/537.36 Edg/148.0.0.0",
+            "content-length": "391",
+            "accept": "*/*",
+            "accept-encoding": "gzip, deflate, br, zstd",
+            "accept-language": "de,de-DE;q=0.9,en;q=0.8,en-GB;q=0.7,en-US;q=0.6",
+            "content-type": "application/json",
+            "origin": "https://gt-assistent.srv1099163.hstgr.cloud",
+            "priority": "u=1, i",
+            "referer": "https://gt-assistent.srv1099163.hstgr.cloud/",
+            "sec-ch-ua": "\"Chromium\";v=\"148\", \"Microsoft Edge\";v=\"148\", \"Not/A)Brand\";v=\"99\"",
+            "sec-ch-ua-mobile": "?0",
+            "sec-ch-ua-platform": "\"macOS\"",
+            "sec-fetch-dest": "empty",
+            "sec-fetch-mode": "cors",
+            "sec-fetch-site": "same-site",
+            "x-forwarded-for": "172.18.0.1",
+            "x-forwarded-host": "n8n.srv1099163.hstgr.cloud",
+            "x-forwarded-port": "443",
+            "x-forwarded-proto": "https",
+            "x-forwarded-server": "345ffec08734",
+            "x-real-ip": "172.18.0.1"
+          },
+          "params": {},
+          "query": {},
+          "body": {
+            "Title": "test 4",
+            "Thema": "test 4",
+            "Post_Typ": "Story",
+            "Hashtag_Thema": "Physiotherapie",
+            "Content_Brief": "test 4",
+            "Veroeffentlichungsdatum": "2026-05-11",
+            "Uhrzeit": "12:00",
+            "Bild_Dateiname": "",
+            "Freigabe_Person": "Thomas",
+            "Kommentare": "test",
+            "Status": "Idee",
+            "Caption_Variante": "",
+            "Canva_Template_ID": "",
+            "Instagram_Post_ID": "",
+            "_eingereichtVon": "Judith",
+            "_eingereichtAm": "2026-05-11T08:55:42.446Z"
+          },
+          "webhookUrl": "https://n8n.srv1099163.hstgr.cloud/webhook/sharepoint-content",
+          "executionMode": "production"
+        }
+      }
+    ]
+  },
+  "connections": {
+    "Formular Webhook": {
+      "main": [
+        [
+          {
+            "node": "Felder mappen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Felder mappen": {
+      "main": [
+        [
+          {
+            "node": "SharePoint: Item erstellen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SharePoint: Item erstellen": {
+      "main": [
+        [
+          {
+            "node": "Code: Material-Dateinamen bauen",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Foto hochladen?": {
+      "main": [
+        [
+          {
+            "node": "HTTP: SP Foto Upload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "IF: Video hochladen?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: SP Foto Upload": {
+      "main": [
+        [
+          {
+            "node": "Code: SP Foto-Log Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: SP Foto-Log Payload": {
+      "main": [
+        [
+          {
+            "node": "SP: Item Foto-Log aktualisieren",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SP: Item Foto-Log aktualisieren": {
+      "main": [
+        [
+          {
+            "node": "HTTP Response → Formular",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Teams: Eingang melden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: Material-Dateinamen bauen": {
+      "main": [
+        [
+          {
+            "node": "IF: Foto hochladen?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "IF: Video hochladen?": {
+      "main": [
+        [
+          {
+            "node": "HTTP: SP Video Upload",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "HTTP Response → Formular",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Teams: Eingang melden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "HTTP: SP Video Upload": {
+      "main": [
+        [
+          {
+            "node": "Code: SP Video-Log Payload",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Code: SP Video-Log Payload": {
+      "main": [
+        [
+          {
+            "node": "SP: Item Video-Log aktualisieren",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "SP: Item Video-Log aktualisieren": {
+      "main": [
+        [
+          {
+            "node": "HTTP Response → Formular",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "Teams: Eingang melden",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "wf01-v4-draft-2026-06-12",
+  "meta": {
+    "instanceId": "f40c6f6af7ce2011b04be6e4c65abbc6b998ddefd762d8f282912f30a607f9b9"
+  },
+  "id": "wf01-v4-foto-video-upload-draft",
+  "tags": []
+}
